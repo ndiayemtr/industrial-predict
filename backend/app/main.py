@@ -1,11 +1,15 @@
+from app.core.config import settings
 from fastapi import FastAPI;
 
 app = FastAPI(
-    title="Industrial Predict AI API",
+    title=settings.app_name,
     description="API de maintenance prédictive industrielle",
-    version="0.1.0",
+    version=settings.app_version,
 )
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {
+        "environment": settings.app_env,
+        "status": "healthy"
+        }
