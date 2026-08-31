@@ -1,19 +1,22 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
 if TYPE_CHECKING:
-    from app.models.site import Site
+    from app.models.company import Company
 
 
-class Company(Base):
-    __tablename__ = "companies"
+class Site(Base):
+    __tablename__ = "sites"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True,
+    )
 
     name: Mapped[str] = mapped_column(
         String(150),
@@ -32,6 +35,12 @@ class Company(Base):
         nullable=True,
     )
 
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -45,7 +54,6 @@ class Company(Base):
         nullable=False,
     )
 
-    sites: Mapped[list["Site"]] = relationship(
-        back_populates="company",
-        cascade="all, delete-orphan",
+    company: Mapped["Company"] = relationship(
+        back_populates="sites",
     )
