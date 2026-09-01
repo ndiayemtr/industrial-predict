@@ -1,18 +1,17 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.models.site import Site
-    from app.models.sensor import Sensor
+    from app.models.equipment import Equipment
 
 
-class Equipment(Base):
-    __tablename__ = "equipments"
+class Sensor(Base):
+    __tablename__ = "sensors"
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
@@ -31,8 +30,13 @@ class Equipment(Base):
         index=True,
     )
 
-    equipment_type: Mapped[str] = mapped_column(
+    sensor_type: Mapped[str] = mapped_column(
         String(100),
+        nullable=False,
+    )
+
+    unit: Mapped[str] = mapped_column(
+        String(30),
         nullable=False,
     )
 
@@ -44,11 +48,11 @@ class Equipment(Base):
     status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        default="operational",
+        default="active",
     )
 
-    site_id: Mapped[int] = mapped_column(
-        ForeignKey("sites.id", ondelete="CASCADE"),
+    equipment_id: Mapped[int] = mapped_column(
+        ForeignKey("equipments.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -66,11 +70,6 @@ class Equipment(Base):
         nullable=False,
     )
 
-    site: Mapped["Site"] = relationship(
-        back_populates="equipments",
-    )
-
-    sensors: Mapped[list["Sensor"]] = relationship(
-        back_populates="equipment",
-        cascade="all, delete-orphan",
+    equipment: Mapped["Equipment"] = relationship(
+        back_populates="sensors",
     )
