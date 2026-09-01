@@ -1,18 +1,17 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.equipment import Equipment
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.models.company import Company
+    from app.models.site import Site
 
 
-class Site(Base):
-    __tablename__ = "sites"
+class Equipment(Base):
+    __tablename__ = "equipments"
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
@@ -25,10 +24,15 @@ class Site(Base):
     )
 
     code: Mapped[str] = mapped_column(
-        String(50),
+        String(100),
         unique=True,
         nullable=False,
         index=True,
+    )
+
+    equipment_type: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
     )
 
     description: Mapped[str | None] = mapped_column(
@@ -36,15 +40,16 @@ class Site(Base):
         nullable=True,
     )
 
-    company_id: Mapped[int] = mapped_column(
-        ForeignKey("companies.id", ondelete="CASCADE"),
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
-        index=True,
+        default="operational",
     )
 
-    equipments: Mapped[list["Equipment"]] = relationship(
-        back_populates="site",
-        cascade="all, delete-orphan",
+    site_id: Mapped[int] = mapped_column(
+        ForeignKey("sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -60,6 +65,6 @@ class Site(Base):
         nullable=False,
     )
 
-    company: Mapped["Company"] = relationship(
-        back_populates="sites",
+    site: Mapped["Site"] = relationship(
+        back_populates="equipments",
     )
