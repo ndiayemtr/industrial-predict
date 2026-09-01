@@ -8,6 +8,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.equipment import Equipment
+    from app.models.measurement import Measurement
 
 
 class Sensor(Base):
@@ -72,4 +73,9 @@ class Sensor(Base):
 
     equipment: Mapped["Equipment"] = relationship(
         back_populates="sensors",
+    )
+
+    measurements: Mapped[list["Measurement"]] = relationship(
+        back_populates="sensor",
+        cascade="all, delete-orphan",
     )
