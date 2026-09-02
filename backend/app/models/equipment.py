@@ -80,3 +80,10 @@ class Equipment(Base):
         back_populates="equipment",
         cascade="all, delete-orphan",
     )
+
+    criticality: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="medium",
+        index=True,
+    )
