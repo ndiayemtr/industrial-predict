@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.site import Site
     from app.models.sensor import Sensor
+    from app.models.maintenance_record import MaintenanceRecord
 
 
 class Equipment(Base):
@@ -71,6 +72,11 @@ class Equipment(Base):
     )
 
     sensors: Mapped[list["Sensor"]] = relationship(
+        back_populates="equipment",
+        cascade="all, delete-orphan",
+    )
+
+    maintenance_records: Mapped[list["MaintenanceRecord"]] = relationship(
         back_populates="equipment",
         cascade="all, delete-orphan",
     )
