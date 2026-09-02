@@ -1,5 +1,6 @@
 from app.core.config import settings
 from fastapi import FastAPI;
+from app.api.routes.companies import router as companies_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -13,3 +14,8 @@ def health_check():
         "environment": settings.app_env,
         "status": "healthy"
         }
+
+app.include_router(
+    companies_router,
+    prefix="/api/v1",
+)
