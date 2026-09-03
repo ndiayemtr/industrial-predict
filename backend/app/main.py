@@ -4,6 +4,7 @@ from app.api.routes.companies import router as companies_router
 from app.api.routes.sites import router as sites_router
 from app.api.routes.equipment import router as equipment_router
 from app.api.routes.sensors import router as sensors_router
+from app.api.routes.measurements import router as measurements_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -35,5 +36,10 @@ app.include_router(
 
 app.include_router(
     sensors_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    measurements_router,
     prefix="/api/v1",
 )
