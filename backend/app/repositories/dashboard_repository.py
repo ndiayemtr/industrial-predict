@@ -136,6 +136,25 @@ class DashboardRepository:
         )
         return list(self.db.execute(statement).mappings().all())
 
+    def count_high_critical_unavailable(
+    self,
+        company_id: int,
+        site_id: int | None = None,
+        equipment_id: int | None = None,
+    ) -> int:
+        statement = select(func.count(Equipment.id)).where(
+            Equipment.id.in_(
+                self._equipment_ids(
+                    company_id,
+                    site_id,
+                    equipment_id,
+                )
+            ),
+            Equipment.criticality.in_(("high", "critical")),
+            Equipment.status.in_(("maintenance", "out_of_service")),
+        )
+        return self.db.execute(statement).scalar_one()
+
     def count_equipments_with_active_sensor(
         self, company_id: int, site_id: int | None = None,
         equipment_id: int | None = None,
