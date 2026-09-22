@@ -24,7 +24,10 @@ class SensorUpdate(BaseModel):
     name: str | None = None
     code: str | None = None
     sensor_type: str | None = None
-    unit: str | None = None
+    unit: str | None = Field(
+        default=None,
+        min_length=1,
+    )
     description: str | None = None
     status: SensorStatus | None = None
     equipment_id: int | None = None

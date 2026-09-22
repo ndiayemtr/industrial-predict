@@ -35,8 +35,11 @@ class MeasurementUpdate(BaseModel):
     @classmethod
     def validate_timestamp_timezone(
         cls,
-        value: datetime,
-    ) -> datetime:
+        value: datetime | None,
+    ) -> datetime | None:
+        if value is None:
+            return value
+
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("timestamp must include timezone information")
 
@@ -44,7 +47,7 @@ class MeasurementUpdate(BaseModel):
 
 
 class MeasurementRead(MeasurementBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     sensor_id: int
-
-    model_config = ConfigDict(from_attributes=True)
