@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.enums import SensorStatus
 
@@ -9,7 +9,9 @@ class SensorBase(BaseModel):
     name: str
     code: str
     sensor_type: str
-    unit: str | None = None
+    unit: str = Field(
+        min_length=1,
+    )
     description: str | None = None
     status: SensorStatus = SensorStatus.ACTIVE
 
