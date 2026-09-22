@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.core.enums import SensorStatus
+
 
 class SensorBase(BaseModel):
     name: str
@@ -9,7 +11,7 @@ class SensorBase(BaseModel):
     sensor_type: str
     unit: str | None = None
     description: str | None = None
-    status: str = "active"
+    status: SensorStatus = SensorStatus.ACTIVE
 
 
 class SensorCreate(SensorBase):
@@ -22,7 +24,7 @@ class SensorUpdate(BaseModel):
     sensor_type: str | None = None
     unit: str | None = None
     description: str | None = None
-    status: str | None = None
+    status: SensorStatus | None = None
     equipment_id: int | None = None
 
 

@@ -2,11 +2,17 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.core.enums import (
+    MaintenancePriority,
+    MaintenanceStatus,
+    MaintenanceType,
+)
+
 
 class MaintenanceBase(BaseModel):
-    maintenance_type: str
-    status: str = "planned"
-    priority: str = "medium"
+    maintenance_type: MaintenanceType
+    status: MaintenanceStatus = MaintenanceStatus.PLANNED
+    priority: MaintenancePriority = MaintenancePriority.MEDIUM
     title: str
     description: str | None = None
     failure_code: str | None = None
@@ -25,9 +31,9 @@ class MaintenanceCreate(MaintenanceBase):
 
 
 class MaintenanceUpdate(BaseModel):
-    maintenance_type: str | None = None
-    status: str | None = None
-    priority: str | None = None
+    maintenance_type: MaintenanceType | None = None
+    status: MaintenanceStatus | None = None
+    priority: MaintenancePriority | None = None
     title: str | None = None
     description: str | None = None
     failure_code: str | None = None

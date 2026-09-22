@@ -2,14 +2,19 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.core.enums import (
+    EquipmentCriticality,
+    EquipmentStatus,
+)
+
 
 class EquipmentBase(BaseModel):
     name: str
     code: str
     equipment_type: str
     description: str | None = None
-    status: str = "operational"
-    criticality: str = "medium"
+    status: EquipmentStatus = EquipmentStatus.OPERATIONAL
+    criticality: EquipmentCriticality = EquipmentCriticality.MEDIUM
 
 
 class EquipmentCreate(EquipmentBase):
@@ -21,8 +26,8 @@ class EquipmentUpdate(BaseModel):
     code: str | None = None
     equipment_type: str | None = None
     description: str | None = None
-    status: str | None = None
-    criticality: str | None = None
+    status: EquipmentStatus | None = None
+    criticality: EquipmentCriticality | None = None
     site_id: int | None = None
 
 
