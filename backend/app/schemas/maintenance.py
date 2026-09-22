@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.enums import (
     MaintenancePriority,
@@ -22,13 +22,20 @@ class MaintenanceBase(BaseModel):
     planned_at: datetime | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    downtime_minutes: int | None = None
-    cost: float | None = None
+    downtime_minutes: int | None = Field(
+        default=None,
+        ge=0,
+    )
+
+    cost: float | None = Field(
+        default=None,
+        ge=0,
+    )
 
     @field_validator(
-    "planned_at",
-    "started_at",
-    "completed_at",
+        "planned_at",
+        "started_at",
+        "completed_at",
     )
     @classmethod
     def validate_timezone(
@@ -39,9 +46,7 @@ class MaintenanceBase(BaseModel):
             return value
 
         if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError(
-                "datetime must include timezone information"
-            )
+            raise ValueError("datetime must include timezone information")
 
         return value
 
@@ -52,9 +57,7 @@ class MaintenanceBase(BaseModel):
             and self.completed_at is not None
             and self.started_at > self.completed_at
         ):
-            raise ValueError(
-                "started_at must be before or equal to completed_at"
-            )
+            raise ValueError("started_at must be before or equal to completed_at")
 
         return self
 
@@ -76,8 +79,15 @@ class MaintenanceUpdate(BaseModel):
     planned_at: datetime | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
-    downtime_minutes: int | None = None
-    cost: float | None = None
+    downtime_minutes: int | None = Field(
+        default=None,
+        ge=0,
+    )
+
+    cost: float | None = Field(
+        default=None,
+        ge=0,
+    )
     equipment_id: int | None = None
 
     @model_validator(mode="after")
@@ -87,9 +97,7 @@ class MaintenanceUpdate(BaseModel):
             and self.completed_at is not None
             and self.started_at > self.completed_at
         ):
-            raise ValueError(
-                "started_at must be before or equal to completed_at"
-            )
+            raise ValueError("started_at must be before or equal to completed_at")
 
         return self
 
