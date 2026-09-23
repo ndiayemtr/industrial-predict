@@ -1,4 +1,6 @@
-from sqlalchemy import func, select
+from datetime import datetime
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.maintenance_record import MaintenanceRecord
@@ -14,10 +16,66 @@ class MaintenanceRepository:
         *,
         offset: int,
         limit: int,
+        equipment_id: int | None = None,
+        maintenance_type: str | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        search: str | None = None,
     ) -> list[MaintenanceRecord]:
+        statement = select(MaintenanceRecord)
+
+        if equipment_id is not None:
+            statement = statement.where(
+                MaintenanceRecord.equipment_id == equipment_id
+            )
+
+        if maintenance_type is not None:
+            statement = statement.where(
+                MaintenanceRecord.maintenance_type == maintenance_type
+            )
+
+        if status is not None:
+            statement = statement.where(
+                MaintenanceRecord.status == status
+            )
+
+        if priority is not None:
+            statement = statement.where(
+                MaintenanceRecord.priority == priority
+            )
+
+        if start_time is not None:
+            statement = statement.where(
+                MaintenanceRecord.created_at >= start_time
+            )
+
+        if end_time is not None:
+            statement = statement.where(
+                MaintenanceRecord.created_at < end_time
+            )
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    MaintenanceRecord.title.ilike(pattern),
+                    MaintenanceRecord.description.ilike(pattern),
+                    MaintenanceRecord.failure_code.ilike(pattern),
+                    MaintenanceRecord.root_cause.ilike(pattern),
+                    MaintenanceRecord.action_taken.ilike(pattern),
+                    MaintenanceRecord.technician.ilike(pattern),
+                )
+            )
+
         statement = (
-            select(MaintenanceRecord)
-            .order_by(MaintenanceRecord.created_at.desc(), MaintenanceRecord.id.desc())
+            statement
+            .order_by(
+                MaintenanceRecord.created_at.desc(),
+                MaintenanceRecord.id.desc(),
+            )
             .offset(offset)
             .limit(limit)
         )
@@ -28,9 +86,68 @@ class MaintenanceRepository:
             .all()
         )
 
-    def count_all(self) -> int:
-        statement = select(func.count(MaintenanceRecord.id))
-        return self.db.execute(statement).scalar_one()
+    def count_all(
+        self,
+        *,
+        equipment_id: int | None = None,
+        maintenance_type: str | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        search: str | None = None,
+    ) -> int:
+        statement = select(
+            func.count(MaintenanceRecord.id)
+        )
+
+        if equipment_id is not None:
+            statement = statement.where(
+                MaintenanceRecord.equipment_id == equipment_id
+            )
+
+        if maintenance_type is not None:
+            statement = statement.where(
+                MaintenanceRecord.maintenance_type == maintenance_type
+            )
+
+        if status is not None:
+            statement = statement.where(
+                MaintenanceRecord.status == status
+            )
+
+        if priority is not None:
+            statement = statement.where(
+                MaintenanceRecord.priority == priority
+            )
+
+        if start_time is not None:
+            statement = statement.where(
+                MaintenanceRecord.created_at >= start_time
+            )
+
+        if end_time is not None:
+            statement = statement.where(
+                MaintenanceRecord.created_at < end_time
+            )
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    MaintenanceRecord.title.ilike(pattern),
+                    MaintenanceRecord.description.ilike(pattern),
+                    MaintenanceRecord.failure_code.ilike(pattern),
+                    MaintenanceRecord.root_cause.ilike(pattern),
+                    MaintenanceRecord.action_taken.ilike(pattern),
+                    MaintenanceRecord.technician.ilike(pattern),
+                )
+            )
+
+        return self.db.execute(
+            statement
+        ).scalar_one()
 
     def get_all(self) -> list[MaintenanceRecord]:
         statement = (

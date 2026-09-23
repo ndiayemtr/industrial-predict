@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -9,6 +11,7 @@ from app.schemas.maintenance import (
     MaintenanceUpdate,
 )
 from app.services.maintenance_service import MaintenanceService
+from app.core.enums import MaintenancePriority, MaintenanceStatus, MaintenanceType
 
 
 router = APIRouter(
@@ -24,14 +27,42 @@ router = APIRouter(
 def get_maintenance_records(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    equipment_id: int | None = Query(default=None, ge=1),
+    maintenance_type: MaintenanceType | None = Query(default=None),
+    maintenance_status: MaintenanceStatus | None = Query(
+        default=None,
+        alias="status",
+    ),
+    priority: MaintenancePriority | None = Query(default=None),
+    start_time: datetime | None = Query(default=None),
+    end_time: datetime | None = Query(default=None),
+    search: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = MaintenanceService(db)
 
-    return service.get_paginated(
-        page=page,
-        page_size=page_size,
-    )
+    try:
+        return service.get_paginated(
+            page=page,
+            page_size=page_size,
+            equipment_id=equipment_id,
+            maintenance_type=maintenance_type,
+            status=maintenance_status,
+            priority=priority,
+            start_time=start_time,
+            end_time=end_time,
+            search=search,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
 
 
 @router.get(

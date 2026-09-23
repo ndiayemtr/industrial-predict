@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.core.pagination import build_page
@@ -23,15 +25,46 @@ class MaintenanceService:
         *,
         page: int,
         page_size: int,
+        equipment_id: int | None = None,
+        maintenance_type: str | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        search: str | None = None,
     ):
+        if (
+            start_time is not None
+            and end_time is not None
+            and start_time >= end_time
+        ):
+            raise ValueError(
+                "start_time must be before end_time"
+            )
+
         offset = (page - 1) * page_size
 
         items = self.repository.get_paginated(
             offset=offset,
             limit=page_size,
+            equipment_id=equipment_id,
+            maintenance_type=maintenance_type,
+            status=status,
+            priority=priority,
+            start_time=start_time,
+            end_time=end_time,
+            search=search,
         )
 
-        total = self.repository.count_all()
+        total = self.repository.count_all(
+            equipment_id=equipment_id,
+            maintenance_type=maintenance_type,
+            status=status,
+            priority=priority,
+            start_time=start_time,
+            end_time=end_time,
+            search=search,
+        )
 
         return build_page(
             items=items,
