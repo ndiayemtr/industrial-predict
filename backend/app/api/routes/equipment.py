@@ -9,6 +9,10 @@ from app.schemas.equipment import (
     EquipmentUpdate,
 )
 from app.services.equipment_service import EquipmentService
+from app.core.enums import (
+    EquipmentCriticality,
+    EquipmentStatus,
+)
 
 
 router = APIRouter(
@@ -24,6 +28,24 @@ router = APIRouter(
 def get_equipments(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    site_id: int | None = Query(
+    default=None,
+        ge=1,
+    ),
+
+    status: EquipmentStatus | None = Query(
+        default=None,
+    ),
+
+    criticality: EquipmentCriticality | None = Query(
+        default=None,
+    ),
+
+    search: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = EquipmentService(db)
@@ -31,6 +53,10 @@ def get_equipments(
     return service.get_paginated(
         page=page,
         page_size=page_size,
+        site_id=site_id,
+        status=status,
+        criticality=criticality,
+        search=search,
     )
 
 

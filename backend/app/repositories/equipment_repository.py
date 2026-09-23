@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.equipment import Equipment
@@ -14,9 +14,41 @@ class EquipmentRepository:
         *,
         offset: int,
         limit: int,
+        site_id: int | None = None,
+        status: str | None = None,
+        criticality: str | None = None,
+        search: str | None = None,
     ) -> list[Equipment]:
+        statement = select(Equipment)
+
+        if site_id is not None:
+            statement = statement.where(
+                Equipment.site_id == site_id
+            )
+
+        if status is not None:
+            statement = statement.where(
+                Equipment.status == status
+            )
+
+        if criticality is not None:
+            statement = statement.where(
+                Equipment.criticality == criticality
+            )
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    Equipment.name.ilike(pattern),
+                    Equipment.code.ilike(pattern),
+                    Equipment.equipment_type.ilike(pattern),
+                )
+            )
+
         statement = (
-            select(Equipment)
+            statement
             .order_by(Equipment.id.asc())
             .offset(offset)
             .limit(limit)
@@ -28,9 +60,45 @@ class EquipmentRepository:
             .all()
         )
 
-    def count_all(self) -> int:
+    def count_all(
+        self,
+        *,
+        site_id: int | None = None,
+        status: str | None = None,
+        criticality: str | None = None,
+        search: str | None = None,
+    ) -> int:
         statement = select(func.count(Equipment.id))
-        return self.db.execute(statement).scalar_one()
+
+        if site_id is not None:
+            statement = statement.where(
+                Equipment.site_id == site_id
+            )
+
+        if status is not None:
+            statement = statement.where(
+                Equipment.status == status
+            )
+
+        if criticality is not None:
+            statement = statement.where(
+                Equipment.criticality == criticality
+            )
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    Equipment.name.ilike(pattern),
+                    Equipment.code.ilike(pattern),
+                    Equipment.equipment_type.ilike(pattern),
+                )
+            )
+
+        return self.db.execute(
+            statement
+        ).scalar_one()
 
     def get_all(self) -> list[Equipment]:
         statement = select(Equipment).order_by(Equipment.id)

@@ -20,15 +20,28 @@ class EquipmentService:
         *,
         page: int,
         page_size: int,
+        site_id: int | None = None,
+        status: str | None = None,
+        criticality: str | None = None,
+        search: str | None = None,
     ):
         offset = (page - 1) * page_size
 
         items = self.repository.get_paginated(
             offset=offset,
             limit=page_size,
+            site_id=site_id,
+            status=status,
+            criticality=criticality,
+            search=search,
         )
 
-        total = self.repository.count_all()
+        total = self.repository.count_all(
+            site_id=site_id,
+            status=status,
+            criticality=criticality,
+            search=search,
+        )
 
         return build_page(
             items=items,
