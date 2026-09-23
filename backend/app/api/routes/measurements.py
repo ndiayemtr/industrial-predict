@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.pagination import Page
 from app.schemas.measurement import (
     MeasurementCreate,
     MeasurementRead,
@@ -20,14 +21,19 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[MeasurementRead],
+    response_model=Page[MeasurementRead],
 )
 def get_measurements(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     service = MeasurementService(db)
 
-    return service.get_all()
+    return service.get_paginated(
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(

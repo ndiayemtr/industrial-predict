@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app.core.pagination import build_page
+
 from app.models.equipment import Equipment
 from app.repositories.equipment_repository import EquipmentRepository
 from app.repositories.site_repository import SiteRepository
@@ -12,6 +14,28 @@ class EquipmentService:
         self.db = db
         self.repository = EquipmentRepository(db)
         self.site_repository = SiteRepository(db)
+
+    def get_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+    ):
+        offset = (page - 1) * page_size
+
+        items = self.repository.get_paginated(
+            offset=offset,
+            limit=page_size,
+        )
+
+        total = self.repository.count_all()
+
+        return build_page(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     def get_all(self) -> list[Equipment]:
         return self.repository.get_all()

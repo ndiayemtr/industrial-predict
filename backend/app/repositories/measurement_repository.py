@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.measurement import Measurement
@@ -10,6 +10,29 @@ class MeasurementRepository:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def get_paginated(
+        self,
+        *,
+        offset: int,
+        limit: int,
+    ) -> list[Measurement]:
+        statement = (
+            select(Measurement)
+            .order_by(Measurement.timestamp.desc(), Measurement.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(
+            self.db.execute(statement)
+            .scalars()
+            .all()
+        )
+
+    def count_all(self) -> int:
+        statement = select(func.count(Measurement.id))
+        return self.db.execute(statement).scalar_one()
 
     def get_all(self) -> list[Measurement]:
         statement = (

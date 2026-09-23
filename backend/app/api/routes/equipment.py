@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.pagination import Page
 from app.schemas.equipment import (
     EquipmentCreate,
     EquipmentRead,
@@ -18,14 +19,19 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[EquipmentRead],
+    response_model=Page[EquipmentRead],
 )
 def get_equipments(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     service = EquipmentService(db)
 
-    return service.get_all()
+    return service.get_paginated(
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(

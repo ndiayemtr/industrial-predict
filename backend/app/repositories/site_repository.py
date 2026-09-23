@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.site import Site
@@ -8,6 +8,29 @@ class SiteRepository:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def get_paginated(
+        self,
+        *,
+        offset: int,
+        limit: int,
+    ) -> list[Site]:
+        statement = (
+            select(Site)
+            .order_by(Site.id.asc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(
+            self.db.execute(statement)
+            .scalars()
+            .all()
+        )
+
+    def count_all(self) -> int:
+        statement = select(func.count(Site.id))
+        return self.db.execute(statement).scalar_one()
 
     def get_all(self) -> list[Site]:
         statement = select(Site).order_by(Site.id)

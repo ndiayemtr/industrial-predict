@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.sensor import Sensor
@@ -8,6 +8,29 @@ class SensorRepository:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def get_paginated(
+        self,
+        *,
+        offset: int,
+        limit: int,
+    ) -> list[Sensor]:
+        statement = (
+            select(Sensor)
+            .order_by(Sensor.id.asc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(
+            self.db.execute(statement)
+            .scalars()
+            .all()
+        )
+
+    def count_all(self) -> int:
+        statement = select(func.count(Sensor.id))
+        return self.db.execute(statement).scalar_one()
 
     def get_all(self) -> list[Sensor]:
         statement = select(Sensor).order_by(Sensor.id)

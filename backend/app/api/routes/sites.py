@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.pagination import Page
 from app.schemas.site import SiteCreate, SiteRead, SiteUpdate
 from app.services.site_service import SiteService
 
@@ -14,11 +15,18 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[SiteRead],
+    response_model=Page[SiteRead],
 )
-def get_sites(db: Session = Depends(get_db)):
+def get_sites(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
     service = SiteService(db)
-    return service.get_all()
+    return service.get_paginated(
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.schemas.pagination import Page
 from app.schemas.maintenance import (
     MaintenanceCreate,
     MaintenanceRead,
@@ -18,14 +19,19 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[MaintenanceRead],
+    response_model=Page[MaintenanceRead],
 )
 def get_maintenance_records(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     service = MaintenanceService(db)
 
-    return service.get_all()
+    return service.get_paginated(
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(

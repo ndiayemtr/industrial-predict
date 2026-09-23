@@ -2,6 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.core.pagination import build_page
+
 from app.models.measurement import Measurement
 from app.repositories.measurement_repository import MeasurementRepository
 from app.repositories.sensor_repository import SensorRepository
@@ -14,6 +16,28 @@ class MeasurementService:
         self.repository = MeasurementRepository(db)
         self.sensor_repository = SensorRepository(db)
         self.db = db
+
+    def get_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+    ):
+        offset = (page - 1) * page_size
+
+        items = self.repository.get_paginated(
+            offset=offset,
+            limit=page_size,
+        )
+
+        total = self.repository.count_all()
+
+        return build_page(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
     def get_all(self) -> list[Measurement]:
         return self.repository.get_all()
