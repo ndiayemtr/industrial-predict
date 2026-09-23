@@ -83,15 +83,19 @@ class CompanyService:
         *,
         page: int,
         page_size: int,
+        search: str | None = None,
     ):
         offset = (page - 1) * page_size
 
         items = self.repository.get_paginated(
             offset=offset,
             limit=page_size,
+            search=search,
         )
 
-        total = self.repository.count_all()
+        total = self.repository.count_all(
+            search=search,
+        )
 
         return build_page(
             items=items,

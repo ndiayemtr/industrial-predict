@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.company import Company
@@ -43,9 +43,22 @@ class CompanyRepository:
         *,
         offset: int,
         limit: int,
+        search: str | None = None,
     ) -> list[Company]:
+        statement = select(Company)
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    Company.name.ilike(pattern),
+                    Company.code.ilike(pattern),
+                )
+            )
+
         statement = (
-            select(Company)
+            statement
             .order_by(Company.id.asc())
             .offset(offset)
             .limit(limit)
@@ -58,10 +71,22 @@ class CompanyRepository:
         )
 
 
-    def count_all(self) -> int:
-        statement = select(
-            func.count(Company.id)
-        )
+    def count_all(
+        self,
+        *,
+        search: str | None = None,
+    ) -> int:
+        statement = select(func.count(Company.id))
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    Company.name.ilike(pattern),
+                    Company.code.ilike(pattern),
+                )
+            )
 
         return self.db.execute(
             statement

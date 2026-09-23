@@ -31,6 +31,11 @@ def get_companies(
         ge=1,
         le=100,
     ),
+    search: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = CompanyService(db)
@@ -38,6 +43,7 @@ def get_companies(
     return service.get_paginated(
         page=page,
         page_size=page_size,
+        search=search,
     )
 
 
