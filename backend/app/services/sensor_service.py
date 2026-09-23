@@ -20,15 +20,25 @@ class SensorService:
         *,
         page: int,
         page_size: int,
+        equipment_id: int | None = None,
+        status: str | None = None,
+        search: str | None = None,
     ):
         offset = (page - 1) * page_size
 
         items = self.repository.get_paginated(
             offset=offset,
             limit=page_size,
+            equipment_id=equipment_id,
+            status=status,
+            search=search,
         )
 
-        total = self.repository.count_all()
+        total = self.repository.count_all(
+            equipment_id=equipment_id,
+            status=status,
+            search=search,
+        )
 
         return build_page(
             items=items,

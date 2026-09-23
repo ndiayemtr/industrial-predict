@@ -9,21 +9,39 @@ from app.schemas.sensor import (
     SensorUpdate,
 )
 from app.services.sensor_service import SensorService
+from app.core.enums import SensorStatus
 
 
 router = APIRouter(
     prefix="/sensors",
     tags=["Sensors"],
 )
-
-
 @router.get(
     "",
     response_model=Page[SensorRead],
 )
 def get_sensors(
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
+    equipment_id: int | None = Query(
+        default=None,
+        ge=1,
+    ),
+    status: SensorStatus | None = Query(
+        default=None,
+    ),
+    search: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = SensorService(db)
@@ -31,6 +49,9 @@ def get_sensors(
     return service.get_paginated(
         page=page,
         page_size=page_size,
+        equipment_id=equipment_id,
+        status=status,
+        search=search,
     )
 
 
