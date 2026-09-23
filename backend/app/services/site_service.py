@@ -20,15 +20,22 @@ class SiteService:
         *,
         page: int,
         page_size: int,
+        company_id: int | None = None,
+        search: str | None = None,
     ):
         offset = (page - 1) * page_size
 
         items = self.repository.get_paginated(
             offset=offset,
             limit=page_size,
+            company_id=company_id,
+            search=search,
         )
 
-        total = self.repository.count_all()
+        total = self.repository.count_all(
+            company_id=company_id,
+            search=search,
+        )
 
         return build_page(
             items=items,

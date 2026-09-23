@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.site import Site
@@ -14,9 +14,28 @@ class SiteRepository:
         *,
         offset: int,
         limit: int,
+        company_id: int | None = None,
+        search: str | None = None,
     ) -> list[Site]:
+        statement = select(Site)
+
+        if company_id is not None:
+            statement = statement.where(
+                Site.company_id == company_id
+            )
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    Site.name.ilike(pattern),
+                    Site.code.ilike(pattern),
+                )
+            )
+
         statement = (
-            select(Site)
+            statement
             .order_by(Site.id.asc())
             .offset(offset)
             .limit(limit)
@@ -28,9 +47,32 @@ class SiteRepository:
             .all()
         )
 
-    def count_all(self) -> int:
+    def count_all(
+        self,
+        *,
+        company_id: int | None = None,
+        search: str | None = None,
+    ) -> int:
         statement = select(func.count(Site.id))
-        return self.db.execute(statement).scalar_one()
+
+        if company_id is not None:
+            statement = statement.where(
+                Site.company_id == company_id
+            )
+
+        if search:
+            pattern = f"%{search.strip()}%"
+
+            statement = statement.where(
+                or_(
+                    Site.name.ilike(pattern),
+                    Site.code.ilike(pattern),
+                )
+            )
+
+        return self.db.execute(
+            statement
+        ).scalar_one()
 
     def get_all(self) -> list[Site]:
         statement = select(Site).order_by(Site.id)

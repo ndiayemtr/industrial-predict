@@ -20,12 +20,24 @@ router = APIRouter(
 def get_sites(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    company_id: int | None = Query(
+        default=None,
+        ge=1,
+    ),
+
+    search: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = SiteService(db)
     return service.get_paginated(
         page=page,
         page_size=page_size,
+        company_id=company_id,
+        search=search,
     )
 
 
