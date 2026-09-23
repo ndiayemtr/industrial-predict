@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.company import Company
@@ -37,3 +37,32 @@ class CompanyRepository:
     def delete(self, company: Company) -> None:
         self.db.delete(company)
         self.db.flush()
+        
+    def get_paginated(
+        self,
+        *,
+        offset: int,
+        limit: int,
+    ) -> list[Company]:
+        statement = (
+            select(Company)
+            .order_by(Company.id.asc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(
+            self.db.execute(statement)
+            .scalars()
+            .all()
+        )
+
+
+    def count_all(self) -> int:
+        statement = select(
+            func.count(Company.id)
+        )
+
+        return self.db.execute(
+            statement
+        ).scalar_one()

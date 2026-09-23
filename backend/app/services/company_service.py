@@ -6,6 +6,7 @@ from app.schemas.company import (
     CompanyCreate,
     CompanyUpdate,
 )
+from app.core.pagination import build_page
 
 
 class CompanyService:
@@ -76,3 +77,25 @@ class CompanyService:
     def delete(self, company: Company) -> None:
         self.repository.delete(company)
         self.db.commit()
+        
+    def get_paginated(
+        self,
+        *,
+        page: int,
+        page_size: int,
+    ):
+        offset = (page - 1) * page_size
+
+        items = self.repository.get_paginated(
+            offset=offset,
+            limit=page_size,
+        )
+
+        total = self.repository.count_all()
+
+        return build_page(
+            items=items,
+            total=total,
+            page=page,
+            page_size=page_size,
+        )

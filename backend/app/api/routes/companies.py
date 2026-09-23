@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -8,6 +8,7 @@ from app.schemas.company import (
     CompanyUpdate,
 )
 from app.services.company_service import CompanyService
+from app.schemas.pagination import Page
 
 
 router = APIRouter(
@@ -18,14 +19,26 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[CompanyRead],
+    response_model=Page[CompanyRead],
 )
 def get_companies(
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = CompanyService(db)
 
-    return service.get_all()
+    return service.get_paginated(
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(
