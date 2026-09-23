@@ -11,6 +11,7 @@ from app.schemas.measurement import (
     MeasurementUpdate,
 )
 from app.services.measurement_service import MeasurementService
+from app.core.enums import MeasurementQuality
 
 
 router = APIRouter(
@@ -24,16 +25,47 @@ router = APIRouter(
     response_model=Page[MeasurementRead],
 )
 def get_measurements(
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    page_size: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
+    sensor_id: int | None = Query(
+        default=None,
+        ge=1,
+    ),
+    quality: MeasurementQuality | None = Query(
+        default=None,
+    ),
+    start_time: datetime | None = Query(
+        default=None,
+    ),
+    end_time: datetime | None = Query(
+        default=None,
+    ),
     db: Session = Depends(get_db),
 ):
     service = MeasurementService(db)
 
-    return service.get_paginated(
-        page=page,
-        page_size=page_size,
-    )
+    try:
+        return service.get_paginated(
+            page=page,
+            page_size=page_size,
+            sensor_id=sensor_id,
+            quality=quality,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
 
 
 @router.get(

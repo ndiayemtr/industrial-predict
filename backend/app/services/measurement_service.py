@@ -22,15 +22,37 @@ class MeasurementService:
         *,
         page: int,
         page_size: int,
+        sensor_id: int | None = None,
+        quality: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ):
+        if (
+            start_time is not None
+            and end_time is not None
+            and start_time >= end_time
+        ):
+            raise ValueError(
+                "start_time must be before end_time"
+            )
+
         offset = (page - 1) * page_size
 
         items = self.repository.get_paginated(
             offset=offset,
             limit=page_size,
+            sensor_id=sensor_id,
+            quality=quality,
+            start_time=start_time,
+            end_time=end_time,
         )
 
-        total = self.repository.count_all()
+        total = self.repository.count_all(
+            sensor_id=sensor_id,
+            quality=quality,
+            start_time=start_time,
+            end_time=end_time,
+        )
 
         return build_page(
             items=items,

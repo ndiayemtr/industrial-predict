@@ -16,10 +16,39 @@ class MeasurementRepository:
         *,
         offset: int,
         limit: int,
+        sensor_id: int | None = None,
+        quality: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> list[Measurement]:
+        statement = select(Measurement)
+
+        if sensor_id is not None:
+            statement = statement.where(
+                Measurement.sensor_id == sensor_id
+            )
+
+        if quality is not None:
+            statement = statement.where(
+                Measurement.quality == quality
+            )
+
+        if start_time is not None:
+            statement = statement.where(
+                Measurement.timestamp >= start_time
+            )
+
+        if end_time is not None:
+            statement = statement.where(
+                Measurement.timestamp < end_time
+            )
+
         statement = (
-            select(Measurement)
-            .order_by(Measurement.timestamp.desc(), Measurement.id.desc())
+            statement
+            .order_by(
+                Measurement.timestamp.desc(),
+                Measurement.id.desc(),
+            )
             .offset(offset)
             .limit(limit)
         )
@@ -30,9 +59,41 @@ class MeasurementRepository:
             .all()
         )
 
-    def count_all(self) -> int:
-        statement = select(func.count(Measurement.id))
-        return self.db.execute(statement).scalar_one()
+    def count_all(
+        self,
+        *,
+        sensor_id: int | None = None,
+        quality: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+    ) -> int:
+        statement = select(
+            func.count(Measurement.id)
+        )
+
+        if sensor_id is not None:
+            statement = statement.where(
+                Measurement.sensor_id == sensor_id
+            )
+
+        if quality is not None:
+            statement = statement.where(
+                Measurement.quality == quality
+            )
+
+        if start_time is not None:
+            statement = statement.where(
+                Measurement.timestamp >= start_time
+            )
+
+        if end_time is not None:
+            statement = statement.where(
+                Measurement.timestamp < end_time
+            )
+
+        return self.db.execute(
+            statement
+        ).scalar_one()
 
     def get_all(self) -> list[Measurement]:
         statement = (
