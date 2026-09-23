@@ -8,6 +8,7 @@ from app.models.measurement import Measurement
 from app.repositories.measurement_repository import MeasurementRepository
 from app.repositories.sensor_repository import SensorRepository
 from app.schemas.measurement import MeasurementCreate, MeasurementUpdate
+from app.core.datetime_utils import validate_timezone
 
 
 class MeasurementService:
@@ -27,6 +28,16 @@ class MeasurementService:
         start_time: datetime | None = None,
         end_time: datetime | None = None,
     ):
+        start_time = validate_timezone(
+            start_time,
+            field_name="start_time",
+        )
+
+        end_time = validate_timezone(
+            end_time,
+            field_name="end_time",
+        )
+
         if (
             start_time is not None
             and end_time is not None
@@ -59,7 +70,7 @@ class MeasurementService:
             total=total,
             page=page,
             page_size=page_size,
-        )
+    )
 
     def get_all(self) -> list[Measurement]:
         return self.repository.get_all()

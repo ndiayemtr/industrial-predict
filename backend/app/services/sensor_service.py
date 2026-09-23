@@ -25,6 +25,12 @@ class SensorService:
         search: str | None = None,
     ):
         offset = (page - 1) * page_size
+        
+        if search is not None:
+            search = search.strip()
+
+            if not search:
+                search = None
 
         items = self.repository.get_paginated(
             offset=offset,

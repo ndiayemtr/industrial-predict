@@ -11,6 +11,7 @@ from app.schemas.maintenance import (
     MaintenanceCreate,
     MaintenanceUpdate,
 )
+from app.core.datetime_utils import validate_timezone
 
 
 class MaintenanceService:
@@ -33,6 +34,25 @@ class MaintenanceService:
         end_time: datetime | None = None,
         search: str | None = None,
     ):
+        start_time = validate_timezone(
+            start_time,
+            field_name="start_time",
+        )
+
+        end_time = validate_timezone(
+            end_time,
+            field_name="end_time",
+        )
+
+        if (
+            start_time is not None
+            and end_time is not None
+            and start_time >= end_time
+        ):
+            raise ValueError(
+                "start_time must be before end_time"
+            )
+    
         if (
             start_time is not None
             and end_time is not None
@@ -43,6 +63,12 @@ class MaintenanceService:
             )
 
         offset = (page - 1) * page_size
+        
+        if search is not None:
+            search = search.strip()
+
+            if not search:
+                search = None
 
         items = self.repository.get_paginated(
             offset=offset,
