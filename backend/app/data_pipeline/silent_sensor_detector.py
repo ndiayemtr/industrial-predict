@@ -18,6 +18,19 @@ class SilentSensorDetector:
                 "silence_multiplier must be greater than 1"
             )
 
+        reference_timestamp = pd.Timestamp(
+            reference_time
+        )
+
+        if reference_timestamp.tzinfo is None:
+            raise ValueError(
+                "reference_time must include timezone information"
+            )
+
+        reference_timestamp = (
+            reference_timestamp.tz_convert("UTC")
+        )
+
         if dataframe.empty:
             return pd.DataFrame(
                 columns=[
@@ -52,9 +65,6 @@ class SilentSensorDetector:
                 .dt.total_seconds()
             )
 
-        reference_timestamp = pd.Timestamp(
-            reference_time
-        )
 
         if reference_timestamp.tzinfo is None:
             raise ValueError(

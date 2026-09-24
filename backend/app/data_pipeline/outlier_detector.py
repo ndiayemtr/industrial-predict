@@ -15,7 +15,7 @@ class MeasurementOutlierDetector:
                 "iqr_multiplier must be greater than 0"
             )
 
-        result = dataframe.copy()
+        result = dataframe.copy().reset_index(drop=True)
 
         if result.empty:
             result["outlier_lower_bound"] = pd.Series(
