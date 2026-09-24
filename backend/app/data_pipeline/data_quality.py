@@ -42,10 +42,14 @@ class DataQualityReport:
             ).sum()
         )
 
+        parsed_timestamps = pd.to_datetime(
+            dataframe["timestamp"],
+            errors="coerce",
+            utc=True,
+        )
+
         invalid_timestamps = int(
-            dataframe["timestamp"]
-            .isna()
-            .sum()
+            parsed_timestamps.isna().sum()
         )
 
         quality_distribution = (

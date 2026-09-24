@@ -10,13 +10,14 @@ class WindowFeatureBuilder:
         window_size: int = 3,
     ) -> pd.DataFrame:
 
-        if dataframe.empty:
-            return dataframe.copy()
-
         if window_size < 1:
             raise ValueError(
                 "window_size must be greater than or equal to 1"
             )
+            
+        
+        if dataframe.empty:
+            return dataframe.copy()
 
         result = dataframe.copy()
 
@@ -57,7 +58,7 @@ class WindowFeatureBuilder:
         result["rolling_std"] = grouped["value"].transform(
             lambda series: series.rolling(
                 window=window_size,
-                min_periods=2,
+                min_periods=min(2, window_size),
             ).std()
         )
 
