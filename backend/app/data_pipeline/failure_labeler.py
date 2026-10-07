@@ -104,7 +104,8 @@ class FailureLabeler:
             hours=horizon_hours
         )
 
-        for index, row in result.iterrows():
+        # DataFrame indices may repeat after concatenating equipment series.
+        for position, (_, row) in enumerate(result.iterrows()):
 
             equipment_failures = failures[
                 failures["equipment_id"]
@@ -129,19 +130,19 @@ class FailureLabeler:
             )
 
             if time_to_failure <= horizon:
-                result.at[
-                    index,
-                    "failure_within_horizon",
+                result.iat[
+                    position,
+                    result.columns.get_loc("failure_within_horizon"),
                 ] = 1
 
-                result.at[
-                    index,
-                    "next_failure_at",
+                result.iat[
+                    position,
+                    result.columns.get_loc("next_failure_at"),
                 ] = next_failure
 
-                result.at[
-                    index,
-                    "time_to_failure_hours",
+                result.iat[
+                    position,
+                    result.columns.get_loc("time_to_failure_hours"),
                 ] = (
                     time_to_failure.total_seconds()
                     / 3600
