@@ -24,6 +24,15 @@ class UnifiedAnomalyScorer:
                 "sum of weights must be greater than 0"
             )
 
+        if any(weight < 0 for weight in (
+            statistical_weight,
+            robust_zscore_weight,
+            isolation_forest_weight,
+        )):
+            raise ValueError(
+                "individual weights must be greater than or equal to 0"
+            )
+
         if not 0 <= anomaly_threshold <= 1:
             raise ValueError(
                 "anomaly_threshold must be between 0 and 1"
