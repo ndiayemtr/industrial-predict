@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-feature/2.5-failure-risk-model
+feature/2.6-health-score
 
 À mettre à jour à chaque changement de branche.
 

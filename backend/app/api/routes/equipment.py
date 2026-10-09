@@ -13,6 +13,11 @@ from app.core.enums import (
     EquipmentCriticality,
     EquipmentStatus,
 )
+from app.schemas.health_score import (
+    HealthScoreRead,
+    HealthScoreRequest,
+)
+from app.services.health_score_service import HealthScoreService
 
 
 router = APIRouter(
@@ -59,6 +64,28 @@ def get_equipments(
         search=search,
     )
 
+@router.post(
+    "/{equipment_id}/health-score",
+    response_model=HealthScoreRead,
+)
+def calculate_equipment_health_score(
+    equipment_id: int,
+    data: HealthScoreRequest,
+    db: Session = Depends(get_db),
+):
+    service = HealthScoreService(db)
+
+    try:
+        return service.calculate_for_equipment(
+            equipment_id,
+            data,
+        )
+
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
 
 @router.get(
     "/{equipment_id}",
