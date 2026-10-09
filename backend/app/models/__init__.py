@@ -4,6 +4,7 @@ from app.models.equipment import Equipment
 from app.models.sensor import Sensor
 from app.models.measurement import Measurement
 from app.models.maintenance_record import MaintenanceRecord
+from app.models.prediction_record import PredictionRecord
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "Sensor",
     "Measurement",
     "MaintenanceRecord",
+    "PredictionRecord",
 ]

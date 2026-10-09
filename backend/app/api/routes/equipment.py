@@ -12,12 +12,16 @@ from app.services.equipment_service import EquipmentService
 from app.core.enums import (
     EquipmentCriticality,
     EquipmentStatus,
+    PredictionType,
 )
 from app.schemas.health_score import (
     HealthScoreRead,
     HealthScoreRequest,
 )
 from app.services.health_score_service import HealthScoreService
+from app.schemas.prediction_record import PredictionRecordRead
+from app.services.prediction_service import PredictionService
+from datetime import datetime
 
 
 router = APIRouter(
@@ -79,6 +83,57 @@ def calculate_equipment_health_score(
         return service.calculate_for_equipment(
             equipment_id,
             data,
+        )
+
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+@router.get(
+    "/{equipment_id}/predictions",
+    response_model=Page[PredictionRecordRead],
+)
+def get_equipment_predictions(
+    equipment_id: int,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    prediction_type: PredictionType | None = Query(
+        default=None,
+    ),
+    level: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=50,
+    ),
+    is_alert: bool | None = Query(
+        default=None,
+    ),
+    start_time: datetime | None = Query(
+        default=None,
+    ),
+    end_time: datetime | None = Query(
+        default=None,
+    ),
+    db: Session = Depends(get_db),
+):
+    service = PredictionService(db)
+
+    try:
+        return service.get_paginated(
+            equipment_id=equipment_id,
+            page=page,
+            page_size=page_size,
+            prediction_type=(
+                prediction_type.value
+                if prediction_type is not None
+                else None
+            ),
+            level=level,
+            is_alert=is_alert,
+            start_time=start_time,
+            end_time=end_time,
         )
 
     except LookupError as exc:

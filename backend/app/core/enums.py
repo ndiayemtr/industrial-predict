@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import Enum, StrEnum
 
 
 class EquipmentStatus(StrEnum):
@@ -45,3 +45,8 @@ class MaintenancePriority(StrEnum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+class PredictionType(str, Enum):
+    ANOMALY = "anomaly"
+    FAILURE_RISK = "failure_risk"
+    HEALTH_SCORE = "health_score"

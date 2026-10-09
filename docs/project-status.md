@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-feature/2.6-health-score
+feature/2.7-predictions-persistence
 
 À mettre à jour à chaque changement de branche.
 
@@ -48,36 +48,88 @@ Tests Dashboard :
 
 ## Machine Learning
 
-### 2.4
+### 2.4 - Anomaly Detection
 
-Détection d'anomalies
-Statut : terminée
+Statut : terminée et testée.
 
-### 2.5
+Fonctionnalités principales :
 
-Failure Risk Model
-Statut : implémenté et testé
+- détection statistique des anomalies
+- Z-score classique et robuste
+- Isolation Forest
+- score d'anomalie unifié
+- orchestration par capteur et équipement
+- explication des anomalies
 
-Commits principaux :
+### 2.5 - Failure Risk Model
 
-- modèle de risque de panne
-- tests automatisés du modèle
+Statut : terminée et testée.
 
-## Travail actuel
+Fonctionnalités principales :
+
+- génération des labels de panne
+- préparation du dataset supervisé
+- baseline classifier
+- Random Forest
+- évaluation du modèle
+- score de risque
+- niveaux de risque
+- explication des prédictions
 
 ### 2.6 - Health Score
 
-Objectif :
-Calculer un score de santé synthétique d'un équipement
-à partir des données disponibles.
+Statut : terminée et testée.
+
+Fonctionnalités principales :
+
+- Failure Health
+- Anomaly Health
+- Data Quality Health
+- Maintenance Health
+- agrégation pondérée
+- classification du niveau de santé
+- API Health Score par équipement
+
+### 2.7 - Predictions Persistence
+
+Statut : terminée et testée.
+
+Fonctionnalités principales :
+
+- enum PredictionType
+- modèle SQLAlchemy PredictionRecord
+- migration Alembic prediction_records
+- schémas Pydantic
+- PredictionRepository
+- PredictionService
+- persistance des anomalies
+- persistance du Failure Risk
+- persistance du Health Score
+- historique des prédictions par équipement
+- filtres par type, niveau, alerte et période
+- pagination des prédictions
+
+API :
+
+- GET /api/v1/equipments/{equipment_id}/predictions
+
+Tests Predictions Persistence :
+
+- 44 tests passés
+- 0 échec
+- 1 test PostgreSQL ignoré selon l'environnement
+
+Suite backend complète :
+
+- 538 tests passés
+- 0 échec
+- 4 tests ignorés
+- compileall app : OK
+
+## Travail actuel
+
+Étape 2.7 terminée.
 
 ## Prochaine action
 
-Définir précisément :
-
-- formule du Health Score
-- variables utilisées
-- pondérations
-- niveaux de santé
-- API d'exposition du score
-- tests
+Définir et démarrer la prochaine étape de la roadmap après Predictions Persistence.
