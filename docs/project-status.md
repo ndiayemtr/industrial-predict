@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-feature/2.7-predictions-persistence
+main
 
 À mettre à jour à chaque changement de branche.
 
@@ -132,4 +132,4 @@ Suite backend complète :
 
 ## Prochaine action
 
-Définir et démarrer la prochaine étape de la roadmap après Predictions Persistence.
+Démarrer l'étape 2.8 - Remaining Useful Life.

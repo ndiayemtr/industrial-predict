@@ -15,7 +15,8 @@
 
 [x] Anomaly Detection
 [x] Failure Risk Model
-[ ] Health Score
+[x] Health Score
+[x] Predictions Persistence
 [ ] Remaining Useful Life
 [ ] Predictive Maintenance Recommendations
 
