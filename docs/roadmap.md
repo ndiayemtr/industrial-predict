@@ -17,7 +17,7 @@
 [x] Failure Risk Model
 [x] Health Score
 [x] Predictions Persistence
-[ ] Remaining Useful Life
+[x] Remaining Useful Life
 [ ] Predictive Maintenance Recommendations
 
 ## Phase 3 - Frontend

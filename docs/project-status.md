@@ -126,10 +126,78 @@ Suite backend complète :
 - 4 tests ignorés
 - compileall app : OK
 
+### 2.8 - Remaining Useful Life (RUL)
+
+Statut : terminée et testée.
+
+La fonctionnalité Remaining Useful Life est terminée.
+
+### Fonctionnalités implémentées
+
+- Définition métier du RUL :
+  - nombre d'heures jusqu'à la prochaine maintenance corrective connue ;
+  - calcul par équipement ;
+  - les observations sans panne future connue sont considérées comme censurées et exclues de l'entraînement.
+
+- Pipeline de données :
+  - `RULLabeler`
+  - `RULDatasetBuilder`
+  - `RULPreparer`
+  - split temporel réutilisant `TemporalDatasetSplitter`
+
+- Modèles ML :
+  - baseline `DummyRegressor` avec stratégie médiane ;
+  - modèle principal `RandomForestRegressor` ;
+  - sauvegarde et chargement des modèles avec `joblib`.
+
+- Évaluation :
+  - MAE ;
+  - RMSE ;
+  - R².
+
+- Classification RUL :
+  - critical : <= 24 h
+  - warning : <= 72 h
+  - watch : <= 168 h
+  - healthy : > 168 h
+
+- Explicabilité :
+  - classement des feature importances ;
+  - résumé des variables les plus influentes.
+
+- API :
+  - `POST /api/v1/equipments/{equipment_id}/rul`
+  - validation des features attendues ;
+  - gestion des équipements inexistants ;
+  - gestion d'un modèle RUL indisponible.
+
+- Persistance :
+  - nouveau type de prédiction `rul` ;
+  - enregistrement automatique dans `prediction_records` ;
+  - `score` = RUL en heures ;
+  - `level` = niveau RUL ;
+  - `details.rul_hours` = valeur RUL.
+
+### Validation
+
+Tests RUL :
+
+- 118 passed
+- 0 failed
+- 0 skipped
+
+Suite backend complète :
+
+- 656 passed
+- 0 failed
+- 4 skipped
+
+Les tests ignorés nécessitent PostgreSQL.
+
 ## Travail actuel
 
-Étape 2.7 terminée.
+Étape 2.8 - Remaining Useful Life terminée et validée.
 
 ## Prochaine action
 
-Démarrer l'étape 2.8 - Remaining Useful Life.
+Mettre à jour la documentation finale, merger la branche `feature/2.8-remaining-useful-life` vers `main`, puis démarrer l'étape suivante : Predictive Maintenance Recommendations.
