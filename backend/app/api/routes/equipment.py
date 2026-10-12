@@ -22,6 +22,13 @@ from app.services.health_score_service import HealthScoreService
 from app.schemas.prediction_record import PredictionRecordRead
 from app.services.prediction_service import PredictionService
 from datetime import datetime
+from app.schemas.rul import (
+    RULPredictionRead,
+    RULPredictionRequest,
+)
+from app.services.rul_prediction_service import (
+    RULPredictionService,
+)
 
 
 router = APIRouter(
@@ -139,6 +146,41 @@ def get_equipment_predictions(
     except LookupError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+        
+@router.post(
+    "/{equipment_id}/rul",
+    response_model=RULPredictionRead,
+)
+def predict_equipment_rul(
+    equipment_id: int,
+    data: RULPredictionRequest,
+    db: Session = Depends(get_db),
+):
+    service = RULPredictionService(db)
+
+    try:
+        return service.predict_for_equipment(
+            equipment_id,
+            data,
+        )
+
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         )
 

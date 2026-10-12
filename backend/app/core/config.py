@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,6 +10,10 @@ class Settings(BaseSettings):
     debug: bool = True
 
     database_url: str
+
+    rul_model_path: Path = Path(
+        "artifacts/rul/rul_model.joblib"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

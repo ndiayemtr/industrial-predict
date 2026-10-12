@@ -50,3 +50,4 @@ class PredictionType(str, Enum):
     ANOMALY = "anomaly"
     FAILURE_RISK = "failure_risk"
     HEALTH_SCORE = "health_score"
+    RUL = "rul"

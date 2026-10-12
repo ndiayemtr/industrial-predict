@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-main
+feature/2.8-remaining-useful-life
 
 À mettre à jour à chaque changement de branche.
 
