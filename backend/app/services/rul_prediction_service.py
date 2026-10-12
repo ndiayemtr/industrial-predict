@@ -10,6 +10,10 @@ from app.schemas.rul import (
     RULPredictionRequest,
 )
 from app.services.rul_service import RULService
+from datetime import datetime, timezone
+
+from app.ml.rul_schemas import RULPredictionResult
+from app.services.prediction_service import PredictionService
 
 
 class RULPredictionService:
@@ -17,6 +21,7 @@ class RULPredictionService:
     def __init__(self, db: Session):
         self.equipment_repository = EquipmentRepository(db)
         self.model_store = RULModelStore()
+        self.prediction_service = PredictionService(db)
 
     def predict_for_equipment(
         self,
@@ -89,6 +94,15 @@ class RULPredictionService:
 
         result = results[0]
 
+        self.prediction_service.persist_rul(
+            equipment_id=equipment.id,
+            result=RULPredictionResult(
+                rul_hours=result.rul_hours,
+                rul_level=result.rul_level,
+            ),
+            predicted_at=datetime.now(timezone.utc),
+            model_name="rul_random_forest",
+        )
         return RULPredictionRead(
             equipment_id=equipment.id,
             rul_hours=result.rul_hours,

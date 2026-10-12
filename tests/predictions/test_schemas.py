@@ -40,7 +40,7 @@ class PredictionSchemaTests(unittest.TestCase):
         self.assertEqual(create_data(horizon_hours=0.5).horizon_hours, 0.5)
 
     def test_all_prediction_types_and_invalid_type(self):
-        self.assertEqual([member.value for member in PredictionType], ["anomaly", "failure_risk", "health_score"])
+        self.assertEqual([member.value for member in PredictionType], ["anomaly", "failure_risk", "health_score", "rul"])
         for kind in PredictionType:
             self.assertEqual(create_data(prediction_type=kind).prediction_type, kind)
         with self.assertRaises(ValidationError):

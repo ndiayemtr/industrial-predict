@@ -11,6 +11,7 @@ from app.ml.health_score.schemas import HealthScoreResult
 from datetime import datetime
 
 from app.core.pagination import build_page
+from app.ml.rul_schemas import RULPredictionResult
 
 
 class PredictionService:
@@ -259,3 +260,28 @@ class PredictionService:
             page=page,
             page_size=page_size,
         )
+        
+    def persist_rul(
+        self,
+        *,
+        equipment_id: int,
+        result: RULPredictionResult,
+        predicted_at: datetime,
+        model_name: str | None = "rul_random_forest",
+        model_version: str | None = None,
+    ) -> PredictionRecord:
+
+        data = PredictionRecordCreate(
+            equipment_id=equipment_id,
+            prediction_type=PredictionType.RUL,
+            score=result.rul_hours,
+            level=result.rul_level,
+            model_name=model_name,
+            model_version=model_version,
+            details={
+                "rul_hours": result.rul_hours,
+            },
+            predicted_at=predicted_at,
+        )
+
+        return self.create(data)
