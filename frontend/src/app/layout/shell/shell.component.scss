@@ -1,0 +1,57 @@
+@use '../../../styles/tokens' as tokens;
+
+:host {
+  display: block;
+}
+
+.product-identity {
+  padding-top: tokens.$space-sm;
+}
+
+.product-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: tokens.$border-width solid tokens.$sidebar-muted;
+  border-radius: tokens.$border-radius;
+  font-weight: 700;
+}
+
+.product-name {
+  color: tokens.$sidebar-text;
+  margin: tokens.$space-lg 0 tokens.$space-sm;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  span {
+    display: block;
+  }
+}
+
+.product-description {
+  margin: 0;
+  color: tokens.$sidebar-muted;
+  font-size: tokens.$font-size-small;
+  line-height: tokens.$line-height-body;
+}
+
+.header-identity {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$space-xs;
+}
+
+.header-title {
+  font-weight: 600;
+}
+
+.header-description {
+  color: tokens.$text-secondary;
+  font-size: tokens.$font-size-small;
+}
+
+main {
+  min-width: 0;
+}
