@@ -29,6 +29,8 @@ from app.schemas.rul import (
 from app.services.rul_prediction_service import (
     RULPredictionService,
 )
+from app.schemas.recommendation import RecommendationRead
+from app.services.recommendation_service import RecommendationService
 
 
 router = APIRouter(
@@ -74,6 +76,33 @@ def get_equipments(
         criticality=criticality,
         search=search,
     )
+    
+@router.get(
+    "/{equipment_id}/recommendation",
+    response_model=RecommendationRead,
+)
+def get_equipment_recommendation(
+    equipment_id: int,
+    db: Session = Depends(get_db),
+):
+    service = RecommendationService(db)
+
+    try:
+        return service.recommend_from_latest_predictions(
+            equipment_id=equipment_id,
+        )
+
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        )
 
 @router.post(
     "/{equipment_id}/health-score",

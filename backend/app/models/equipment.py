@@ -87,3 +87,9 @@ class Equipment(Base):
         default="medium",
         index=True,
     )
+    
+    maintenance_recommendations = relationship(
+        "MaintenanceRecommendation",
+        back_populates="equipment",
+        cascade="all, delete-orphan",
+    )
