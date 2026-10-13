@@ -43,7 +43,7 @@ describe('Shell routing', () => {
     expect(outlet.isActivated).toBe(true);
     expect(outlet.component).toBeInstanceOf(DashboardPlaceholderComponent);
     expect(shell.nativeElement.querySelector('nb-sidebar').textContent).toContain('Industrial Predict');
-    expect(shell.nativeElement.querySelector('nb-layout-header').textContent).toContain('Espace de travail');
+    expect(shell.nativeElement.querySelector('nb-layout-header .header-title').textContent).toBe('Dashboard');
     expect(shell.nativeElement.querySelector('main h1').textContent).toBe('Dashboard');
     expect(shell.nativeElement.querySelector('main').textContent).toContain('Aucune donnée métier');
   });

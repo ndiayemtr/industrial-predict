@@ -1,0 +1,23 @@
+<div class="header-main">
+  <button class="sidebar-toggle" type="button"
+    [attr.aria-controls]="sidebarId()"
+    [attr.aria-expanded]="expanded()"
+    [attr.aria-label]="expanded() ? 'Masquer la navigation principale' : 'Afficher la navigation principale'"
+    (click)="toggleSidebar()">
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" focusable="false">
+      <path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    </svg>
+  </button>
+  <div class="header-identity">
+    <p class="header-title">{{ title() }}</p>
+    <span class="header-description">Industrial Predict AI</span>
+  </div>
+</div>
+<div class="header-actions" aria-label="Fonctionnalités à venir">
+  <button type="button" disabled aria-label="Notifications — À venir">
+    <span>Notifications</span><span class="unavailable-label">À venir</span>
+  </button>
+  <button type="button" disabled aria-label="Profil utilisateur — À venir">
+    <span>Profil utilisateur</span><span class="unavailable-label">À venir</span>
+  </button>
+</div>

@@ -1,16 +1,16 @@
 <a class="skip-link" href="#main-content">Aller au contenu principal</a>
 
 <nb-layout class="shell-layout">
-  <nb-sidebar tag="shell-sidebar" [containerFixed]="false" role="complementary" aria-label="Navigation de l’application">
+  <nb-sidebar #sidebar id="shell-sidebar" tag="shell-sidebar" [containerFixed]="false"
+    [attr.aria-hidden]="sidebar.state === 'collapsed' ? 'true' : null"
+    [attr.inert]="sidebar.state === 'collapsed' ? '' : null"
+    role="complementary" aria-label="Navigation de l’application">
     <app-sidebar />
   </nb-sidebar>
 
   <!-- Nebular 17's subheader is beside the sidebar and cannot be fixed. -->
   <nb-layout-header subheader role="banner" aria-label="En-tête de l’application">
-    <div class="header-identity">
-      <span class="header-title">Espace de travail</span>
-      <span class="header-description">Industrial Predict AI</span>
-    </div>
+    <app-header [sidebarState]="sidebar.state" [sidebarTag]="sidebar.tag" sidebarId="shell-sidebar" />
   </nb-layout-header>
 
   <nb-layout-column>

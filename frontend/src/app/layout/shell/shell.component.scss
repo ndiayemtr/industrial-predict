@@ -1,22 +1,5 @@
-@use '../../../styles/tokens' as tokens;
-
 :host {
   display: block;
-}
-
-.header-identity {
-  display: flex;
-  flex-direction: column;
-  gap: tokens.$space-xs;
-}
-
-.header-title {
-  font-weight: 600;
-}
-
-.header-description {
-  color: tokens.$text-secondary;
-  font-size: tokens.$font-size-small;
 }
 
 main {
