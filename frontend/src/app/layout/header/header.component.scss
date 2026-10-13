@@ -68,11 +68,19 @@ button {
   }
 }
 
-.header-actions button {
+.header-actions {
+  gap: tokens.$space-lg;
+}
+
+.header-placeholder {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  gap: tokens.$space-sm;
   cursor: default;
   color: tokens.$text-secondary;
-  opacity: 1;
+  font-size: tokens.$font-size-small;
+}
+
+.unavailable-label {
+  white-space: nowrap;
 }

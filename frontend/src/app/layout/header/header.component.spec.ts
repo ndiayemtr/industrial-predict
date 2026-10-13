@@ -87,18 +87,24 @@ describe('Global Header', () => {
     expect(root.querySelector('nb-sidebar')!.hasAttribute('inert')).toBe(false);
   });
 
-  it('keeps notifications and profile explicitly disabled without a fictitious counter or identity', async () => {
+  it('shows notifications and profile as non-interactive coming-soon text without fictitious content', async () => {
     const harness = await open('/dashboard');
     const header = harness.routeNativeElement!.querySelector('app-header')!;
-    const buttons = Array.from(header.querySelectorAll<HTMLButtonElement>('.header-actions button'));
-    expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual([
-      'Notifications — À venir', 'Profil utilisateur — À venir'
-    ]);
-    for (const button of buttons) {
-      expect(button.disabled).toBe(true);
-      expect(button.textContent).toContain('À venir');
-      button.click();
+    const placeholders = Array.from(header.querySelectorAll<HTMLElement>('.header-placeholder'));
+    expect(placeholders).toHaveLength(2);
+    expect(placeholders[0].textContent).toContain('Notifications');
+    expect(placeholders[1].textContent).toContain('Profil utilisateur');
+    for (const placeholder of placeholders) {
+      expect(placeholder.tagName).toBe('SPAN');
+      expect(placeholder.hasAttribute('tabindex')).toBe(false);
+      expect(placeholder.hasAttribute('role')).toBe(false);
+      expect(placeholder.hasAttribute('href')).toBe(false);
+      expect(placeholder.textContent).toContain('À venir');
+      expect(placeholder.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+      placeholder.click();
     }
+    expect(header.querySelectorAll('button')).toHaveLength(1);
+    expect(header.querySelector('.header-actions button, .header-actions a')).toBeNull();
     expect(TestBed.inject(Router).url).toBe('/dashboard');
     expect(header.querySelector('a, nb-badge, img, [role="dialog"]')).toBeNull();
   });

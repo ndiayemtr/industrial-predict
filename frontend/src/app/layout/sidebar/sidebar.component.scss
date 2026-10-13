@@ -5,15 +5,18 @@
 }
 
 .product-identity {
-  padding-top: tokens.$space-sm;
+  display: flex;
+  align-items: flex-start;
+  gap: tokens.$space-sm;
   margin-bottom: tokens.$space-lg;
 }
 
 .product-mark {
   display: inline-grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
   border: tokens.$border-width solid tokens.$sidebar-muted;
   border-radius: tokens.$border-radius;
   font-weight: 700;
@@ -21,11 +24,10 @@
 
 .product-name {
   color: tokens.$sidebar-text;
-  margin: tokens.$space-md 0 tokens.$space-sm;
-  font-size: 1.25rem;
+  margin: 0 0 tokens.$space-xs;
+  font-size: tokens.$font-size-body;
   font-weight: 600;
-  line-height: 1.4;
-
+  line-height: 1.25;
 }
 
 .product-description {
@@ -46,13 +48,16 @@
 .navigation-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: tokens.$space-sm;
   min-height: 2.75rem;
-  padding: tokens.$space-sm tokens.$space-md;
+  padding: tokens.$space-sm;
   border-radius: tokens.$border-radius;
   font-size: tokens.$font-size-small;
   line-height: tokens.$line-height-body;
+}
+
+.navigation-label {
+  flex: 1;
 }
 
 .navigation-link {

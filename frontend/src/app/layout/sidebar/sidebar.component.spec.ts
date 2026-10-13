@@ -66,6 +66,25 @@ describe('Sidebar navigation', () => {
     expect(harness.routeNativeElement!.querySelector('main h1')?.textContent).toBe('Sites');
   });
 
+  it('should provide eleven distinct decorative icons while retaining text labels and link focusability', async () => {
+    const harness = await open();
+    const entries = Array.from(harness.routeNativeElement!.querySelectorAll('nav .navigation-item'));
+    const paths = entries.map((entry) => {
+      const svg = entry.querySelector('svg')!;
+      expect(svg).not.toBeNull();
+      expect(svg.getAttribute('aria-hidden')).toBe('true');
+      expect(svg.getAttribute('focusable')).toBe('false');
+      expect(svg.hasAttribute('tabindex')).toBe(false);
+      expect(svg.querySelector('title')).toBeNull();
+      expect(entry.querySelector('.navigation-label')?.textContent?.trim()).toBeTruthy();
+      if (entry.tagName === 'A') expect((entry as HTMLAnchorElement).tabIndex).toBe(0);
+      return svg.querySelector('path')!.getAttribute('d');
+    });
+    expect(entries).toHaveLength(11);
+    expect(new Set(paths).size).toBe(11);
+    expect(paths.every(Boolean)).toBe(true);
+  });
+
   it('should keep Équipements active on a detail URL', async () => {
     const harness = await open('/equipments/42?tab=sensors');
     const links = activeLinks(harness);

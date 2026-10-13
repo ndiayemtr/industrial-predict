@@ -1,7 +1,9 @@
 <div class="product-identity">
   <span class="product-mark" aria-hidden="true">IP</span>
-  <p class="product-name">Industrial Predict <span>AI</span></p>
-  <p class="product-description">Maintenance prédictive industrielle</p>
+  <div class="product-copy">
+    <p class="product-name">Industrial Predict <span>AI</span></p>
+    <p class="product-description">Maintenance prédictive industrielle</p>
+  </div>
 </div>
 
 <nav aria-label="Navigation principale">
@@ -16,7 +18,8 @@
             [routerLinkActiveOptions]="item.match === 'exact' ? exactMatch : sectionMatch"
             [ariaCurrentWhenActive]="true"
           >
-            {{ item.label }}
+            <app-icon [name]="item.id" />
+            <span class="navigation-label">{{ item.label }}</span>
           </a>
         } @else {
           <span
@@ -25,7 +28,8 @@
             aria-disabled="true"
             [attr.aria-label]="item.label + ' — À venir'"
           >
-            <span>{{ item.label }}</span>
+            <app-icon [name]="item.id" />
+            <span class="navigation-label">{{ item.label }}</span>
             <span class="coming-soon" aria-hidden="true">À venir</span>
           </span>
         }

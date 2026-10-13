@@ -3,10 +3,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, PRIMARY_OUTLET, Router } from '@angular/router';
 import { NbSidebarService, NbSidebarState } from '@nebular/theme';
 import { filter, map, startWith } from 'rxjs';
+import { IconComponent } from '../../shared/ui/icon/icon.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [IconComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
