@@ -1,0 +1,93 @@
+@use '../../../styles/tokens' as tokens;
+
+:host {
+  display: block;
+}
+
+.product-identity {
+  padding-top: tokens.$space-sm;
+  margin-bottom: tokens.$space-lg;
+}
+
+.product-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: tokens.$border-width solid tokens.$sidebar-muted;
+  border-radius: tokens.$border-radius;
+  font-weight: 700;
+}
+
+.product-name {
+  color: tokens.$sidebar-text;
+  margin: tokens.$space-md 0 tokens.$space-sm;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+}
+
+.product-description {
+  margin: 0;
+  color: tokens.$sidebar-muted;
+  font-size: tokens.$font-size-small;
+  line-height: tokens.$line-height-body;
+}
+
+.navigation-list {
+  display: grid;
+  gap: tokens.$space-xs;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navigation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: tokens.$space-sm;
+  min-height: 2.75rem;
+  padding: tokens.$space-sm tokens.$space-md;
+  border-radius: tokens.$border-radius;
+  font-size: tokens.$font-size-small;
+  line-height: tokens.$line-height-body;
+}
+
+.navigation-link {
+  color: tokens.$sidebar-text;
+  text-decoration: none;
+
+  &:hover,
+  &:focus,
+  &:active {
+    color: tokens.$sidebar-text;
+  }
+
+  &:hover {
+    box-shadow: inset 0 0 0 tokens.$border-width tokens.$sidebar-muted;
+  }
+
+  &:focus-visible {
+    outline: 2px solid tokens.$sidebar-text;
+    outline-offset: 2px;
+  }
+
+  &.is-active {
+    color: tokens.$sidebar-text;
+    background: tokens.$navigation-active;
+    box-shadow: inset 3px 0 0 tokens.$sidebar-text;
+    font-weight: 600;
+  }
+}
+
+.is-unavailable {
+  color: tokens.$sidebar-muted;
+  cursor: default;
+}
+
+.coming-soon {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}

@@ -1,13 +1,8 @@
 <a class="skip-link" href="#main-content">Aller au contenu principal</a>
 
 <nb-layout class="shell-layout">
-  <nb-sidebar tag="shell-sidebar" role="complementary" aria-label="Identité produit">
-    <!-- Temporary identity area; the navigation component belongs to UI 1.4. -->
-    <div class="product-identity">
-      <span class="product-mark" aria-hidden="true">IP</span>
-      <p class="product-name">Industrial Predict <span>AI</span></p>
-      <p class="product-description">Maintenance prédictive industrielle</p>
-    </div>
+  <nb-sidebar tag="shell-sidebar" [containerFixed]="false" role="complementary" aria-label="Navigation de l’application">
+    <app-sidebar />
   </nb-sidebar>
 
   <!-- Nebular 17's subheader is beside the sidebar and cannot be fixed. -->

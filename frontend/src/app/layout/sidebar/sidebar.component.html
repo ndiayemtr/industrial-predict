@@ -1,0 +1,35 @@
+<div class="product-identity">
+  <span class="product-mark" aria-hidden="true">IP</span>
+  <p class="product-name">Industrial Predict <span>AI</span></p>
+  <p class="product-description">Maintenance prédictive industrielle</p>
+</div>
+
+<nav aria-label="Navigation principale">
+  <ul class="navigation-list">
+    @for (item of items; track item.id) {
+      <li>
+        @if (item.status === 'available') {
+          <a
+            class="navigation-item navigation-link"
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="item.match === 'exact' ? exactMatch : sectionMatch"
+            [ariaCurrentWhenActive]="true"
+          >
+            {{ item.label }}
+          </a>
+        } @else {
+          <span
+            class="navigation-item is-unavailable"
+            role="link"
+            aria-disabled="true"
+            [attr.aria-label]="item.label + ' — À venir'"
+          >
+            <span>{{ item.label }}</span>
+            <span class="coming-soon" aria-hidden="true">À venir</span>
+          </span>
+        }
+      </li>
+    }
+  </ul>
+</nav>
