@@ -31,6 +31,16 @@ from app.services.rul_prediction_service import (
 )
 from app.schemas.recommendation import RecommendationRead
 from app.services.recommendation_service import RecommendationService
+from app.schemas.maintenance_recommendation import (
+    MaintenanceRecommendationRead,
+)
+from app.schemas.recommendation import (
+    RecommendationPriority,
+    RecommendationType,
+)
+from app.services.maintenance_recommendation_service import (
+    MaintenanceRecommendationService,
+)
 
 
 router = APIRouter(
@@ -76,12 +86,13 @@ def get_equipments(
         criticality=criticality,
         search=search,
     )
-    
-@router.get(
-    "/{equipment_id}/recommendation",
+
+@router.post(
+    "/{equipment_id}/recommendations",
     response_model=RecommendationRead,
+    status_code=status.HTTP_201_CREATED,
 )
-def get_equipment_recommendation(
+def generate_equipment_recommendation(
     equipment_id: int,
     db: Session = Depends(get_db),
 ):
@@ -101,6 +112,47 @@ def get_equipment_recommendation(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        )
+
+@router.get(
+    "/{equipment_id}/recommendations",
+    response_model=Page[MaintenanceRecommendationRead],
+)
+def get_equipment_recommendations(
+    equipment_id: int,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    priority: RecommendationPriority | None = Query(
+        default=None,
+    ),
+    recommendation_type: RecommendationType | None = Query(
+        default=None,
+    ),
+    start_time: datetime | None = Query(
+        default=None,
+    ),
+    end_time: datetime | None = Query(
+        default=None,
+    ),
+    db: Session = Depends(get_db),
+):
+    service = MaintenanceRecommendationService(db)
+
+    try:
+        return service.get_paginated(
+            equipment_id=equipment_id,
+            page=page,
+            page_size=page_size,
+            priority=priority,
+            recommendation_type=recommendation_type,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         )
 
