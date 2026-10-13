@@ -194,10 +194,66 @@ Suite backend complète :
 
 Les tests ignorés nécessitent PostgreSQL.
 
+### 2.9 - Predictive Maintenance Recommendations
+
+Statut : terminée et testée.
+
+Fonctionnalités principales :
+
+- moteur de recommandations basé sur :
+  - Anomaly Detection
+  - Failure Risk
+  - Health Score
+  - Remaining Useful Life (RUL)
+
+- priorités :
+  - critical
+  - high
+  - medium
+  - low
+
+- types de recommandations :
+  - urgent_maintenance
+  - inspection
+  - planned_maintenance
+  - monitoring
+  - no_action
+
+- résolution de priorité centralisée
+- génération d'explications métier
+- combinaison de plusieurs signaux
+- récupération automatique des dernières prédictions persistées
+- persistance des recommandations dans `maintenance_recommendations`
+- historique paginé
+- filtres par :
+  - priority
+  - recommendation_type
+  - start_time
+  - end_time
+
+API :
+
+- POST /api/v1/equipments/{equipment_id}/recommendations
+- GET /api/v1/equipments/{equipment_id}/recommendations
+
+Tests Predictive Maintenance Recommendations :
+
+- 216 tests passés
+- 0 échec
+- 0 skipped
+
+Suite backend complète :
+
+- 872 tests passés
+- 0 échec
+- 4 tests ignorés
+
+Les tests ignorés nécessitent PostgreSQL.
+
 ## Travail actuel
 
-Étape 2.8 - Remaining Useful Life terminée et validée.
+Étape 2.9 - Predictive Maintenance Recommendations terminée et validée.
 
 ## Prochaine action
 
-Mettre à jour la documentation finale, merger la branche `feature/2.8-remaining-useful-life` vers `main`, puis démarrer l'étape suivante : Predictive Maintenance Recommendations.
+Merger la branche `feature/2.9-predictive-maintenance-recommendations` vers `main`, puis démarrer l'étape suivante du projet.

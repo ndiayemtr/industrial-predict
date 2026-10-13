@@ -18,7 +18,7 @@
 [x] Health Score
 [x] Predictions Persistence
 [x] Remaining Useful Life
-[ ] Predictive Maintenance Recommendations
+[x] Predictive Maintenance Recommendations
 
 ## Phase 3 - Frontend
 
