@@ -2,52 +2,605 @@
 
 ## Vue générale
 
+```text
 Frontend Angular
-|
-v
-REST API FastAPI
-|
-+---- Services
-|
-+---- Repositories
-|
-v
-PostgreSQL
-
-        +
         |
         v
-
-ML / Predictive Analytics
+REST API FastAPI
+        |
+        v
+     Services
+     /      \
+    v        v
+Repositories  ML / Predictive Analytics
+    |        |
+    v        v
+PostgreSQL   Models / Scoring / Recommendation Engine
+```
 
 ## Backend
 
+```text
 app/
 ├── api/
-│ └── routes/
+│   └── routes/
 ├── models/
 ├── schemas/
 ├── repositories/
 ├── services/
 ├── core/
+├── data_pipeline/
 └── ml/
+```
 
 ## Modèle métier
 
+```text
 Company
 └── Site
-└── Equipment
-├── Sensor
-│ └── Measurement
-└── MaintenanceRecord
+    └── Equipment
+        ├── Sensor
+        │   └── Measurement
+        ├── MaintenanceRecord
+        ├── PredictionRecord
+        └── MaintenanceRecommendation
+```
 
-## Principe
+## Entités principales
 
-Les routes HTTP ne doivent pas contenir la logique métier.
+### Company
 
+Représente une entreprise cliente de la plateforme.
+
+Une entreprise possède un ou plusieurs sites.
+
+### Site
+
+Représente un site industriel appartenant à une entreprise.
+
+Un site possède un ou plusieurs équipements.
+
+### Equipment
+
+Représente un actif industriel surveillé.
+
+Un équipement peut posséder :
+
+- plusieurs capteurs ;
+- plusieurs enregistrements de maintenance ;
+- plusieurs prédictions ;
+- plusieurs recommandations de maintenance.
+
+### Sensor
+
+Représente un capteur associé à un équipement.
+
+Il collecte les données utilisées par les fonctions d'analyse et de prédiction.
+
+### Measurement
+
+Représente une mesure remontée par un capteur.
+
+Les mesures constituent la principale source de données du pipeline analytique et ML.
+
+### MaintenanceRecord
+
+Représente une intervention de maintenance réalisée ou planifiée sur un équipement.
+
+Les maintenances correctives sont notamment utilisées pour :
+
+- générer les labels de panne ;
+- calculer le Remaining Useful Life.
+
+### PredictionRecord
+
+Représente une prédiction persistée pour un équipement.
+
+Types de prédictions supportés :
+
+- `anomaly`
+- `failure_risk`
+- `health_score`
+- `rul`
+
+Cette entité permet notamment :
+
+- l'historisation des prédictions ;
+- les filtres par type, niveau, alerte et période ;
+- l'utilisation des prédictions par le moteur de recommandations.
+
+### MaintenanceRecommendation
+
+Représente une recommandation de maintenance générée à partir des signaux prédictifs disponibles.
+
+Une recommandation contient notamment :
+
+- une priorité ;
+- un type de recommandation ;
+- un titre ;
+- une raison ;
+- une action recommandée ;
+- les signaux utilisés ;
+- la date de génération.
+
+## Architecture applicative
+
+Le backend suit le principe :
+
+```text
 Route
 → Service
 → Repository
 → Database
+```
 
-La logique ML doit également rester isolée de la couche API.
+Les routes HTTP ne doivent pas contenir de logique métier.
+
+### Routes API
+
+Responsabilités :
+
+- exposition des endpoints HTTP ;
+- validation des paramètres ;
+- injection des dépendances ;
+- conversion des erreurs métier en codes HTTP ;
+- sérialisation des réponses.
+
+Les routes ne doivent pas contenir de logique métier ou ML.
+
+### Services
+
+Responsabilités :
+
+- orchestration métier ;
+- validation fonctionnelle ;
+- coordination entre plusieurs repositories ;
+- coordination avec les composants ML ;
+- génération et persistance des prédictions ou recommandations.
+
+### Repositories
+
+Responsabilités :
+
+- accès aux données ;
+- requêtes SQLAlchemy ;
+- création, lecture et filtrage des entités ;
+- pagination ;
+- agrégations lorsque nécessaire.
+
+La logique métier ne doit pas être placée dans les repositories.
+
+### Models
+
+Les modèles SQLAlchemy représentent les entités persistées dans PostgreSQL.
+
+Ils définissent notamment :
+
+- les colonnes ;
+- les contraintes ;
+- les clés étrangères ;
+- les relations entre entités.
+
+### Schemas
+
+Les schémas Pydantic sont utilisés pour :
+
+- validation des entrées API ;
+- validation des sorties ;
+- contrats entre couches applicatives ;
+- typage des structures métier.
+
+## Pipeline prédictif
+
+```text
+Measurements
+    ↓
+Data Pipeline
+    ↓
+Feature Preparation
+    ↓
+ML Models
+    ├── Anomaly Detection
+    ├── Failure Risk
+    ├── Health Score
+    └── Remaining Useful Life
+    ↓
+PredictionRecord
+    ↓
+Recommendation Engine
+    ↓
+MaintenanceRecommendation
+```
+
+## Data Pipeline
+
+Le dossier :
+
+```text
+app/data_pipeline/
+```
+
+contient les composants de préparation des datasets utilisés par les modèles ML.
+
+Responsabilités principales :
+
+- génération de labels ;
+- construction de datasets supervisés ;
+- préparation des données temporelles ;
+- calcul du Remaining Useful Life ;
+- gestion des observations censurées lorsque nécessaire.
+
+## Machine Learning
+
+Le dossier :
+
+```text
+app/ml/
+```
+
+contient les composants ML et analytiques.
+
+La logique ML doit rester indépendante de la couche API.
+
+### Anomaly Detection
+
+Objectif : détecter des comportements anormaux dans les mesures des capteurs.
+
+Approches utilisées :
+
+- Z-score classique ;
+- Z-score robuste ;
+- Isolation Forest ;
+- score d'anomalie unifié.
+
+### Failure Risk
+
+Objectif : estimer la probabilité qu'une panne corrective survienne dans un horizon donné.
+
+Composants principaux :
+
+- génération des labels de panne ;
+- préparation du dataset supervisé ;
+- baseline classifier ;
+- Random Forest ;
+- évaluation ;
+- score de risque ;
+- niveaux de risque ;
+- explicabilité.
+
+### Health Score
+
+Objectif : produire un indicateur synthétique de l'état de santé d'un équipement.
+
+Composantes principales :
+
+- Failure Health ;
+- Anomaly Health ;
+- Data Quality Health ;
+- Maintenance Health.
+
+Le Health Score final est obtenu par agrégation pondérée.
+
+### Remaining Useful Life
+
+Objectif : estimer le nombre d'heures restantes avant la prochaine panne corrective connue.
+
+Définition V1 :
+
+```text
+RUL(t) =
+temps entre l'instant t
+et la prochaine maintenance corrective connue
+du même équipement
+```
+
+Principes :
+
+- uniquement les maintenances correctives ;
+- `started_at` obligatoire ;
+- calcul par équipement ;
+- unité : heures ;
+- les observations sans panne future connue sont censurées ;
+- les observations censurées sont exclues de l'entraînement V1.
+
+Modèles :
+
+- baseline `DummyRegressor` avec stratégie médiane ;
+- `RandomForestRegressor`.
+
+Évaluation :
+
+- MAE ;
+- RMSE ;
+- R².
+
+Classification RUL :
+
+```text
+critical : <= 24 h
+warning  : <= 72 h
+watch    : <= 168 h
+healthy  : > 168 h
+```
+
+## Persistance des prédictions
+
+Les résultats analytiques importants sont persistés dans `PredictionRecord`.
+
+Flux :
+
+```text
+ML / Analytics
+      ↓
+PredictionService
+      ↓
+PredictionRepository
+      ↓
+prediction_records
+```
+
+La persistance permet :
+
+- l'historisation ;
+- la consultation des dernières prédictions ;
+- les filtres ;
+- la pagination ;
+- l'exploitation par le moteur de recommandations.
+
+## Recommendation Engine
+
+Le moteur de recommandations transforme les signaux prédictifs en action de maintenance compréhensible.
+
+Entrées possibles :
+
+- anomaly score ;
+- failure probability ;
+- Health Score ;
+- RUL.
+
+Flux :
+
+```text
+PredictionRecord
+      ↓
+RecommendationService
+      ↓
+RecommendationPriorityResolver
+      ↓
+RecommendationEngine
+      ↓
+RecommendationExplainer
+      ↓
+MaintenanceRecommendation
+```
+
+## Priorités de recommandation
+
+```text
+critical
+high
+medium
+low
+```
+
+La priorité la plus sévère déterminée par les signaux disponibles prévaut.
+
+Ordre :
+
+```text
+critical > high > medium > low
+```
+
+## Types de recommandations
+
+Types actuellement supportés :
+
+- `urgent_maintenance`
+- `inspection`
+- `planned_maintenance`
+- `monitoring`
+- `no_action`
+
+Le moteur produit une seule recommandation principale pour éviter des actions contradictoires.
+
+## Principales règles V1
+
+### Critical
+
+Une priorité `critical` peut notamment être déclenchée par :
+
+- RUL <= 24 heures ;
+- failure probability >= 0.75 ;
+- Health Score < 30.
+
+Action principale : `urgent_maintenance`.
+
+### High
+
+Peut notamment être déclenchée par :
+
+- RUL <= 72 heures ;
+- Health Score entre 30 inclus et 50 exclus.
+
+Actions possibles :
+
+- `planned_maintenance`
+- `inspection`
+
+### Medium
+
+Peut notamment être déclenchée par :
+
+- RUL <= 168 heures ;
+- anomaly score >= 0.50.
+
+Actions possibles :
+
+- `planned_maintenance`
+- `monitoring`
+
+### Low
+
+Lorsqu'aucun signal significatif de risque ou de dégradation n'est détecté : `no_action`.
+
+## Explicabilité
+
+Les prédictions et recommandations doivent rester interprétables.
+
+Une recommandation contient notamment :
+
+- la priorité ;
+- le type ;
+- le titre ;
+- la raison ;
+- l'action recommandée ;
+- les signaux ayant participé à la décision.
+
+L'objectif est de permettre à un opérateur ou responsable maintenance de comprendre pourquoi une action est recommandée.
+
+## API prédictive
+
+Les principales API prédictives incluent notamment :
+
+```text
+POST /api/v1/equipments/{equipment_id}/health-score
+POST /api/v1/equipments/{equipment_id}/rul
+GET  /api/v1/equipments/{equipment_id}/predictions
+```
+
+## API recommandations
+
+Génération d'une recommandation :
+
+```text
+POST /api/v1/equipments/{equipment_id}/recommendations
+```
+
+Cette opération :
+
+- récupère les dernières prédictions disponibles ;
+- génère une recommandation ;
+- persiste la recommandation ;
+- retourne la recommandation générée.
+
+Historique :
+
+```text
+GET /api/v1/equipments/{equipment_id}/recommendations
+```
+
+Filtres supportés :
+
+- `priority`
+- `recommendation_type`
+- `start_time`
+- `end_time`
+
+L'historique utilise la même convention de pagination que l'historique des prédictions.
+
+## Principe REST
+
+Une opération `GET` ne doit pas modifier l'état du système.
+
+Par conséquent, `POST /recommendations` est utilisé pour générer et persister une nouvelle recommandation, tandis que `GET /recommendations` sert uniquement à consulter l'historique.
+
+## Séparation ML / API
+
+La logique ML ne doit jamais être directement implémentée dans les routes HTTP.
+
+Flux recommandé :
+
+```text
+Route
+→ Service
+→ ML / Recommendation Engine
+→ Repository
+→ Database
+```
+
+Les composants ML doivent rester :
+
+- testables indépendamment ;
+- réutilisables ;
+- découplés de FastAPI ;
+- indépendants de la présentation frontend.
+
+## Base de données
+
+PostgreSQL est utilisé comme base principale.
+
+Les migrations sont gérées par Alembic.
+
+Principales entités persistées :
+
+```text
+companies
+sites
+equipments
+sensors
+measurements
+maintenance_records
+prediction_records
+maintenance_recommendations
+```
+
+## Tests
+
+Le backend utilise `pytest`.
+
+Les tests couvrent notamment :
+
+- repositories ;
+- services ;
+- API ;
+- pipeline de données ;
+- composants ML ;
+- persistance des prédictions ;
+- RUL ;
+- moteur de recommandations ;
+- historique et pagination.
+
+Les tests nécessitant une base PostgreSQL réelle peuvent être marqués comme tests d'intégration et ignorés lorsqu'un environnement PostgreSQL n'est pas disponible.
+
+## Principes d'évolution
+
+Toute nouvelle fonctionnalité doit respecter :
+
+```text
+Route
+→ Service
+→ Repository
+```
+
+ou, pour les fonctionnalités prédictives :
+
+```text
+Route
+→ Service
+→ ML / Analytics
+→ Repository
+```
+
+Les règles suivantes doivent être conservées :
+
+- aucune logique métier dans les routes ;
+- aucune logique HTTP dans les composants ML ;
+- aucune duplication de logique métier ;
+- tests obligatoires pour les nouvelles fonctionnalités ;
+- migrations Alembic pour toute évolution de schéma ;
+- contrats API stables sauf décision explicite ;
+- séparation claire entre prédiction et recommandation ;
+- persistance des résultats importants nécessaires à l'historisation.
+
+## Responsabilité opérationnelle
+
+Industrial Predict AI fournit une aide à la décision.
+
+Les prédictions et recommandations ne provoquent pas automatiquement :
+
+- l'arrêt d'un équipement ;
+- la création d'un ordre de travail ;
+- l'affectation d'un technicien ;
+- l'exécution d'une maintenance.
+
+La décision opérationnelle finale reste sous la responsabilité des utilisateurs autorisés.

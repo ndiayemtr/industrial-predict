@@ -26,6 +26,10 @@ Construire une plateforme professionnelle permettant notamment :
 - prédiction du risque de panne
 - Health Score des équipements
 - maintenance prédictive
+- estimation du Remaining Useful Life (RUL)
+- persistance et historique des prédictions
+- recommandations de maintenance prédictive
+- historique des recommandations
 
 ## Stack principale
 
@@ -48,6 +52,11 @@ Construire une plateforme professionnelle permettant notamment :
 - Python
 - scikit-learn
 - pipeline ML interne
+- détection d'anomalies
+- prédiction du risque de panne
+- Health Score
+- Remaining Useful Life (RUL)
+- moteur de recommandations de maintenance
 
 ## Règles de développement
 
