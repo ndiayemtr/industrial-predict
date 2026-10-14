@@ -1,0 +1,34 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; }
+form {
+  padding: tokens.$space-md;
+  border: tokens.$border-width solid tokens.$border-color;
+  border-radius: tokens.$border-radius;
+  background: tokens.$surface-background;
+  color: tokens.$text-primary;
+  overflow-wrap: anywhere;
+}
+.filter-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
+.filter-field { min-width: 0; display: flex; flex-direction: column; gap: tokens.$space-sm; }
+label { font-weight: 600; }
+select, input, button {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: tokens.$space-sm;
+  border: tokens.$border-width solid tokens.$border-color;
+  border-radius: tokens.$border-radius;
+  font: inherit;
+  color: tokens.$text-primary;
+  background: tokens.$surface-background;
+  &:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+  &:disabled { cursor: not-allowed; color: tokens.$text-secondary; background: tokens.$content-background; }
+}
+button { cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
+.reference-count, #period-help { font-size: tokens.$font-size-small; color: tokens.$text-secondary; margin: 0; }
+#period-help { margin-top: tokens.$space-md; }
+.validation-error { min-height: 1.5em; margin: tokens.$space-sm 0; }
+.apply-button:not(:disabled) { background: tokens.$navigation-active; color: tokens.$sidebar-text; }
+@media (min-width: 48rem) { .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

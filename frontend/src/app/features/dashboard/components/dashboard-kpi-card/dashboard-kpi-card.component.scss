@@ -1,0 +1,16 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; }
+.kpi-card {
+  height: 100%; padding: tokens.$space-md;
+  background: tokens.$surface-background;
+  border: tokens.$border-width solid tokens.$border-color;
+  border-radius: tokens.$border-radius;
+  overflow-wrap: anywhere;
+}
+p, h3 { margin: 0; }
+h3 { margin-top: tokens.$space-sm; font-size: tokens.$font-size-body; color: tokens.$text-primary; }
+.temporal-scope, .information { color: tokens.$text-secondary; font-size: tokens.$font-size-small; line-height: tokens.$line-height-body; }
+.kpi-value { margin-top: tokens.$space-sm; font-size: 1.75rem; font-weight: 700; color: tokens.$text-primary; }
+.unit { font-size: tokens.$font-size-body; }
+.information { margin-top: tokens.$space-sm; }

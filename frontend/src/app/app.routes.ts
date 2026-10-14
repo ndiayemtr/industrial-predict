@@ -23,8 +23,8 @@ export const routes: Routes = [
         title: `${item.label} | Industrial Predict AI`,
         data: { pageTitle: item.label },
         loadComponent: item.id === 'dashboard'
-          ? () => import('./features/dashboard/dashboard-placeholder.component').then(
-              (m) => m.DashboardPlaceholderComponent
+          ? () => import('./features/dashboard/pages/dashboard/dashboard.component').then(
+              (m) => m.DashboardComponent
             )
           : loadFeaturePlaceholder
       })),

@@ -7,7 +7,8 @@ import { provideRouter, Router, RouterOutlet } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { NbLayoutHeaderComponent, NbSidebarModule, NbThemeModule, NbThemeService } from '@nebular/theme';
 import { routes } from '../../app.routes';
-import { DashboardPlaceholderComponent } from '../../features/dashboard/dashboard-placeholder.component';
+import { DashboardComponent } from '../../features/dashboard/pages/dashboard/dashboard.component';
+import { provideDashboardTesting } from '../../features/dashboard/testing/dashboard-testing';
 import { ShellComponent } from './shell.component';
 
 describe('Shell routing', () => {
@@ -17,6 +18,7 @@ describe('Shell routing', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
+        ...provideDashboardTesting(),
         provideNoopAnimations(),
         importProvidersFrom(
           NbThemeModule.forRoot(
@@ -41,11 +43,11 @@ describe('Shell routing', () => {
     expect(TestBed.inject(Router).url).toBe('/dashboard');
     expect(shell.componentInstance).toBeInstanceOf(ShellComponent);
     expect(outlet.isActivated).toBe(true);
-    expect(outlet.component).toBeInstanceOf(DashboardPlaceholderComponent);
+    expect(outlet.component).toBeInstanceOf(DashboardComponent);
     expect(shell.nativeElement.querySelector('nb-sidebar').textContent).toContain('Industrial Predict');
     expect(shell.nativeElement.querySelector('nb-layout-header .header-title').textContent).toBe('Dashboard');
     expect(shell.nativeElement.querySelector('main h1').textContent).toBe('Dashboard');
-    expect(shell.nativeElement.querySelector('main').textContent).toContain('Aucune donnée métier');
+    expect(shell.nativeElement.querySelector('main').textContent).toContain('Sélectionnez une entreprise');
   });
 
   it('should use a non-fixed subheader beside the sidebar and a single selected theme', async () => {

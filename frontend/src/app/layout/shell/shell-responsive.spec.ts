@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from '../../app.routes';
+import { provideDashboardTesting } from '../../features/dashboard/testing/dashboard-testing';
 
 describe('Shell responsive navigation', () => {
   let width: number;
@@ -16,6 +17,7 @@ describe('Shell responsive navigation', () => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes), provideNoopAnimations(),
+      ...provideDashboardTesting(),
       importProvidersFrom(
         NbThemeModule.forRoot({ name: 'industrial-predict' },
           [{ name: 'industrial-predict', base: 'default', variables: {} }]),

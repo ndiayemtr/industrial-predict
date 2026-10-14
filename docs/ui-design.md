@@ -206,6 +206,125 @@ contenu s'applique. Les changements de mode ne laissent pas de fond bloquant.
   ont été contrôlés ; cela ne constitue pas une certification d'accessibilité
   ni une preuve de comportement vocal sur chaque lecteur d'écran.
 
-UI 1.8.1 à UI 1.8.3 sont validées ; UI 1.8.4 finalise les documents et contrôles
-avant validation du livrable et autorisation du commit. Les écrans métier et
-l'intégration API restent une phase ultérieure non commencée.
+UI 1.8 est terminée, commitée dans `12a18c3` et fusionnée via `acd872b`.
+Les résultats ci-dessus sont historiques et ne sont pas relancés en UI 2.1.1.
+UI 2.1 a validé la conception du Dashboard V1 ; UI 2.2 à UI 2.7.1 l'ont livré
+et validé sur `feature/frontend-dashboard`. La fusion Dashboard dans main reste
+à réaliser ; UI 2.8 finalise la documentation sans changement visuel.
+
+## Dashboard V1 — présentation implémentée et validée
+
+Les règles suivantes sont appliquées au Dashboard livré. DASH-01 à DASH-06
+sont enregistrées dans D014 de [decisions.md](decisions.md). Le contrat et
+l'architecture présente figurent dans [frontend-architecture.md](frontend-architecture.md).
+
+### Composition livrée
+
+Le Shell et son Header restent inchangés. PageHeader fournit le seul h1
+« Dashboard », une description et les actions de page projetées. Le périmètre,
+la période UTC avec fin exclusive et `calculated_at` restent lisibles.
+Un formulaire de filtres précède les cinq sections :
+
+| Section | Contenu affiché |
+| --- | --- |
+| Synthèse | Six cartes : équipements, capteurs actifs, couverture par capteurs actifs, mesures reçues, maintenances ouvertes et retards de démarrage ; périmètre et période au-dessus des sections |
+| Équipements | Statuts et criticités, part opérationnelle, nombre high/critical et nombre high/critical indisponibles ; aucune liste nominative non fournie par le contrat |
+| Capteurs | Statut déclaré, couverture en capteurs actifs, capteurs actuellement actifs ayant émis sur la période |
+| Mesures | Qualité déclarée, volumes quotidiens UTC, derniers relevés par capteur avec valeur, unité, qualité, date et âge au calcul |
+| Maintenance | Charge ouverte et priorités, retards de démarrage, terminées par type, part corrective, arrêt déclaré avec couverture et anomalies de dates |
+
+Cartes KPI, tableaux de répartition et listes de relevés (DASH-02), avec texte
+et effectifs accessibles ; aucune bibliothèque graphique ajoutée. Aucun Health
+Score, RUL, risque de panne ou alerte fictive (DASH-01). L'affichage monétaire
+est différé faute de devise (DASH-03), même si `maintenance.cost` est disponible.
+
+### Portée et précision des libellés
+
+| Libellé | Indicateurs concernés |
+| --- | --- |
+| État actuel | Inventaire, statuts, criticité, couverture capteurs, maintenances ouvertes ; anomalies de dates manquantes sur le périmètre |
+| Sur la période | Volume/qualité des mesures, capteurs ayant émis, maintenances terminées, part corrective et arrêt déclaré dans `[start_time, end_time)` |
+| Au calcul | Dernières mesures et leur âge, retards de démarrage, référence à `calculated_at` |
+
+Les derniers relevés ne sont pas restreints à la période choisie : l'indiquer
+dans cette section pour éviter une interprétation trompeuse. Ne pas appeler
+« disponibilité » la part opérationnelle, ni « santé » la criticité, ni « télémétrie
+complète » le volume reçu. Un capteur actif n'est pas nécessairement communicant.
+
+Un vrai zéro s'affiche comme zéro ; un pourcentage null comme « Non calculable » ;
+une valeur absente comme « Non renseignée ». Signaler les valeurs inconnues dans
+« Autres / non reconnus », sans leur attribuer un état sain ou critique.
+Une somme partielle affiche sa couverture de saisie, effectifs inclus.
+La couleur ne remplace jamais les libellés, unités ou avertissements explicites.
+
+### Filtres et états accessibles livrés
+
+Entreprise obligatoire sans valeur inventée ; site et équipement facultatifs.
+Le sélecteur d'équipement est proposé après choix du site (DASH-04), simple
+politique UX qui ne supprime pas le support API d'un équipement sans site.
+Labels explicites, ordre clavier naturel, focus visible et bouton Appliquer.
+Les sélecteurs consomment les listes paginées : compteurs chargés/total et boutons
+« Charger davantage » lorsqu'une page suivante existe. Aucun champ de recherche
+de références n'est implémenté dans ce formulaire.
+Changement d'entreprise : site/équipement effacés ; changement de site :
+équipement effacé. Indiquer UTC et la fin exclusive dans les champs de période.
+
+Sept jours glissants UTC (168 heures) sont le préréglage initial (DASH-05),
+avec une fin fixée à l'application et sans évolution automatique après la requête.
+Une période personnalisée conserve ses bornes validées. Au départ, inviter à
+sélectionner une entreprise ; ne pas confondre cette invitation avec un résultat
+vide de l'API, ni envoyer un GET Dashboard incomplet.
+
+Réutiliser LoadingState pour loading (une seule annonce et reduced-motion),
+EmptyState pour l'absence globale d'actifs, textes explicites pour les sections
+sans lignes, ErrorState pour error
+(relance manuelle réseau/serveur, correction des filtres sinon). success est le
+rendu réel des cinq sections ; une période sans mesures n'efface pas le parc.
+Conserver filtres, titres et focus pendant les états, sans annonces répétitives
+ni déplacement automatique de focus après un simple rechargement.
+
+### Responsive et limites de validation
+
+Réutiliser marine, bleu actif, surfaces blanches, fond gris clair, typographie
+et espacements des tokens ; aucun second thème. Cartes et filtres se replient
+selon l'espace disponible, textes longs sans débordement ; derniers relevés
+lisibles à 320/390 px. Les barres conservent des valeurs textuelles et les tableaux
+une sémantique compréhensible. Le breakpoint du Shell reste 1024 px, inclus en desktop.
+
+UI 2.7 a contrôlé le Dashboard à 1440/1024/1023/768/390/320 px CSS, hauteur 900 px,
+sans débordement horizontal global, avec un seul h1 et huit tableaux dotés de
+captions/en-têtes. Les cartes et les listes se replient selon la place disponible ;
+les relevés sont présentés en listes avec définitions pour rester lisibles à 320 px.
+Menu mobile : Tab/Shift+Tab, Échap, focus restauré et contenu inert ; skip link
+activé par Entrée vers main-content, sans changement d'URL. Actualiser conserve
+le focus et les filtres appliqués. Les états de chargement/erreur utilisent les
+rôles status/alert des composants partagés et aria-busy sur la zone de résultats.
+
+Les vérifications réelles PETROSEN couvrent idle/success, zéros, ratios null,
+capteur sans relevé et dernier relevé hors période. Loading Dashboard, empty,
+erreurs UI/retry, catégories inconnues et couverture partielle sont validés par
+tests simulés, sans prétendre à des observations réelles de tous ces cas.
+Les montants ne sont pas affichés. La précision des valeurs et l'âge API en
+secondes sont conservés, sans seuil d'alerte ni compteur de fraîcheur live.
+UI 2.7.1 remplace « 1 équipements » par la formulation neutre
+« Équipements avec capteur actif : X sur Y », valeurs API inchangées, y compris 0/0.
+
+### Zoom réel et limites restantes
+
+La validation manuelle utilisateur du zoom réel **100 %, 200 % et 400 %** en
+UI 1.8.4 concerne le socle. Elle est conservée comme historique et ne prouve
+pas à elle seule le rendu du Dashboard V1 désormais enrichi.
+En UI 2.7, Ctrl+0 a été appliqué dans le navigateur intégré ; ses raccourcis de
+zoom sont restés sans effet, sans variation de viewport ou de ratio de pixels.
+Le pourcentage exact n'est pas exposé : aucun zoom réel 200/400 % du Dashboard
+n'est revendiqué par l'assistant, et aucun redimensionnement CSS n'est assimilé
+à un zoom. En réponse à la clarification UI 2.8, **l'utilisateur confirme avoir
+effectué et validé le zoom réel du Dashboard V1 à 100 %, 200 % et 400 %**.
+Cette confirmation concerne bien le Dashboard enrichi, distinctement de
+l'historique UI 1.8, et complète la limite de l'outillage de l'assistant.
+Il s'agit d'un contrôle manuel utilisateur, pas d'un test automatisé.
+**Lecteur d'écran réel non testé** : les contrôles DOM/ARIA/clavier ne valent
+ni validation vocale ni certification d'accessibilité.
+
+Le warning actuel est **565,38 ko initial pour 500 ko** ; références Dashboard
+différé 52,00 ko en UI 2.6, 51,98 ko après UI 2.7.1. Les budgets restent inchangés.

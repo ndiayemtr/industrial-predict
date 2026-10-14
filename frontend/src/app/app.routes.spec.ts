@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from './app.routes';
+import { provideDashboardTesting } from './features/dashboard/testing/dashboard-testing';
 import { NAVIGATION_ITEMS } from './layout/navigation/navigation.config';
 
 const expectedPages = [
@@ -85,6 +86,7 @@ describe('Routing integration gaps', () => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes), provideNoopAnimations(),
+      ...provideDashboardTesting(),
       importProvidersFrom(
         NbThemeModule.forRoot({ name: 'industrial-predict' },
           [{ name: 'industrial-predict', base: 'default', variables: {} }]),

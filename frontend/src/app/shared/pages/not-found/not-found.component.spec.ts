@@ -8,6 +8,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from '../../../app.routes';
+import { provideDashboardTesting } from '../../../features/dashboard/testing/dashboard-testing';
 import { NotFoundComponent } from './not-found.component';
 
 describe('Not-found routing inside the Shell', () => {
@@ -15,6 +16,7 @@ describe('Not-found routing inside the Shell', () => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes), provideNoopAnimations(),
+      ...provideDashboardTesting(),
       importProvidersFrom(
         NbThemeModule.forRoot({ name: 'industrial-predict' },
           [{ name: 'industrial-predict', base: 'default', variables: {} }]),

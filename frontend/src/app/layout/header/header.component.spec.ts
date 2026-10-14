@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { NbSidebarComponent, NbSidebarModule, NbSidebarService, NbThemeModule } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from '../../app.routes';
+import { provideDashboardTesting } from '../../features/dashboard/testing/dashboard-testing';
 import { FeaturePlaceholderComponent } from '../../shared/pages/feature-placeholder/feature-placeholder.component';
 import { ShellComponent } from '../shell/shell.component';
 
@@ -16,6 +17,7 @@ describe('Global Header', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes), provideNoopAnimations(),
+        ...provideDashboardTesting(),
         importProvidersFrom(
           NbThemeModule.forRoot({ name: 'industrial-predict' },
             [{ name: 'industrial-predict', base: 'default', variables: {} }]),

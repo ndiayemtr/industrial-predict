@@ -52,11 +52,22 @@ Les contraintes de compatibilité et la correction Sass reproductible par
 Avant une modification frontend, lire également `docs/frontend-architecture.md`
 et `docs/ui-design.md`.
 
-La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
-UI 1.7 est terminée et commitée : les quatre composants partagés sont disponibles.
-UI 1.8.1 à UI 1.8.3 sont validées ; UI 1.8.4 finalise la documentation et
-la préparation du commit responsive, sans commit automatique. Les pages métier restent
-des placeholders explicites, sans données fictives ni appels API.
+Le socle UI 1.1 à UI 1.8 est terminé et fusionné dans `main`.
+Les quatre composants partagés et le Shell responsive accessible sont disponibles.
+UI 2.1 à UI 2.7.1 sont terminées et commitées sur `feature/frontend-dashboard`
+(HEAD `956a0b4`). Dashboard V1 consomme FastAPI via `/api/v1/dashboard` :
+filtres UTC, références paginées, façade locale et cinq sections de présentation.
+UI 2.8 finalise la documentation ; la fusion dans `main` reste à réaliser.
+Les autres pages métier restent des placeholders. Aucun identifiant d'entreprise
+par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
+Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
+`docs/decisions.md` ; le contrat consommé et l'architecture livrée sont décrits
+dans `docs/frontend-architecture.md`. Ne pas étendre le Dashboard V1 aux
+indicateurs ML : les fonctions backend correspondantes ne sont pas intégrées
+à cette page. L'autorisation multi-entreprises n'est pas démontrée sur la route
+Dashboard ; ne pas déclarer une préparation à la production SaaS multi-tenant.
+La validation comprend 220 tests Angular ; lecteur d'écran réel non testé.
+Le bundle initial de 565,38 ko dépasse le warning de 500 ko, sans relèvement.
 
 ### Machine Learning
 

@@ -1,0 +1,6 @@
+<article class="kpi-card">
+  <p class="temporal-scope">{{ temporalScope() }}</p>
+  <h3>{{ label() }}</h3>
+  <p class="kpi-value">{{ formattedValue() }}@if (showUnit()) { <span class="unit"> {{ unit() }}</span> }</p>
+  @if (information()) { <p class="information">{{ information() }}</p> }
+</article>

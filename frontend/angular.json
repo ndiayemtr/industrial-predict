@@ -92,7 +92,8 @@
               "buildTarget": "industrial-predict-ui:build:production"
             },
             "development": {
-              "buildTarget": "industrial-predict-ui:build:development"
+              "buildTarget": "industrial-predict-ui:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

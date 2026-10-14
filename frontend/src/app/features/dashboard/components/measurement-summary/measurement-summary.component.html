@@ -1,0 +1,51 @@
+<section aria-labelledby="measurement-summary-title">
+  <h2 id="measurement-summary-title">Mesures</h2>
+  <p class="section-context">Sur la période — qualité déclarée, sans diagnostic ni seuil d’alerte. Début inclus, fin exclue.</p>
+  <app-dashboard-kpi-card label="Part de qualité bonne" [value]="summary().quality.good_ratio.percentage === null ? 'Non calculable' : summary().quality.good_ratio.percentage"
+    unit="%" temporalScope="Sur la période" [information]="summary().quality.good_ratio.numerator + ' mesures de qualité bonne sur ' + summary().quality.good_ratio.denominator + ' mesures.'" />
+  <dl class="quality-counts">
+    <div><dt>Bonne</dt><dd>{{ summary().quality.good }}</dd></div>
+    <div><dt>Suspecte</dt><dd>{{ summary().quality.suspect }}</dd></div>
+    <div><dt>Mauvaise</dt><dd>{{ summary().quality.bad }}</dd></div>
+    <div><dt>Manquante</dt><dd>{{ summary().quality.missing }}</dd></div>
+    <div><dt>Estimée</dt><dd>{{ summary().quality.estimated }}</dd></div>
+    <div><dt>Autres / non reconnus</dt><dd>{{ summary().quality.other }}</dd></div>
+  </dl>
+  <table>
+    <caption>Répartition réelle de qualité — {{ summary().quality.total }} mesures sur la période</caption>
+    <thead><tr><th scope="col">Qualité déclarée</th><th scope="col">Effectif</th></tr></thead>
+    <tbody>
+      @for (category of summary().quality.distribution; track $index) {
+        <tr><th scope="row">{{ qualityLabel(category.value) }}</th><td>{{ category.count }}</td></tr>
+      } @empty { <tr><td colspan="2">Aucune catégorie fournie par l’API pour cette période.</td></tr> }
+    </tbody>
+  </table>
+  <p class="section-context daily-context">Dates UTC : les journées de début et de fin peuvent être partielles, selon les bornes sélectionnées. Les jours à zéro sont conservés.</p>
+  <table>
+    <caption>Volume quotidien — Sur la période</caption>
+    <thead><tr><th scope="col">Date (UTC)</th><th scope="col">Mesures</th></tr></thead>
+    <tbody>
+      @for (day of summary().daily_volume; track $index) {
+        <tr><th scope="row">{{ day.date }}</th><td>{{ day.count }}</td></tr>
+      } @empty { <tr><td colspan="2">Aucun volume quotidien fourni par l’API.</td></tr> }
+    </tbody>
+  </table>
+  <h3 class="readings-title">Derniers relevés — Au calcul</h3>
+  <p class="section-context">Derniers relevés au {{ period().calculated_at }} (UTC), indépendamment de la période sélectionnée. Leur date peut se situer hors période. L’âge est fourni par l’API au calcul et n’est pas actualisé automatiquement.</p>
+  <ul class="last-readings">
+    @for (reading of summary().last_measurements; track $index) {
+      <li>
+        <h4>{{ reading.sensor_name }} — {{ reading.sensor_code }}</h4>
+        @if (reading.timestamp === null) { <p>Aucun relevé disponible au calcul pour ce capteur.</p> }
+        <dl>
+          <div><dt>Équipement — identifiant</dt><dd>{{ reading.equipment_id }}</dd></div>
+          <div><dt>Date du relevé (UTC)</dt><dd>{{ reading.timestamp ?? 'Non renseignée' }}</dd></div>
+          <div><dt>Valeur</dt><dd>{{ reading.value ?? 'Non renseignée' }}</dd></div>
+          <div><dt>Unité déclarée</dt><dd>{{ reading.unit ?? 'Non renseignée' }}</dd></div>
+          <div><dt>Qualité déclarée</dt><dd>{{ reading.quality === null ? 'Non renseignée' : qualityLabel(reading.quality) }}</dd></div>
+          <div><dt>Âge au calcul</dt><dd>{{ reading.age_seconds ?? 'Non renseigné' }}@if (reading.age_seconds !== null) { <span> s</span> }</dd></div>
+        </dl>
+      </li>
+    } @empty { <li>Aucun capteur ou relevé fourni par l’API.</li> }
+  </ul>
+</section>

@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from '../../app.routes';
+import { provideDashboardTesting } from '../../features/dashboard/testing/dashboard-testing';
 
 @Component({ standalone: true, template: '<input #field aria-label="Focus owned by page" />' })
 class FocusClaimingPage {
@@ -18,6 +19,7 @@ describe('Shell navigation focus', () => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes), provideNoopAnimations(),
+      ...provideDashboardTesting(),
       importProvidersFrom(
         NbThemeModule.forRoot({ name: 'industrial-predict' },
           [{ name: 'industrial-predict', base: 'default', variables: {} }]),
