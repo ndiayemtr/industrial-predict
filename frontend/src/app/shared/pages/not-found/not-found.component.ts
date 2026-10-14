@@ -1,0 +1,13 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { NbCardModule } from '@nebular/theme';
+
+@Component({
+  selector: 'app-not-found',
+  standalone: true,
+  imports: [RouterLink, NbCardModule],
+  templateUrl: './not-found.component.html',
+  styleUrl: './not-found.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class NotFoundComponent {}

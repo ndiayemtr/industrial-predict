@@ -33,6 +33,14 @@ export const routes: Routes = [
         title: 'Détail équipement | Industrial Predict AI',
         data: { pageTitle: 'Détail équipement' },
         loadComponent: loadFeaturePlaceholder
+      },
+      {
+        path: '**',
+        title: 'Page introuvable | Industrial Predict AI',
+        data: { pageTitle: 'Page introuvable', isNotFound: true },
+        loadComponent: () => import('./shared/pages/not-found/not-found.component').then(
+          (m) => m.NotFoundComponent
+        )
       }
     ]
   }

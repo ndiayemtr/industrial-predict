@@ -1,0 +1,52 @@
+@use '../../../../styles/tokens' as tokens;
+
+:host {
+  display: block;
+}
+
+.error-code {
+  margin: 0 0 tokens.$space-md;
+  color: tokens.$navigation-active;
+  font-size: tokens.$font-size-title * 2;
+  font-weight: 700;
+  line-height: 1;
+}
+
+h1 {
+  margin: 0 0 tokens.$space-md;
+  color: tokens.$text-primary;
+  font-size: tokens.$font-size-title;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.error-description {
+  max-width: 44rem;
+  margin: 0 0 tokens.$space-lg;
+  color: tokens.$text-secondary;
+  line-height: tokens.$line-height-body;
+}
+
+.dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: tokens.$space-sm tokens.$space-md;
+  border-radius: tokens.$border-radius;
+  background: tokens.$navigation-active;
+  color: tokens.$sidebar-text;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover,
+  &:active,
+  &:focus {
+    color: tokens.$sidebar-text;
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid tokens.$navigation-active;
+    outline-offset: 3px;
+  }
+}

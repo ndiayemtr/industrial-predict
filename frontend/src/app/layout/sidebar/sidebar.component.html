@@ -15,7 +15,7 @@
             class="navigation-item navigation-link"
             [routerLink]="item.path"
             routerLinkActive="is-active"
-            [routerLinkActiveOptions]="item.match === 'exact' ? exactMatch : sectionMatch"
+            [routerLinkActiveOptions]="isNotFound() || item.match === 'exact' ? exactMatch : sectionMatch"
             [ariaCurrentWhenActive]="true"
           >
             <app-icon [name]="item.id" />
