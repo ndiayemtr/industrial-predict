@@ -1,0 +1,29 @@
+<section aria-labelledby="equipment-summary-title">
+  <h2 id="equipment-summary-title">Équipements</h2>
+  <p class="section-context">État actuel — statuts déclarés et criticités du périmètre sélectionné.</p>
+  <div class="summary-grid">
+    <app-dashboard-kpi-card label="Part opérationnelle" [value]="status().operational_ratio.percentage === null ? 'Non calculable' : status().operational_ratio.percentage" unit="%" temporalScope="État actuel"
+      [information]="status().operational_ratio.numerator + ' équipements opérationnels sur ' + status().operational_ratio.denominator + ' équipements.'" />
+    <app-dashboard-kpi-card label="Criticité élevée ou critique" [value]="criticality().high_or_critical" temporalScope="État actuel" />
+    <app-dashboard-kpi-card label="Élevés ou critiques indisponibles" [value]="criticality().high_or_critical_unavailable" temporalScope="État actuel"
+      information="Équipements de criticité élevée ou critique, en maintenance ou hors service." />
+  </div>
+  <table>
+    <caption>Répartition des statuts — {{ status().total }} équipements</caption>
+    <thead><tr><th scope="col">Statut</th><th scope="col">Effectif</th></tr></thead>
+    <tbody>
+      @for (category of status().distribution; track $index) {
+        <tr><th scope="row">{{ categoryLabel(category.value, 'status') }}</th><td>{{ category.count }}</td></tr>
+      } @empty { <tr><td colspan="2">Aucune catégorie fournie par l’API.</td></tr> }
+    </tbody>
+  </table>
+  <table>
+    <caption>Répartition des criticités — {{ criticality().total }} équipements</caption>
+    <thead><tr><th scope="col">Criticité</th><th scope="col">Effectif</th></tr></thead>
+    <tbody>
+      @for (category of criticality().distribution; track $index) {
+        <tr><th scope="row">{{ categoryLabel(category.value, 'criticality') }}</th><td>{{ category.count }}</td></tr>
+      } @empty { <tr><td colspan="2">Aucune catégorie fournie par l’API.</td></tr> }
+    </tbody>
+  </table>
+</section>

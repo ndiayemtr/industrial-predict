@@ -27,8 +27,23 @@
     @if (state.status === 'empty') {
       <app-empty-state title="Aucun actif dans ce périmètre" message="Le périmètre sélectionné ne contient aucun site, équipement ou capteur." />
     } @else {
-      <p class="results-ready">Les données du Dashboard ont été chargées. Les sections d’indicateurs seront intégrées lors des prochaines étapes.</p>
-      <p class="scope-help">Les indicateurs distingueront l’état actuel, les données sur la période et les informations au calcul.</p>
+      <section class="results-ready" aria-labelledby="dashboard-synthesis-title">
+        <h2 id="dashboard-synthesis-title">Synthèse</h2>
+        <p class="scope-help">Les états actuels décrivent le parc au moment de la requête ; la période UTC a une fin exclusive.</p>
+        <div class="kpi-grid">
+          <app-dashboard-kpi-card label="Équipements" [value]="state.data.assets.equipments" temporalScope="État actuel" />
+          <app-dashboard-kpi-card label="Capteurs actifs" [value]="state.data.sensor_status.active" temporalScope="État actuel" />
+          <app-dashboard-kpi-card label="Couverture par capteurs actifs" [value]="state.data.sensor_coverage.coverage.percentage === null ? 'Non calculable' : state.data.sensor_coverage.coverage.percentage" unit="%" temporalScope="État actuel"
+            information="Part des équipements dotés d’au moins un capteur actif." />
+          <app-dashboard-kpi-card label="Mesures reçues" [value]="state.data.measurements.activity.measurements_total" temporalScope="Sur la période" />
+          <app-dashboard-kpi-card label="Maintenances ouvertes" [value]="state.data.maintenance.open.total" temporalScope="État actuel"
+            information="Interventions planifiées ou en cours." />
+          <app-dashboard-kpi-card label="Retards de démarrage" [value]="state.data.maintenance.overdue.overdue" temporalScope="Au calcul"
+            information="Interventions planifiées avant le calcul et non démarrées." />
+        </div>
+      </section>
+      <app-equipment-summary [status]="state.data.equipment_status" [criticality]="state.data.equipment_criticality" />
+      <app-sensor-summary [status]="state.data.sensor_status" [coverage]="state.data.sensor_coverage" [activity]="state.data.measurements.activity" />
     }
   }
 </section>

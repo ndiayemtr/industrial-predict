@@ -46,6 +46,30 @@ describe('DashboardComponent', () => {
     apply(); request().flush(emptyDashboardResponse()); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-empty-state')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.result-metadata').textContent).toContain('Tous les sites');
+    expect(fixture.nativeElement.querySelector('app-equipment-summary, app-sensor-summary, .kpi-grid')).toBeNull();
+  });
+  it('renders the six actual KPI fields and summaries only on success, without another request', () => {
+    expect(fixture.nativeElement.querySelector('.kpi-grid')).toBeNull();
+    apply(); const req = request();
+    expect(fixture.nativeElement.querySelector('.kpi-grid')).toBeNull();
+    const response = emptyDashboardResponse();
+    response.assets.equipments = 19; response.sensor_status.active = 13;
+    response.sensor_coverage.coverage.percentage = 73.25;
+    response.measurements.activity.measurements_total = 0;
+    response.maintenance.open.total = 6; response.maintenance.overdue.overdue = 2;
+    req.flush(response); fixture.detectChanges();
+    const cards = fixture.nativeElement.querySelectorAll('.kpi-grid app-dashboard-kpi-card');
+    expect(cards).toHaveLength(6);
+    expect([...cards].map((el: Element) => el.querySelector('.kpi-value')!.textContent!.trim())).toEqual(['19', '13', '73,25 %', '0', '6', '2']);
+    expect([...cards].map((el: Element) => el.querySelector('.temporal-scope')!.textContent)).toEqual(['État actuel', 'État actuel', 'État actuel', 'Sur la période', 'État actuel', 'Au calcul']);
+    expect(fixture.nativeElement.querySelector('app-equipment-summary')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-sensor-summary')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
+    http.expectNone(() => true);
+    apply(); const next = request();
+    expect(fixture.nativeElement.querySelector('.kpi-grid')).toBeNull();
+    next.flush({}, { status: 500, statusText: 'Error' }); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-equipment-summary, app-sensor-summary, .kpi-grid')).toBeNull();
   });
   it.each([400, 422, 404, 500])('shows the appropriate HTTP %s state and keeps filters available', status => {
     apply(); request().flush({ detail: 'Test error' }, { status, statusText: 'Error' }); fixture.detectChanges();

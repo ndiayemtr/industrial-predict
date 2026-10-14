@@ -21,6 +21,7 @@ p { line-height: tokens.$line-height-body; }
   dd { margin: tokens.$space-xs 0 0; overflow-wrap: anywhere; }
 }
 .scope-help { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: tokens.$space-md; }
 .refresh-button {
   min-height: 2.75rem;
   padding: tokens.$space-sm tokens.$space-md;
