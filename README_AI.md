@@ -53,8 +53,9 @@ Avant une modification frontend, lire également `docs/frontend-architecture.md`
 et `docs/ui-design.md`.
 
 La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
-UI 1.7 est en cours : les contrats des composants partagés sont validés,
-mais leur implémentation UI 1.7.2 n'a pas commencé. Les pages métier restent
+UI 1.7 est terminée et commitée : les quatre composants partagés sont disponibles.
+UI 1.8.1 à UI 1.8.3 sont validées ; UI 1.8.4 finalise la documentation et
+la préparation du commit responsive, sans commit automatique. Les pages métier restent
 des placeholders explicites, sans données fictives ni appels API.
 
 ### Machine Learning

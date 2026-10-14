@@ -15,9 +15,10 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - HttpClient prévu pour l'intégration API, pas encore configuré dans l'application
 
 État vérifié le 14 octobre 2026 sur `feature/frontend-shared-components`,
-HEAD `82fc073`. Voir `decisions.md` pour les limites de compatibilité.
+HEAD `e3a2a2c`, avec les corrections UI 1.8.2 non commitées.
+Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente — UI 1.1 à UI 1.6
+## Structure réellement présente — UI 1.1 à UI 1.8.3
 
 ```text
 frontend/
@@ -30,6 +31,10 @@ frontend/
 │   │   └── navigation/ (modèle et configuration)
 │   ├── features/dashboard/ (DashboardPlaceholderComponent)
 │   └── shared/
+│       ├── components/page-header/
+│       ├── components/loading-state/
+│       ├── components/empty-state/
+│       ├── components/error-state/
 │       ├── pages/feature-placeholder/
 │       ├── pages/not-found/
 │       └── ui/icon/ (SVG locaux)
@@ -42,7 +47,8 @@ frontend/
 un seul `nb-layout`, un `nb-sidebar`, un `nb-layout-header subheader`
 avec `HeaderComponent` et un `nb-layout-column` avec `main#main-content`
 et le Router Outlet enfant. `SidebarComponent` s'intègre dans le sidebar
-existant, sans le recréer. Le header se situe à droite de la sidebar.
+existant, sans le recréer. En desktop, le header se situe à droite de la sidebar ;
+en mobile/tablette, il occupe la largeur disponible et la Sidebar est superposée.
 
 Le Header lit `data.pageTitle` sur la route primaire active la plus profonde,
 avec le repli « Espace de travail ». Le titre du document provient de `title`
@@ -57,6 +63,59 @@ Après NavigationEnd, le focus est déplacé après rendu lors d'un changement
 de page ; la navigation initiale, les changements de query params seuls,
 les fragments et les interactions ayant repris le focus sont préservés.
 Les abonnements et callbacks restent liés au cycle de vie Angular.
+
+## Politique responsive réelle — UI 1.8.2
+
+Le `ShellComponent` centralise la détection du mode à partir de la largeur CSS
+du viewport, via `DOCUMENT.defaultView.innerWidth` et un listener `resize`
+créé par `Renderer2`. Le listener et les callbacks `afterNextRender` sont
+nettoyés via `DestroyRef`.
+
+| Mode | Seuil | État initial et comportement |
+| --- | --- | --- |
+| Desktop | **>= 1024 px**, y compris 1024 exactement | Sidebar latérale expanded, fermeture manuelle possible |
+| Mobile/tablette | **< 1024 px** | Sidebar collapsed initialement ; ouverture superposée sans compression du contenu |
+
+Nebular reste la source unique de l'état de Sidebar : l'entrée `state` définit
+l'état initial, puis les API `expand()`, `collapse()`, `toggle(false, tag)` du
+service utilisé par le Header et la sortie `stateChange` synchronisent l'UI.
+Le mode natif `responsive` de Nebular n'est pas activé : son état `compacted`
+et ses styles de menu ne correspondent pas aux liens personnalisés du projet.
+La superposition repose sur des overrides SCSS limités à `.shell-layout.shell-mobile`.
+
+En mobile, le panneau ouvert est un dialogue `aria-modal="true"` ;
+`CdkTrapFocus`, issu du CDK déjà installé, confine Tab/Shift+Tab dans le panneau.
+Le focus est placé sur le bouton « Fermer la navigation » après rendu.
+Le Header et la colonne principale deviennent `inert` et `aria-hidden`.
+Le fond extérieur cliquable, Échap et le bouton interne ferment le panneau
+et restaurent le focus au toggle du Header. Le fond n'est pas dans l'ordre de
+tabulation ; le bouton interne fournit l'action clavier équivalente.
+Le scroll de l'arrière-plan est bloqué par le style conditionnel
+`body:has(.shell-layout.drawer-open)` ; la navigation conserve son propre scroll.
+
+Après `NavigationEnd`, le panneau mobile ouvert est fermé sans forcer un retour
+au toggle lorsqu'un changement de page doit déplacer le focus vers le main.
+Les règles existantes de focus restent applicables : fragments, changements
+de query params seuls, interactions et focus revendiqué par une page sont
+respectés. Si une navigation avec fragment ou sur la même page laisse le focus
+dans le menu désormais masqué, le toggle sert de repli. Une navigation annulée
+ne ferme pas le panneau.
+
+Au franchissement desktop vers mobile, la Sidebar se ferme ; un focus dans
+la navigation masquée revient au toggle. Au retour desktop, elle s'ouvre et
+le fond, la modalité et l'inertie du contenu disparaissent ; le focus revient
+au toggle si le bouton de fermeture mobile disparaît. Un redimensionnement
+restant dans le même mode conserve l'état choisi par l'utilisateur.
+
+Le Header reçoit l'état réel de la Sidebar pour `aria-expanded`, son identifiant
+pour `aria-controls` et un libellé dynamique. Ses styles mobiles sont déclenchés
+par la classe du Shell, sans seconde politique de breakpoint indépendante.
+Sous 1024 px, l'identité secondaire et Notifications/Profil sont masqués ;
+le bouton et le titre restent prioritaires avec des espacements réduits.
+
+La couverture dédiée se trouve dans `layout/shell/shell-responsive.spec.ts` :
+initialisation (dont 1023/1024), transitions, fermeture, navigation annulée ou
+réussie, focus, attributs accessibles, skip link et nettoyage du listener.
 
 ## Routes réellement présentes
 
@@ -244,14 +303,15 @@ Chaque écran doit gérer explicitement :
 ## Architecture shared et contrats validés UI 1.7.1
 
 `shared/ui/icon` existe déjà. `shared/pages` contient les pages transversales
-de routing (placeholder et 404). Les quatre nouveaux composants de présentation
-seront placés dans `shared/components/`, distinctement de ces pages.
-Ils ne sont pas encore implémentés ; UI 1.7.2 n'a pas commencé.
+de routing (placeholder et 404). Les quatre composants de présentation sont
+implémentés dans `shared/components/`, distinctement de ces pages, et commités
+dans `e3a2a2c`. UI 1.7 est terminée. Ils ne sont pas encore intégrés aux pages
+métier définitives et ne créent aucune route de démonstration persistante.
 
 Les contrats suivants ont été validés dans la discussion de conception
 Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 
-### PageHeaderComponent — prévu
+### PageHeaderComponent — implémenté en UI 1.7.2
 
 - Emplacement : `shared/components/page-header/`.
 - Entrée obligatoire : `title: string` ; entrée optionnelle : `description?: string`.
@@ -259,24 +319,31 @@ Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 - Titre sémantique `<h1>` ; description rendue uniquement si renseignée.
 - Actions à droite sur grand écran, sous le titre sur petit écran.
 - Aucun appel API ni logique métier. Il ne remplace pas le Header global du Shell.
+- API : `input.required<string>()` pour title, `input<string>()` pour description.
+- Une description vide ou composée uniquement d'espaces n'est pas rendue.
 
-### LoadingStateComponent — prévu
+### LoadingStateComponent — implémenté en UI 1.7.3
 
 - Emplacement : `shared/components/loading-state/`.
 - Entrée optionnelle : `message: string`, valeur par défaut « Chargement des données… ».
 - Indicateur visuel et `role="status"` pour annoncer le chargement.
 - Animation respectant les préférences de réduction du mouvement.
 - Aucun déclenchement de requête HTTP.
+- Une entrée signal avec défaut et un message de repli si le texte est vide ;
+  une seule région status, `aria-atomic="true"`, indicateur décoratif `aria-hidden`.
 
-### EmptyStateComponent — prévu
+### EmptyStateComponent — implémenté en UI 1.7.4
 
 - Emplacement : `shared/components/empty-state/`.
 - Entrées : `title: string` et `message: string`.
 - Illustration ou icône décorative optionnelle.
 - Projection facultative d'une action fournie par la page métier.
 - État distinct d'une erreur réseau ; aucun appel API ni création automatique de données.
+- title et message utilisent `input.required<string>()` ; titre sémantique `<h2>`.
+- Entrée optionnelle `icon: LocalIconName | undefined` : réutilisation de
+  `IconComponent` et de son entrée existante `name`, sans enrichir le catalogue.
 
-### ErrorStateComponent — prévu
+### ErrorStateComponent — implémenté en UI 1.7.5
 
 - Emplacement : `shared/components/error-state/`.
 - Entrées : `title: string`, `message: string`, `retryable: boolean`.
@@ -284,19 +351,47 @@ Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 - Message accessible avec `role="alert"` ou mécanisme équivalent adapté, sans répétition excessive.
 - Bouton « Réessayer » accessible au clavier, visible uniquement si `retryable` est vrai.
 - Aucun appel HTTP dans le composant ; la page consommatrice gère la relance.
+- title et message utilisent `input.required<string>()` ; `retryable = input(false)`
+  et `retry = output<void>()`. Le titre est un `<h2>`.
+- Une seule région `role="alert"`, `aria-atomic="true"`, contient le titre et
+  le message ; le bouton reste hors de cette région pour éviter les réannonces
+  liées à son apparition. Aucun timer ni relance interne.
 
 ### Principes communs et validation d'implémentation
 
-Angular 21 standalone, TypeScript strict, SCSS avec les tokens existants,
+Les quatre composants utilisent Angular 21 standalone, OnPush, TypeScript strict, SCSS avec les tokens existants,
 HTML sémantique, contrastes et navigation clavier. Ces composants restent
 légers, indépendants des modules métier et du backend FastAPI, sans nouvelle
-dépendance. Les tests unitaires seront obligatoires lors de UI 1.7.2 : contrats
+dépendance. Les tests unitaires couvrent les étapes UI 1.7.2 à UI 1.7.5 : contrats
 d'entrée, rendu conditionnel, projection, sémantique accessible et émission
 de `retry` seulement sur action utilisateur.
 
 Les états restent distincts : `loading`, `success`, `empty`, `error`.
 `success` est le rendu normal des données par la page métier ; aucun composant
 partagé spécifique n'est prévu pour cet état.
+
+## Validation UI 1.8.3 et finalisation UI 1.8.4
+
+La suite frontend comprend **116 tests Angular réussis**, dont les tests des
+quatre composants partagés et les 19 tests responsive ajoutés en UI 1.8.2.
+Les **5 tests du correctif Sass** et le contrôle des breakpoints, expressions
+et thème unique réussissent ; le build production réussit sans nouvelle
+dépréciation Sass. Le bundle initial reste à **504,68 ko**, au-dessus du budget
+d'avertissement de **500 ko** ; aucun budget n'est relevé.
+
+UI 1.8.3 a vérifié les routes Dashboard, détail équipement et 404 à 1440,
+1024, 1023, 768, 390 et 320 px, hauteur 900 px, ainsi que les transitions
+répétées autour du seuil et les interactions clavier/souris, sans anomalie
+reproductible dans ce périmètre. Les composants partagés ont été réexaminés
+dans leur code et leurs tests ; aucune nouvelle démonstration n'a été ajoutée.
+
+Le zoom navigateur réel à **100 %, 200 % et 400 %** est **validé manuellement
+par l'utilisateur**, avec cinq vérifications déclarées OK dans la demande
+UI 1.8.4. Les tests de reflow de l'assistant à 720 × 450 et 360 × 225 px ne
+sont pas présentés comme une preuve de zoom réel ; la confirmation utilisateur
+complète cette limite de l'outillage. **Aucun lecteur d'écran réel n'a été testé**.
+La vérification du DOM/ARIA et du clavier ne certifie pas à elle seule la
+compatibilité de toutes les technologies d'assistance.
 
 ## Autres composants partagés envisagés
 

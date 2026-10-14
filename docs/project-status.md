@@ -258,11 +258,13 @@ Les tests ignorés nécessitent PostgreSQL.
 
 Merger la branche `feature/2.9-predictive-maintenance-recommendations` vers `main`, puis démarrer l'étape suivante du projet.
 
-## Frontend — synchronisation UI 1.7.0 du 14 octobre 2026
+## Frontend — finalisation UI 1.8.4 du 14 octobre 2026
 
 La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
-Le HEAD de la branche frontend est `82fc073`, merge de
-`feature/frontend-ui-foundation`, incluant le commit final `8c7bd9f`.
+Historique : `82fc073` a fusionné `feature/frontend-ui-foundation`, incluant
+le commit final `8c7bd9f`. Le HEAD actuel est `e3a2a2c`
+(`feat(frontend): add reusable shared UI components`) ; UI 1.7 est terminée
+et commitée. Les corrections UI 1.8.2 restent non commitées.
 
 | Étape | État et périmètre livré |
 | --- | --- |
@@ -272,8 +274,17 @@ Le HEAD de la branche frontend est `82fc073`, merge de
 | UI 1.4 | Sidebar, navigation centralisée et icônes terminées ; correction Sass reproductible |
 | UI 1.5 | Header global, titre dynamique et commande Sidebar terminés ; finitions visuelles validées |
 | UI 1.6 | Routing consolidé, 404 lazy, titres, lien d'évitement et gestion du focus terminés |
-| UI 1.7.1 | Conception de PageHeader, LoadingState, EmptyState et ErrorState validée ; contrats désormais documentés |
-| UI 1.7.2 | Non commencée : aucun des quatre composants n'est implémenté |
+| UI 1.7.0 | Synchronisation documentaire validée et commitée |
+| UI 1.7.1 | Conception et contrats des quatre composants partagés validés |
+| UI 1.7.2 | PageHeader standalone implémenté et validé |
+| UI 1.7.3 | LoadingState standalone implémenté et validé |
+| UI 1.7.4 | EmptyState standalone implémenté et validé |
+| UI 1.7.5 | ErrorState standalone implémenté et validé |
+| UI 1.7.6 | Validation globale et visuelle terminée ; démonstration temporaire retirée |
+| UI 1.8.1 | Audit responsive validé |
+| UI 1.8.2 | Corrections responsive validées ; sept fichiers modifiés et un test ajouté, non commités |
+| UI 1.8.3 | Validation approfondie validée, complétée par le zoom réel contrôlé par l'utilisateur |
+| UI 1.8.4 | Documentation, validation finale et préparation du commit en finalisation ; validation du livrable attendue |
 
 Les neuf destinations de navigation accessibles et le détail équipement sont
 encore des placeholders. Rapports et Administration restent « À venir » et
@@ -286,15 +297,40 @@ TypeScript 5.9.3, RxJS 7.8.2, Zone.js 0.16.3 et Dart Sass 1.97.3.
 Environnement constaté : Node.js 24.21.0 et npm 11.19.0.
 
 Les résultats backend ci-dessus constituent l'historique de leurs validations
-respectives. Cette synchronisation documentaire ne relance pas les suites
-de tests ni le build applicatif.
+respectives ; aucune suite backend n'est relancée dans UI 1.8.4.
+
+### Responsive livré et validations
+
+- Desktop : largeur CSS **>= 1024 px**, Sidebar latérale ; 1024 px reste desktop.
+- Mobile/tablette : largeur CSS **< 1024 px**, panneau superposé fermé initialement,
+  sans compression du contenu, avec fond de fermeture, Échap et bouton de fermeture.
+- Fermeture après navigation réussie, confinement du focus CDK, arrière-plan inert,
+  restauration du focus et transitions de modes ; skip link et routing conservés.
+- Validation navigateur UI 1.8.3 : 1440, 1024, 1023, 768, 390 et 320 px, hauteur
+  900 px ; Dashboard, détail équipement et 404, menu ouvert/fermé ; six cycles
+  répétés autour de 1024 px, sans état bloqué ni débordement horizontal observé.
+- Build de production réussi ; **116 tests Angular** et **5 tests du correctif
+  Sass** réussis. Contrôles des quatre expressions Sass, huit breakpoints et
+  thème unique réussis ; aucune nouvelle dépréciation Sass.
+- Bundle initial : **504,68 ko** contre budget d'avertissement **500 ko**,
+  dépassement de **4,68 ko**. Seuil d'erreur 1 Mo et budgets inchangés.
+- Zoom navigateur réel **100 %, 200 % et 400 % validé manuellement par
+  l'utilisateur**, qui confirme les cinq vérifications OK dans la demande
+  UI 1.8.4. Cette confirmation complète la limite du navigateur intégré
+  rencontrée lors des tests de l'assistant ; ce n'est pas un test automatisé.
+- **Aucun test de lecteur d'écran réel réalisé** : les contrôles clavier,
+  de focus et d'attributs ARIA ne constituent pas une validation vocale complète.
+
+Les commandes frontend sont relancées pour la validation finale UI 1.8.4 ;
+les résultats sont également fournis dans le rapport de livraison.
 
 ## Travail actuel
 
-UI 1.7 en cours sur `feature/frontend-shared-components` : synchronisation
-documentaire UI 1.7.0, avant l'implémentation des contrats validés en UI 1.7.1.
+UI 1.8.4 en finalisation sur `feature/frontend-shared-components` : documents
+synchronisés et contrôles finaux avant validation du commit responsive.
 
 ## Prochaine action
 
-Faire valider les modifications documentaires avant leur commit.
-UI 1.7.2 reste à autoriser et à implémenter séparément.
+Faire valider le livrable UI 1.8.4 avant tout commit ou push.
+La prochaine phase est la conception puis l'implémentation du Dashboard frontend
+et de son intégration API. Elle n'est pas commencée et nécessite une mission distincte.

@@ -103,11 +103,49 @@ une régression. Les chemins Sass internes restent liés à Nebular 17.0.0.
 
 Les contrats de PageHeader, LoadingState, EmptyState et ErrorState sont validés
 en UI 1.7.1 et documentés dans `frontend-architecture.md` et `ui-design.md`.
-Ces composants sont prévus sous `shared/components/` et ne sont pas encore
-implémentés. UI 1.7.2 n'a pas commencé.
+Lors de cette décision en UI 1.7.1, ces composants étaient prévus sous
+`shared/components/` et n'étaient pas encore implémentés. UI 1.7 est désormais
+terminée et commitée dans `e3a2a2c` ; les contrats et responsabilités restent inchangés.
 
 Ils restent standalone, stricts, accessibles, sans nouvelle dépendance ni
 appel HTTP ou logique métier. La page fournit les actions projetées et traite
 l'événement `retry`. `success` reste le rendu normal de la page.
 Le PageHeader est distinct du Header global du Shell.
 Les décisions backend D001 à D008 restent inchangées.
+
+## D013 - Politique responsive centralisée et panneau mobile accessible
+
+Décision validée pour UI 1.8.2 : desktop à largeur CSS **>= 1024 px**,
+mobile/tablette à largeur CSS **< 1024 px**. À 1024 exactement, le mode desktop
+est conservé. Le Shell centralise la détection et les transitions ; les styles
+du Header suivent sa classe de mode plutôt qu'un second seuil indépendant.
+
+Nebular 17.0.0 reste la source de l'état expanded/collapsed. Son mode responsive
+natif n'est pas activé : le mode compacted cible notamment `nb-menu`, alors
+que l'application utilise sa propre navigation. Les API publiques existantes
+de Sidebar et des styles ciblés du Shell permettent la superposition mobile,
+sans patch Nebular ni dépendance supplémentaire.
+
+La Sidebar mobile est fermée initialement et ne compresse jamais le contenu
+à l'ouverture. Le panneau ouvert utilise un dialogue modal, `CdkTrapFocus`
+du CDK 21.0.6 déjà installé et un arrière-plan inert/aria-hidden. Le bouton
+interne, Échap et le clic sur le fond extérieur ferment le panneau ; le focus
+revient au toggle en l'absence de navigation. Après `NavigationEnd`, la
+fermeture reste coordonnée avec la politique existante de focus du contenu,
+y compris ses exceptions pour fragments et interactions. Les navigations
+annulées n'entraînent pas cette fermeture.
+
+Le franchissement vers mobile ferme la Sidebar ; le retour desktop l'ouvre
+et retire la modalité et le fond. L'état manuel est conservé lors de changements
+de largeur au sein d'un même mode. Les listeners et callbacks de rendu sont
+nettoyés avec le cycle de vie Angular.
+
+Le Header mobile donne priorité au bouton et au titre ; l'identité secondaire
+et les emplacements Notifications/Profil non fonctionnels sont masqués.
+Le design desktop et les tokens existants sont préservés.
+
+Validation : 116 tests Angular, 5 tests de correctif Sass, build réussi,
+tests navigateur autour de 1024 px et zoom réel 100/200/400 % confirmé
+manuellement par l'utilisateur. **Lecteur d'écran réel non testé**.
+L'avertissement initial 504,68 ko contre 500 ko est documenté, sans relever
+les budgets. UI 1.8.4 reste en finalisation avant validation du commit.
