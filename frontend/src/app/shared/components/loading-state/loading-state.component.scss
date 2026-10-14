@@ -1,0 +1,45 @@
+@use '../../../../styles/tokens' as tokens;
+
+:host {
+  display: block;
+  font-family: tokens.$font-family;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-md;
+  padding: tokens.$space-lg tokens.$space-md;
+}
+
+.loading-indicator {
+  flex: 0 0 auto;
+  width: tokens.$space-lg;
+  height: tokens.$space-lg;
+  box-sizing: border-box;
+  border: tokens.$border-width * 3 solid tokens.$border-color;
+  border-top-color: tokens.$navigation-active;
+  border-radius: 50%;
+  animation: loading-spin 1s linear infinite;
+}
+
+.loading-message {
+  min-width: 0;
+  margin: 0;
+  color: tokens.$text-secondary;
+  font-size: tokens.$font-size-body;
+  line-height: tokens.$line-height-body;
+  overflow-wrap: anywhere;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-indicator {
+    animation: none;
+  }
+}
