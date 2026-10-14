@@ -1,0 +1,66 @@
+<form [formGroup]="form" (ngSubmit)="applyFilters()" aria-label="Filtres du Dashboard" novalidate>
+  <p id="dashboard-filter-help">Sélectionnez une entreprise. Les sites et équipements sont facultatifs.</p>
+  <div class="filter-grid">
+    <div class="filter-field" [attr.aria-busy]="companies().status === 'loading'">
+      <label for="dashboard-company">Entreprise (obligatoire)</label>
+      <select id="dashboard-company" formControlName="company_id" required aria-describedby="dashboard-filter-help company-count">
+        <option [ngValue]="null">Sélectionnez une entreprise</option>
+        @for (item of companies().items; track item.id) { <option [ngValue]="item.id">{{ item.name }} — {{ item.code }}</option> }
+      </select>
+      <p id="company-count" class="reference-count">{{ companies().items.length }} / {{ companies().total }} entreprises chargées</p>
+      @if (companies().status === 'loading') { <app-loading-state message="Chargement des entreprises…" /> }
+      @if (companies().status === 'error') {
+        <app-error-state title="Entreprises indisponibles" message="Impossible de charger les entreprises." [retryable]="true" (retry)="loadCompanies(companies().requestedPage)" />
+      }
+      @if (companies().status === 'ready' && companies().page < companies().pages) {
+        <button type="button" (click)="loadCompanies(companies().page + 1)">Charger davantage d’entreprises</button>
+      }
+    </div>
+    <div class="filter-field" [attr.aria-busy]="sites().status === 'loading'">
+      <label for="dashboard-site">Site</label>
+      <select id="dashboard-site" formControlName="site_id" aria-describedby="site-count">
+        <option [ngValue]="null">Tous les sites</option>
+        @for (item of sites().items; track item.id) { <option [ngValue]="item.id">{{ item.name }} — {{ item.code }}</option> }
+      </select>
+      <p id="site-count" class="reference-count">{{ sites().items.length }} / {{ sites().total }} sites chargés</p>
+      @if (sites().status === 'loading') { <app-loading-state message="Chargement des sites…" /> }
+      @if (sites().status === 'error') {
+        <app-error-state title="Sites indisponibles" message="Impossible de charger les sites de cette entreprise." [retryable]="true" (retry)="loadSites(sites().requestedPage)" />
+      }
+      @if (sites().status === 'ready' && sites().page < sites().pages) {
+        <button type="button" (click)="loadSites(sites().page + 1)">Charger davantage de sites</button>
+      }
+    </div>
+    <div class="filter-field" [attr.aria-busy]="equipments().status === 'loading'">
+      <label for="dashboard-equipment">Équipement</label>
+      <select id="dashboard-equipment" formControlName="equipment_id" aria-describedby="equipment-help equipment-count">
+        <option [ngValue]="null">Tous les équipements</option>
+        @for (item of equipments().items; track item.id) { <option [ngValue]="item.id">{{ item.name }} — {{ item.code }}</option> }
+      </select>
+      <p id="equipment-help" class="reference-count">Sélectionnez un site pour choisir un équipement.</p>
+      <p id="equipment-count" class="reference-count">{{ equipments().items.length }} / {{ equipments().total }} équipements chargés</p>
+      @if (equipments().status === 'loading') { <app-loading-state message="Chargement des équipements…" /> }
+      @if (equipments().status === 'error') {
+        <app-error-state title="Équipements indisponibles" message="Impossible de charger les équipements de ce site." [retryable]="true" (retry)="loadEquipments(equipments().requestedPage)" />
+      }
+      @if (equipments().status === 'ready' && equipments().page < equipments().pages) {
+        <button type="button" (click)="loadEquipments(equipments().page + 1)">Charger davantage d’équipements</button>
+      }
+    </div>
+    <div class="filter-field">
+      <label for="dashboard-start">Date de début (UTC)</label>
+      <input id="dashboard-start" type="datetime-local" step="0.001" formControlName="start_time" required aria-describedby="period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+    </div>
+    <div class="filter-field">
+      <label for="dashboard-end">Date de fin (UTC, exclue)</label>
+      <input id="dashboard-end" type="datetime-local" step="0.001" formControlName="end_time" required aria-describedby="period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+    </div>
+  </div>
+  <p id="period-help">Période en UTC : début inclus, fin exclue. La fin ne peut pas être future.</p>
+  <p id="period-error" class="validation-error" aria-live="polite">
+    @if (form.hasError('invalidDate')) { Renseignez deux dates UTC valides. }
+    @else if (form.hasError('invalidPeriod')) { Le début doit précéder strictement la fin. }
+    @else if (form.hasError('futureEnd')) { La date de fin ne peut pas être future. }
+  </p>
+  <button class="apply-button" type="submit" [disabled]="!canApply()">Appliquer les filtres</button>
+</form>
