@@ -1,0 +1,167 @@
+import { importProvidersFrom } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { By, Title } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideRouter, Router, RouterOutlet, Routes } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
+import { vi } from 'vitest';
+import { routes } from './app.routes';
+import { NAVIGATION_ITEMS } from './layout/navigation/navigation.config';
+
+const expectedPages = [
+  ['/dashboard', 'Dashboard'], ['/companies', 'Entreprises'], ['/sites', 'Sites'],
+  ['/equipments', 'Équipements'], ['/sensors', 'Capteurs'], ['/measurements', 'Mesures'],
+  ['/maintenance', 'Maintenance'], ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
+] as const;
+const children = routes[0].children!;
+
+describe('Routing configuration invariants', () => {
+  it('has unique navigation identifiers, labels, destinations and sibling route paths', () => {
+    const ids = NAVIGATION_ITEMS.map((item) => item.id);
+    const labels = NAVIGATION_ITEMS.map((item) => item.label);
+    const paths = NAVIGATION_ITEMS.flatMap((item) => item.status === 'available' ? [item.path] : []);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(new Set(paths).size).toBe(paths.length);
+    function checkSiblings(config: Routes): void {
+      const routePaths = config.map((route) => route.path);
+      expect(new Set(routePaths).size).toBe(routePaths.length);
+      for (const route of config) if (route.children) checkSiblings(route.children);
+    }
+    checkSiblings(routes);
+  });
+
+  it('maps exactly nine documented Sidebar destinations to routes and excludes disabled features', () => {
+    expect(routes).toHaveLength(1);
+    expect(routes[0].path).toBe('');
+    const available = NAVIGATION_ITEMS.filter((item) => item.status === 'available');
+    expect(available.map((item) => item.path)).toEqual(expectedPages.map(([path]) => path));
+    const pageRoutes = children.filter((route) => route.path && !route.path.includes(':') && route.path !== '**');
+    expect(pageRoutes.map((route) => `/${route.path}`)).toEqual(expectedPages.map(([path]) => path));
+    for (const item of available) {
+      const page = pageRoutes.find((route) => `/${route.path}` === item.path)!;
+      expect(page.data?.['pageTitle']).toBe(item.label);
+      expect(page.title).toBe(`${item.label} | Industrial Predict AI`);
+    }
+    const disabled = NAVIGATION_ITEMS.filter((item) => item.status === 'coming-soon');
+    expect(disabled.map((item) => item.id)).toEqual(['reports', 'administration']);
+    for (const item of disabled) {
+      expect('path' in item).toBe(false);
+      expect(children.some((route) => route.path === item.id || route.path?.startsWith(`${item.id}/`))).toBe(false);
+    }
+  });
+
+  it('has a single full-match root redirect targeting Dashboard exactly', () => {
+    const redirects = children.filter((route) => route.redirectTo !== undefined);
+    expect(redirects).toHaveLength(1);
+    expect(redirects[0].path).toBe('');
+    expect(redirects[0].pathMatch).toBe('full');
+    expect(redirects[0].redirectTo).toBe('dashboard');
+  });
+
+  it('places the unique wildcard last with the 404 metadata', () => {
+    expect(children.filter((route) => route.path === '**')).toHaveLength(1);
+    const wildcard = children.at(-1)!;
+    expect(wildcard.path).toBe('**');
+    expect(wildcard.redirectTo).toBeUndefined();
+    expect(wildcard.data).toEqual({ pageTitle: 'Page introuvable', isNotFound: true });
+    expect(wildcard.title).toBe('Page introuvable | Industrial Predict AI');
+    expect(children.filter((route) => route.path === 'equipments/:equipmentId')).toHaveLength(1);
+  });
+
+  it('declares deferred component loaders for Shell and every page without eager components', () => {
+    const componentRoutes = [routes[0], ...children.filter((route) => route.redirectTo === undefined)];
+    for (const route of componentRoutes) {
+      expect(typeof route.loadComponent).toBe('function');
+      expect(route.component).toBeUndefined();
+      expect(route.loadChildren).toBeUndefined();
+    }
+  });
+});
+
+describe('Routing integration gaps', () => {
+  beforeEach(() => {
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    TestBed.configureTestingModule({ providers: [
+      provideRouter(routes), provideNoopAnimations(),
+      importProvidersFrom(
+        NbThemeModule.forRoot({ name: 'industrial-predict' },
+          [{ name: 'industrial-predict', base: 'default', variables: {} }]),
+        NbSidebarModule.forRoot()
+      )
+    ] });
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  async function settle(harness: RouterTestingHarness): Promise<void> {
+    harness.fixture.detectChanges();
+    TestBed.tick();
+    await harness.fixture.whenStable();
+    harness.fixture.detectChanges();
+  }
+
+  it.each(expectedPages)('synchronizes Header and document titles on %s', async (path, title) => {
+    const harness = await RouterTestingHarness.create(path);
+    await settle(harness);
+    expect(harness.routeNativeElement!.querySelector('app-header .header-title')?.textContent).toBe(title);
+    expect(TestBed.inject(Title).getTitle()).toBe(`${title} | Industrial Predict AI`);
+  });
+
+  it('updates equipmentId repeatedly on the same detail component without returning to the list', async () => {
+    const harness = await RouterTestingHarness.create('/equipments/1');
+    await settle(harness);
+    const outlet = harness.routeDebugElement!.query(By.directive(RouterOutlet)).injector.get(RouterOutlet);
+    const originalComponent = outlet.component;
+    const identifiers: (string | null)[] = [];
+    const subscription = outlet.activatedRoute.paramMap.subscribe((params) => identifiers.push(params.get('equipmentId')));
+    try {
+      for (const id of ['1', '42', '987654321']) {
+        if (id !== '1') {
+          await harness.navigateByUrl(`/equipments/${id}?tab=sensors`);
+          await settle(harness);
+        }
+        expect(outlet.component).toBe(originalComponent);
+        expect(outlet.activatedRoute.snapshot.paramMap.get('equipmentId')).toBe(id);
+        expect(harness.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/equipments');
+        expect(harness.routeNativeElement!.querySelector('app-header .header-title')?.textContent).toBe('Détail équipement');
+        expect(TestBed.inject(Title).getTitle()).toBe('Détail équipement | Industrial Predict AI');
+      }
+      expect(identifiers).toEqual(['1', '42', '987654321']);
+    } finally {
+      subscription.unsubscribe();
+    }
+  });
+
+  it('calls only visited component loaders and reuses them for same-page navigation', async () => {
+    const shellLoader = vi.fn(routes[0].loadComponent!);
+    const trackedChildren = children.map((route) => ({
+      ...route,
+      ...(route.loadComponent ? { loadComponent: vi.fn(route.loadComponent) } : {})
+    }));
+    TestBed.inject(Router).resetConfig([{ ...routes[0], loadComponent: shellLoader, children: trackedChildren }]);
+    const harness = await RouterTestingHarness.create('/dashboard');
+    await settle(harness);
+    const loader = (path: string) => trackedChildren.find((route) => route.path === path)!.loadComponent!;
+    expect(shellLoader).toHaveBeenCalledTimes(1);
+    expect(loader('dashboard')).toHaveBeenCalledTimes(1);
+    for (const route of trackedChildren) {
+      if (route.loadComponent && route.path !== 'dashboard') expect(route.loadComponent).not.toHaveBeenCalled();
+    }
+    await harness.navigateByUrl('/sites');
+    await settle(harness);
+    expect(loader('sites')).toHaveBeenCalledTimes(1);
+    await harness.navigateByUrl('/sites?company=2');
+    await settle(harness);
+    expect(loader('sites')).toHaveBeenCalledTimes(1);
+    await harness.navigateByUrl('/inconnu');
+    await settle(harness);
+    expect(loader('**')).toHaveBeenCalledTimes(1);
+    expect(shellLoader).toHaveBeenCalledTimes(1);
+    for (const route of trackedChildren) {
+      if (route.loadComponent && !['dashboard', 'sites', '**'].includes(route.path!)) {
+        expect(route.loadComponent).not.toHaveBeenCalled();
+      }
+    }
+  });
+});

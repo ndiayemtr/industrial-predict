@@ -1,0 +1,86 @@
+@use '../../../styles/tokens' as tokens;
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: tokens.$space-lg;
+  width: 100%;
+  min-width: 0;
+  color: tokens.$text-primary;
+}
+
+.header-main,
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-md;
+}
+
+.header-main,
+.header-identity {
+  min-width: 0;
+}
+
+.header-identity {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$space-xs;
+}
+
+.header-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: tokens.$font-size-body;
+}
+
+.header-description,
+.unavailable-label {
+  color: tokens.$text-secondary;
+  font-size: tokens.$font-size-small;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: tokens.$header-background;
+  border: tokens.$border-width solid tokens.$border-color;
+  border-radius: tokens.$border-radius;
+  min-height: 44px;
+  padding: tokens.$space-sm tokens.$space-md;
+}
+
+.sidebar-toggle {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  flex-shrink: 0;
+  padding: tokens.$space-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: tokens.$content-background;
+  }
+
+  &:focus-visible {
+    outline: 2px solid tokens.$navigation-active;
+    outline-offset: 2px;
+  }
+}
+
+.header-actions {
+  gap: tokens.$space-lg;
+}
+
+.header-placeholder {
+  display: flex;
+  align-items: center;
+  gap: tokens.$space-sm;
+  cursor: default;
+  color: tokens.$text-secondary;
+  font-size: tokens.$font-size-small;
+}
+
+.unavailable-label {
+  white-space: nowrap;
+}

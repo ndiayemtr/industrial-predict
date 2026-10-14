@@ -1,0 +1,22 @@
+<a class="skip-link" [href]="currentUrl()" aria-controls="main-content"
+  (click)="skipToContent($event)">Aller au contenu principal</a>
+
+<nb-layout class="shell-layout">
+  <nb-sidebar #sidebar id="shell-sidebar" tag="shell-sidebar" [containerFixed]="false"
+    [attr.aria-hidden]="sidebar.state === 'collapsed' ? 'true' : null"
+    [attr.inert]="sidebar.state === 'collapsed' ? '' : null"
+    role="complementary" aria-label="Navigation de l’application">
+    <app-sidebar />
+  </nb-sidebar>
+
+  <!-- Nebular 17's subheader is beside the sidebar and cannot be fixed. -->
+  <nb-layout-header subheader role="banner" aria-label="En-tête de l’application">
+    <app-header [sidebarState]="sidebar.state" [sidebarTag]="sidebar.tag" sidebarId="shell-sidebar" />
+  </nb-layout-header>
+
+  <nb-layout-column>
+    <main #mainContent id="main-content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </nb-layout-column>
+</nb-layout>

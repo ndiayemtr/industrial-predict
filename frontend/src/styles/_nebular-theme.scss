@@ -1,0 +1,58 @@
+// A single light theme can resolve its values at build time instead of emitting
+// the complete Nebular CSS custom-property dictionary.
+@use '@nebular/theme/styles/theming' as nb with (
+  $nb-enable-css-custom-properties: false
+);
+@use '@nebular/theme/styles/themes/default';
+// Nebular 17 does not expose this mixin collection through its package exports.
+// This path is tied to the pinned version; verify it when upgrading Nebular.
+@use '../../node_modules/@nebular/theme/styles/global/components' as components;
+@use '@nebular/theme/styles/global/typography/typography' as typography;
+@use './tokens' as tokens;
+
+// Inherit the light theme's definitions, but emit only our custom theme's CSS.
+nb.$nb-themes: nb.nb-register-theme(
+  (
+    font-family-primary: tokens.$font-family,
+    font-family-secondary: tokens.$font-family,
+    text-basic-color: tokens.$text-primary,
+    text-hint-color: tokens.$text-secondary,
+    color-primary-500: tokens.$navigation-active,
+    background-basic-color-1: tokens.$surface-background,
+    background-basic-color-3: tokens.$content-background,
+    border-basic-color-4: tokens.$border-color,
+    border-radius: tokens.$border-radius,
+    layout-background-color: tokens.$content-background,
+    layout-padding: tokens.$space-xl,
+    layout-medium-padding: tokens.$space-lg,
+    layout-small-padding: tokens.$space-md,
+    sidebar-background-color: tokens.$sidebar-background,
+    sidebar-text-color: tokens.$sidebar-text,
+    sidebar-width: tokens.$sidebar-width,
+    sidebar-padding: tokens.$space-lg,
+    sidebar-shadow: none,
+    header-background-color: tokens.$header-background,
+    header-height: tokens.$header-height,
+    header-padding: tokens.$space-lg tokens.$space-xl,
+    header-shadow: none,
+    card-background-color: tokens.$surface-background,
+    card-border-color: tokens.$border-color,
+    card-padding: tokens.$space-xl,
+    card-margin-bottom: 0,
+    menu-text-color: tokens.$sidebar-text,
+    menu-item-active-background-color: tokens.$navigation-active,
+    menu-item-active-text-color: tokens.$sidebar-text
+  ),
+  industrial-predict,
+  default
+);
+nb.$nb-enabled-themes: (industrial-predict);
+
+@include nb.nb-install() {
+  // Emit themes only for components currently used by the Shell and Dashboard.
+  // Add the appropriate mixin here when a later UI step introduces a component.
+  @include components.nb-layout-theme();
+  @include components.nb-sidebar-theme();
+  @include components.nb-card-theme();
+  @include typography.nb-typography();
+}

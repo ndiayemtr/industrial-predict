@@ -1,0 +1,41 @@
+@use './styles/nebular-theme';
+@use './styles/tokens' as tokens;
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: tokens.$font-family;
+  background: tokens.$content-background;
+  color: tokens.$text-primary;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// Only the selected custom theme is emitted by nebular-theme.
+// This divider is scoped to the Shell, rather than changing every Nebular header.
+.shell-layout nb-layout-header nav {
+  border-bottom: tokens.$border-width solid tokens.$border-color;
+}
+
+.skip-link {
+  position: fixed;
+  top: tokens.$space-sm;
+  left: tokens.$space-sm;
+  z-index: 1100;
+  transform: translateY(-200%);
+  padding: tokens.$space-sm tokens.$space-md;
+  border-radius: tokens.$border-radius;
+  background: tokens.$surface-background;
+  color: tokens.$text-primary;
+
+  &:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid tokens.$navigation-active;
+    outline-offset: 2px;
+  }
+}
