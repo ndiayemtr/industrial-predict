@@ -64,12 +64,29 @@ describe('DashboardComponent', () => {
     expect([...cards].map((el: Element) => el.querySelector('.temporal-scope')!.textContent)).toEqual(['État actuel', 'État actuel', 'État actuel', 'Sur la période', 'État actuel', 'Au calcul']);
     expect(fixture.nativeElement.querySelector('app-equipment-summary')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-sensor-summary')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-measurement-summary')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-maintenance-summary')).not.toBeNull();
     expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
     http.expectNone(() => true);
     apply(); const next = request();
     expect(fixture.nativeElement.querySelector('.kpi-grid')).toBeNull();
     next.flush({}, { status: 500, statusText: 'Error' }); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-equipment-summary, app-sensor-summary, .kpi-grid')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-equipment-summary, app-sensor-summary, app-measurement-summary, app-maintenance-summary, .kpi-grid')).toBeNull();
+  });
+  it('keeps measurements and maintenance absent in idle/loading/empty and reuses the exact success response', () => {
+    const sections = () => fixture.nativeElement.querySelector('app-measurement-summary, app-maintenance-summary');
+    expect(sections()).toBeNull(); apply(); expect(sections()).toBeNull();
+    request().flush(emptyDashboardResponse()); fixture.detectChanges(); expect(sections()).toBeNull();
+    const response = emptyDashboardResponse(); response.assets.sensors = 1;
+    response.measurements.last_measurements = [{ sensor_id: 1, sensor_name: 'Relevé API', sensor_code: 'REAL-1', equipment_id: 42,
+      timestamp: '2026-09-01T00:00:00Z', value: 0, unit: null, quality: null, age_seconds: 123 }];
+    response.maintenance.completed.completed_without_completed_at = 9;
+    apply(); request().flush(response); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-measurement-summary').textContent).toContain('2026-09-01T00:00:00Z');
+    expect(fixture.nativeElement.querySelector('app-maintenance-summary').textContent).toContain('Terminées sans date de fin');
+    expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
+    expect(fixture.nativeElement.querySelectorAll('.kpi-grid app-dashboard-kpi-card')).toHaveLength(6);
+    http.expectNone(() => true);
   });
   it.each([400, 422, 404, 500])('shows the appropriate HTTP %s state and keeps filters available', status => {
     apply(); request().flush({ detail: 'Test error' }, { status, statusText: 'Error' }); fixture.detectChanges();

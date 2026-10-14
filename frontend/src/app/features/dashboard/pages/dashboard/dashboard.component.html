@@ -44,6 +44,8 @@
       </section>
       <app-equipment-summary [status]="state.data.equipment_status" [criticality]="state.data.equipment_criticality" />
       <app-sensor-summary [status]="state.data.sensor_status" [coverage]="state.data.sensor_coverage" [activity]="state.data.measurements.activity" />
+      <app-measurement-summary [summary]="state.data.measurements" [period]="state.data.period" />
+      <app-maintenance-summary [summary]="state.data.maintenance" />
     }
   }
 </section>

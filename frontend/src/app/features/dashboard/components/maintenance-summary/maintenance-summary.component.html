@@ -1,0 +1,54 @@
+<section aria-labelledby="maintenance-summary-title">
+  <h2 id="maintenance-summary-title">Maintenance</h2>
+  <p class="section-context">État actuel — interventions ouvertes (planifiées ou en cours), indépendamment de la période. Les retards de démarrage sont évalués au calcul.</p>
+  <div class="summary-grid">
+    <app-dashboard-kpi-card label="Interventions ouvertes" [value]="summary().open.total" temporalScope="État actuel" />
+    <app-dashboard-kpi-card label="Retards de démarrage" [value]="summary().overdue.overdue" temporalScope="Au calcul" information="Planifiées avant le calcul, sans date de démarrage." />
+    <app-dashboard-kpi-card label="Planifiées sans date prévue" [value]="summary().overdue.planned_without_planned_at" temporalScope="État actuel" information="Ces interventions ne peuvent pas être classées en retard par leur date prévue." />
+  </div>
+  <table>
+    <caption>Interventions ouvertes par statut — État actuel</caption>
+    <thead><tr><th scope="col">Statut</th><th scope="col">Effectif</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Planifiées</th><td>{{ summary().open.planned }}</td></tr>
+      <tr><th scope="row">En cours</th><td>{{ summary().open.in_progress }}</td></tr>
+      <tr><th scope="row">Autres / non reconnus</th><td>{{ summary().open.other }}</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <caption>Priorités des interventions ouvertes — {{ summary().open.priorities.total }} interventions — État actuel</caption>
+    <thead><tr><th scope="col">Priorité déclarée</th><th scope="col">Effectif</th></tr></thead>
+    <tbody>
+      @for (category of summary().open.priorities.distribution; track $index) {
+        <tr><th scope="row">{{ categoryLabel(category.value, 'priority') }}</th><td>{{ category.count }}</td></tr>
+      } @empty { <tr><td colspan="2">Aucune priorité fournie par l’API.</td></tr> }
+    </tbody>
+  </table>
+  <h3 class="subsection-title">Interventions terminées</h3>
+  <p class="section-context">Sur la période — date de fin dans l’intervalle UTC [début inclus, fin exclue).</p>
+  <div class="summary-grid">
+    <app-dashboard-kpi-card label="Interventions terminées" [value]="summary().completed.total" temporalScope="Sur la période" />
+    <app-dashboard-kpi-card label="Part corrective" [value]="summary().corrective.ratio.percentage === null ? 'Non calculable' : summary().corrective.ratio.percentage" unit="%" temporalScope="Sur la période"
+      [information]="summary().corrective.ratio.numerator + ' interventions correctives sur ' + summary().corrective.ratio.denominator + ' interventions terminées.'" />
+    <app-dashboard-kpi-card label="Terminées sans date de fin" [value]="summary().completed.completed_without_completed_at" temporalScope="État actuel" information="Sur le périmètre, hors décompte de période faute de date de fin." />
+  </div>
+  <table>
+    <caption>Types des interventions terminées — Sur la période</caption>
+    <thead><tr><th scope="col">Type déclaré</th><th scope="col">Effectif</th></tr></thead>
+    <tbody>
+      @for (category of summary().completed.types.distribution; track $index) {
+        <tr><th scope="row">{{ categoryLabel(category.value, 'type') }}</th><td>{{ category.count }}</td></tr>
+      } @empty { <tr><td colspan="2">Aucun type fourni par l’API pour cette période.</td></tr> }
+    </tbody>
+  </table>
+  <h3 class="subsection-title">Arrêts déclarés et couverture de saisie</h3>
+  <p class="section-context">Sur la période — durées déclarées des interventions terminées, sans estimation de disponibilité.</p>
+  <div class="summary-grid">
+    <app-dashboard-kpi-card label="Arrêt déclaré en minutes" [value]="summary().downtime.total_minutes" unit="min" temporalScope="Sur la période" />
+    <app-dashboard-kpi-card label="Arrêt déclaré en heures" [value]="summary().downtime.total_hours" unit="h" temporalScope="Sur la période" />
+    <app-dashboard-kpi-card label="Couverture des durées déclarées" [value]="summary().downtime.coverage.ratio.percentage === null ? 'Non calculable' : summary().downtime.coverage.ratio.percentage" unit="%" temporalScope="Sur la période"
+      [information]="summary().downtime.coverage.valid_values + ' durées valides sur ' + summary().downtime.coverage.eligible_records + ' interventions éligibles.'" />
+  </div>
+  <p class="coverage-context">{{ downtimeContext() }}</p>
+  <p class="section-context">Affichage monétaire différé : aucune devise commune définie pour le Dashboard V1.</p>
+</section>

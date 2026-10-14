@@ -1,0 +1,14 @@
+@use '../summary' as summary;
+@use '../../../../../styles/tokens' as tokens;
+@include summary.layout;
+
+.quality-counts, .last-readings dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: tokens.$space-md; margin: tokens.$space-md 0; }
+dt { font-weight: 600; }
+dd { margin: tokens.$space-xs 0 0; }
+dl div, li { min-width: 0; overflow-wrap: anywhere; }
+.daily-context, .readings-title { margin-top: tokens.$space-lg; }
+.readings-title { font-size: 1.125rem; color: tokens.$text-primary; }
+.last-readings { list-style: none; padding: 0; margin: 0; display: grid; gap: tokens.$space-md; }
+.last-readings li { padding: tokens.$space-md; border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius; background: tokens.$surface-background; }
+h4 { margin: 0; font-size: tokens.$font-size-body; }
+td[colspan] { width: auto; text-align: left; }
