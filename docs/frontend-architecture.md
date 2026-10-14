@@ -14,11 +14,12 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient prévu pour l'intégration API, pas encore configuré dans l'application
 
-État vérifié le 14 octobre 2026 sur `feature/frontend-shared-components`,
-HEAD `e3a2a2c`, avec les corrections UI 1.8.2 non commitées.
+État documentaire synchronisé le 14 octobre 2026 sur `feature/frontend-dashboard`,
+HEAD de référence `acd872b`. Le socle UI 1.1 à UI 1.8 est terminé et fusionné
+dans `main` ; UI 2.1 est validée et UI 2.2 n'est pas commencée.
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente — UI 1.1 à UI 1.8.3
+## Structure réellement présente — UI 1.1 à UI 1.8
 
 ```text
 frontend/
@@ -199,13 +200,17 @@ src/app/
 Les fonctionnalités ci-dessous sont des objectifs métier futurs ; les routes
 actuelles ne rendent que des placeholders.
 
-### Dashboard
+### Dashboard V1 — conception validée, non implémentée
 
-- KPI globaux
-- état de santé des équipements
-- risques de panne
-- alertes critiques
-- activité récente
+- synthèse des agrégats existants
+- équipements : statut et criticité actuels
+- capteurs : statut, couverture et émission
+- mesures : volume, qualité déclarée et derniers relevés
+- maintenance : ouverte, en retard de démarrage et terminée sur la période
+
+Les intentions antérieures de santé des équipements, risques de panne et alertes
+critiques restent des objectifs ultérieurs ; elles ne sont pas fournies par le
+contrat Dashboard et ne font pas partie de V1 (D014 / DASH-01).
 
 ### Équipements
 
@@ -370,7 +375,11 @@ Les états restent distincts : `loading`, `success`, `empty`, `error`.
 `success` est le rendu normal des données par la page métier ; aucun composant
 partagé spécifique n'est prévu pour cet état.
 
-## Validation UI 1.8.3 et finalisation UI 1.8.4
+## Historique de validation UI 1.8 — socle terminé
+
+UI 1.8.4 est clôturée : commit `12a18c3`, fusion dans `main` via `acd872b`.
+Les résultats ci-dessous proviennent de la validation du socle ; aucun build
+ou test applicatif n'est relancé pendant la synchronisation documentaire UI 2.1.1.
 
 La suite frontend comprend **116 tests Angular réussis**, dont les tests des
 quatre composants partagés et les 19 tests responsive ajoutés en UI 1.8.2.
@@ -392,6 +401,220 @@ sont pas présentés comme une preuve de zoom réel ; la confirmation utilisateu
 complète cette limite de l'outillage. **Aucun lecteur d'écran réel n'a été testé**.
 La vérification du DOM/ARIA et du clavier ne certifie pas à elle seule la
 compatibilité de toutes les technologies d'assistance.
+
+## Dashboard V1 — contrat et architecture cible UI 2
+
+Conception validée en UI 2.1 ; documentation synchronisée en UI 2.1.1.
+**UI 2.2 n'est pas commencée.** Le placeholder, la configuration Angular et
+les composants existants restent inchangés. Les choix DASH-01 à DASH-06 sont
+enregistrés dans D014 de [decisions.md](decisions.md).
+Le plan de tests et les étapes UI 2.2 à UI 2.8 figurent dans [roadmap.md](roadmap.md).
+
+### Contrat backend réellement présent
+
+Source de vérité : `backend/app/api/routes/dashboard.py`,
+`backend/app/schemas/dashboard.py`, `backend/app/services/dashboard_service.py`,
+`backend/app/repositories/dashboard_repository.py` et
+`tests/dashboard/test_route.py`, `test_service.py`, `test_repository.py`.
+Ces fichiers sont examinés en lecture seule ; aucune API n'est créée ou modifiée.
+
+`GET /api/v1/dashboard` retourne `DashboardRead` sans pagination.
+
+| Query param | Type et présence | Validation backend |
+| --- | --- | --- |
+| `company_id` | Entier obligatoire | > 0 ; entreprise existante |
+| `start_time` | Datetime obligatoire | Fuseau obligatoire ; normalisation UTC |
+| `end_time` | Datetime obligatoire | Fuseau obligatoire ; `start_time < end_time <= calculated_at` |
+| `site_id` | Entier facultatif, omis si absent | > 0 ; site existant appartenant à l'entreprise |
+| `equipment_id` | Entier facultatif, omis si absent | > 0 ; équipement existant appartenant à l'entreprise et au site si celui-ci est fourni |
+
+Un équipement sans `site_id` est accepté : le service vérifie son rattachement
+via son site. La réponse `scope.site_id` reste `null` dans ce cas. Une combinaison
+incohérente est rejetée, jamais élargie. Le frontend enverra des chaînes ISO 8601
+avec fuseau, de préférence `Z` ; les datetime de réponse sont des chaînes JSON.
+Le backend ne fixe ni période par défaut ni durée maximale.
+
+| Bloc de réponse | Données disponibles |
+| --- | --- |
+| `scope` | `company_id`, `site_id`, `equipment_id` ; les deux derniers peuvent être null |
+| `period` | `start_time`, `end_time`, `calculated_at` UTC |
+| `assets` | Comptages `sites`, `equipments`, `sensors`, parents sans enfant inclus |
+| `equipment_status` | `total`, `operational`, `maintenance`, `out_of_service`, `other`, `distribution`, `operational_ratio` |
+| `equipment_criticality` | `total`, `low`, `medium`, `high`, `critical`, `other`, `distribution`, `high_or_critical`, `high_or_critical_unavailable` |
+| `sensor_coverage` | `equipments_total`, `equipments_with_active_sensor`, `coverage` |
+| `sensor_status` | `total`, `active`, `inactive`, `other`, `distribution`, `active_ratio` |
+| `measurements.activity` | `measurements_total`, `active_sensors_total`, `active_sensors_with_measurement`, `active_sensors_reporting_ratio` |
+| `measurements.quality` | `total`, `good`, `suspect`, `bad`, `missing`, `estimated`, `other`, `distribution`, `good_ratio` |
+| `measurements.daily_volume` | Tableau `{ date: string, count: number }`, jours UTC `YYYY-MM-DD` |
+| `measurements.last_measurements` | Un relevé par capteur du périmètre, y compris sans mesure |
+| `maintenance.open` | `total`, `planned`, `in_progress`, `other`, `priorities` (total, low/medium/high/critical/other, distribution) |
+| `maintenance.overdue` | `overdue`, `planned_without_planned_at` |
+| `maintenance.completed` | `total`, `completed_without_completed_at`, `types` (total, preventive/corrective/predictive/other, distribution) |
+| `maintenance.corrective` | `corrective_completed`, `completed_total`, `ratio` |
+| `maintenance.downtime` | `total_minutes`, `total_hours`, `coverage` |
+| `maintenance.cost` | `total_cost`, `currency`, `coverage` ; données conservées dans le DTO, affichage monétaire différé |
+
+Les comptages sont des entiers JSON, les valeurs/sommes/pourcentages des nombres.
+Un ratio contient `numerator`, `denominator` et `percentage: number | null` :
+dénominateur nul → null, sinon pourcentage arrondi par le backend à deux décimales.
+Une distribution contient des `{ value: string, count: number }` : catégories
+brutes conservées, inconnues incluses dans `other`, catégorie SQL nulle représentée
+par la chaîne `"null"`. Ne pas fermer ces chaînes par une union d'enum restrictive.
+La couverture des sommes contient `valid_values`, `eligible_records` et `ratio`.
+
+Chaque dernier relevé comprend `sensor_id`, `sensor_name`, `sensor_code`,
+`equipment_id`, `timestamp`, `value`, `unit`, `quality`, `age_seconds`.
+Les identifiants/noms/codes sont renseignés ; timestamp, valeur, unité, qualité
+et âge sont nullables. Sans relevé, ne pas inventer une valeur nulle à zéro.
+L'unité vient du capteur et peut rester renseignée sans mesure.
+
+### Temps, qualité et limites de calcul
+
+- **État actuel** : inventaire, statut/criticité des équipements, statut et
+  couverture capteurs, maintenances ouvertes (`planned`/`in_progress`) ;
+  indépendants du filtre temporel, sans reconstitution des états historiques.
+- **Sur la période** : mesures avec `timestamp` dans `[start_time, end_time)` ;
+  interventions `completed` avec `completed_at` dans le même intervalle ;
+  leurs types, part corrective, coûts et arrêts déclarés.
+- **Au calcul** : dernières mesures `timestamp <= calculated_at`, sans
+  restriction à la période ; retard de démarrage des interventions `planned`
+  avec `planned_at < calculated_at` et `started_at` absent.
+- Les dates prévues manquantes (`planned_without_planned_at`) et dates de fin
+  manquantes (`completed_without_completed_at`) sont des anomalies de saisie
+  comptées sur le périmètre actuel, pas sur la période.
+- Le volume quotidien est regroupé en UTC et complété avec zéro. Les jours
+  partiels sont possibles ; une fin à minuit exclut ce nouveau jour.
+- Les capteurs ayant émis sont actuellement actifs avec au moins une mesure
+  sur la période, quelle que soit la qualité ; pas de fréquence attendue déduite.
+- La part opérationnelle n'est pas une disponibilité historique ; la qualité
+  `good` est déclarée et ne prouve pas la validité physique des valeurs.
+- `high_or_critical_unavailable` compte uniquement high/critical en maintenance
+  ou out_of_service ; aucune liste nominative ni probabilité de panne fournie.
+- Dernier relevé choisi par timestamp décroissant puis id décroissant ; âge
+  calculé à `calculated_at`, sans seuil de silence inventé ni compteur live.
+- Coûts et arrêts : zéro intervention éligible → somme 0 et pourcentage de couverture null ;
+  interventions présentes sans valeur valide → somme null ; couverture partielle
+  → somme partielle explicite. Les valeurs négatives/absentes sont exclues ; les
+  coûts non finis aussi. `currency` vaut actuellement null (DASH-03).
+- L'arrêt est une somme de déclarations, pas une indisponibilité dédupliquée ;
+  ne pas inventer MTBF, MTTR, moyenne globale des mesures ou économie réalisée.
+
+| HTTP | Comportement réel / traitement frontend prévu |
+| --- | --- |
+| 200 | Réponse structurée, y compris périmètre vide et valeurs nullables |
+| 400 | Dates sans fuseau, période vide/inversée, fin future, site hors entreprise ou équipement hors entreprise/site ; corriger les filtres |
+| 404 | `Company not found`, `Site not found`, `Equipment not found`, `Equipment site not found` ; vérifier la référence, sans élargissement silencieux |
+| 422 | Paramètres obligatoires absents ou mal typés, identifiants non positifs, datetime invalide ; erreurs de saisie |
+| 500 éventuel / réseau | Erreur non interceptée ou indisponibilité ; message accessible et relance manuelle |
+
+Les 400/404 contiennent `{ detail: string }` ; la validation FastAPI 422 utilise
+une liste dans `detail`. Aucun contrôle d'autorisation utilisateur/entreprise
+n'apparaît dans la route actuelle : `company_id` filtre le périmètre, sans
+sécuriser l'accès multi-entreprises. Ce risque ne sera pas corrigé par l'UI seule.
+
+### Références et filtres prévus
+
+Le Dashboard ne retourne pas les noms/listes de référence nécessaires aux filtres.
+Utiliser les API existantes, sans nouvelle API :
+
+| Référence | GET relatif à `/api/v1` |
+| --- | --- |
+| Entreprises | `/companies?page=…&page_size=…&search=…` |
+| Sites | `/sites?company_id=…&page=…&page_size=…&search=…` |
+| Équipements | `/equipments?site_id=…&page=…&page_size=…&search=…` |
+
+Les réponses `Page<T>` contiennent `items`, `total`, `page`, `page_size`, `pages`.
+Page initiale 1, taille par défaut 20, maximum 100 : ne pas présenter la première
+page comme une liste exhaustive. Les références affichent id, nom/code et parent
+réel ; ne pas coder d'entreprise ou de données d'exemple en dur.
+
+Entreprise obligatoire ; « Tous les sites » et « Tous les équipements » omettent
+les filtres facultatifs. Changer d'entreprise efface site et équipement ; changer
+de site efface équipement. Le sélecteur d'équipement sera proposé après choix du
+site (DASH-04), sans imposer cette limitation au DashboardApiService.
+
+Le préréglage initial prévu est sept jours glissants UTC, soit 168 heures :
+à l'application, fixer une fin unique T et un début T − 168 heures (DASH-05).
+Les bornes envoyées restent fixes après application ; une saisie de période
+explicite conserve ses valeurs validées. Les dates restent avec fuseau et la fin
+exclusive est indiquée à l'utilisateur. Aucun GET Dashboard tant qu'entreprise
+et période valides ne sont pas disponibles ; application explicite des filtres,
+pas de requête à chaque frappe ni de polling.
+
+### Architecture Angular cible — aucun fichier créé en UI 2.1.1
+
+```text
+src/app/
+├── core/
+│   ├── http/api-config.ts
+│   ├── api/reference-data-api.service.ts
+│   └── models/ (page.model.ts, reference-data.model.ts)
+└── features/dashboard/
+    ├── models/ (dashboard.model.ts, dashboard-filters.model.ts, dashboard-state.model.ts)
+    ├── data-access/dashboard-api.service.ts
+    ├── dashboard.facade.ts
+    ├── pages/dashboard/dashboard.component.*
+    └── components/
+        ├── dashboard-filters/
+        ├── dashboard-kpi-card/
+        ├── equipment-summary/
+        ├── sensor-summary/
+        ├── measurement-summary/
+        └── maintenance-summary/
+```
+
+- DTO TypeScript stricts conformes aux schémas, noms JSON et nullabilité ;
+  dates conservées en chaînes de transport, formatage explicite à l'affichage.
+- DashboardApiService : GET et HttpParams, sans filtre absent envoyé sous forme
+  `null`/chaîne vide ; aucun calcul de KPI. HttpClient sera configuré plus tard.
+- Service de références : centraliser les CRUD paginés, sans duplication HTTP.
+- Façade locale à la page : filtres appliqués, états, actualisation/relance,
+  traduction des erreurs ; `switchMap` pour écarter les réponses obsolètes,
+  une réponse partagée entre les sections, cycle de vie nettoyé ; pas de store global.
+- Page standalone lazy : remplacer le placeholder dans le chargeur Dashboard
+  seulement, conserver métadonnées Router et Header global ; PageHeader fournit
+  l'unique h1. Aucun import Dashboard dans le Shell.
+- Présentation OnPush : entrées typées, sections et cartes sans HTTP ni logique
+  métier ; tokens SCSS et styles Nebular ciblés, sans nouveaux modules volumineux.
+- DASH-06 : base relative `/api/v1`, proxy développement prévu vers
+  `http://127.0.0.1:8000`, reverse proxy de production à prévoir ultérieurement.
+  Le port est confirmé par l'utilisateur ; aucune configuration réseau créée ici.
+
+### États de la page prévus
+
+| État | Comportement prévu |
+| --- | --- |
+| Invitation initiale | PageHeader et filtres, « Sélectionnez une entreprise » ; aucune requête Dashboard ni entreprise supposée |
+| loading | LoadingState unique et zone de résultats aria-busy ; conserver filtres et focus |
+| empty | EmptyState si tous les comptages d'actifs sont nuls ; périmètre/période visibles ; état vide local pour une section sans données |
+| error | ErrorState ; retry pour réseau/serveur uniquement sur action utilisateur ; pour 400/422 corriger les filtres, pour 404 revoir la référence |
+| success | Cinq sections avec données réelles ; aucun composant success partagé supplémentaire |
+
+Une période sans mesures ne vide pas l'inventaire ni la maintenance. Ne pas
+déduire l'état vide de la seule longueur de `daily_volume`, qui peut contenir
+des jours à zéro, ni confondre des derniers relevés absents avec aucun capteur.
+Les changements de filtres/chargements ne doivent pas forcer le focus ou une
+navigation ; conserver skip link, focus du Shell et annonces accessibles uniques.
+
+### Risques à contrôler pendant l'intégration
+
+- Autorisation multi-entreprises absente dans la route actuelle ; filtrage et
+  sélection ne remplacent pas authentification/RBAC.
+- Pagination des références et suppression/rattachement concurrent d'une
+  référence ; gérer 404 et cohérence des sélections.
+- UTC, fin exclusive, jours partiels et horloge client en avance (fin future rejetée).
+- Environ 21 lectures d'agrégats plus validation du périmètre ; mesurer la latence
+  réelle. Aucune durée maximale de période, derniers relevés non paginés :
+  une pagination d'affichage locale ne réduit pas le payload backend.
+- `calculated_at` commun sans garantie explicite de snapshot SQL entre agrégats ;
+  rattachements/statuts actuels, pas de reconstruction historique.
+- Nullabilité, catégories inconnues, couverture partielle et coûts en Float ;
+  ne pas convertir en zéro ni présenter une précision comptable garantie.
+- Responsive, longs noms et tables jusqu'à 320 px ; lecteur d'écran réel non testé,
+  à vérifier si disponible sans prétendre à une certification.
+- Bundle initial historique 504,68 ko contre 500 ko de warning (1 Mo d'erreur) :
+  budgets inchangés, mesure séparée du coût initial et du chunk Dashboard lazy ;
+  conserver thème unique, correctif et contrôles Sass existants.
 
 ## Autres composants partagés envisagés
 

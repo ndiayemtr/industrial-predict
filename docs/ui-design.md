@@ -206,6 +206,89 @@ contenu s'applique. Les changements de mode ne laissent pas de fond bloquant.
   ont été contrôlés ; cela ne constitue pas une certification d'accessibilité
   ni une preuve de comportement vocal sur chaque lecteur d'écran.
 
-UI 1.8.1 à UI 1.8.3 sont validées ; UI 1.8.4 finalise les documents et contrôles
-avant validation du livrable et autorisation du commit. Les écrans métier et
-l'intégration API restent une phase ultérieure non commencée.
+UI 1.8 est terminée, commitée dans `12a18c3` et fusionnée via `acd872b`.
+Les résultats ci-dessus sont historiques et ne sont pas relancés en UI 2.1.1.
+UI 2.1 a validé la conception du Dashboard V1 ; l'intégration métier UI 2.2
+n'est pas commencée et le Dashboard reste un placeholder.
+
+## Dashboard V1 — conception visuelle validée, non implémentée
+
+Les règles suivantes seront appliquées en UI 2.2 à UI 2.8. DASH-01 à DASH-06
+sont enregistrées dans D014 de [decisions.md](decisions.md). Le contrat et
+l'architecture cible figurent dans [frontend-architecture.md](frontend-architecture.md).
+
+### Composition prévue
+
+Le Shell et son Header restent inchangés. PageHeader fournit le seul h1
+« Dashboard », une description et les actions de page projetées. Le périmètre,
+la période UTC avec fin exclusive et `calculated_at` restent lisibles.
+Un formulaire de filtres précède les cinq sections :
+
+| Section | Contenu réel prévu |
+| --- | --- |
+| Synthèse | Cartes équipements, capteurs actifs, couverture capteurs, mesures reçues, maintenances ouvertes et retards de démarrage ; inventaire sites/équipements/capteurs accessible |
+| Équipements | Statuts et criticités, part opérationnelle, nombre high/critical et nombre high/critical indisponibles ; aucune liste nominative non fournie par le contrat |
+| Capteurs | Statut déclaré, couverture en capteurs actifs, capteurs actuellement actifs ayant émis sur la période |
+| Mesures | Qualité déclarée, volumes quotidiens UTC, derniers relevés par capteur avec valeur, unité, qualité, date et âge au calcul |
+| Maintenance | Charge ouverte et priorités, retards de démarrage, terminées par type, part corrective, arrêt déclaré avec couverture et anomalies de dates |
+
+Cartes KPI, tableaux, répartitions et barres CSS légères (DASH-02), avec texte
+et effectifs accessibles ; aucune bibliothèque graphique ajoutée. Aucun Health
+Score, RUL, risque de panne ou alerte fictive (DASH-01). L'affichage monétaire
+est différé faute de devise (DASH-03), même si `maintenance.cost` est disponible.
+
+### Portée et précision des libellés
+
+| Libellé | Indicateurs concernés |
+| --- | --- |
+| État actuel | Inventaire, statuts, criticité, couverture capteurs, maintenances ouvertes ; anomalies de dates manquantes sur le périmètre |
+| Sur la période | Volume/qualité des mesures, capteurs ayant émis, maintenances terminées, part corrective et arrêt déclaré dans `[start_time, end_time)` |
+| Au calcul | Dernières mesures et leur âge, retards de démarrage, référence à `calculated_at` |
+
+Les derniers relevés ne sont pas restreints à la période choisie : l'indiquer
+dans cette section pour éviter une interprétation trompeuse. Ne pas appeler
+« disponibilité » la part opérationnelle, ni « santé » la criticité, ni « télémétrie
+complète » le volume reçu. Un capteur actif n'est pas nécessairement communicant.
+
+Un vrai zéro s'affiche comme zéro ; un pourcentage null comme « Non calculable » ;
+une valeur absente comme « Non renseignée ». Signaler les valeurs inconnues dans
+« Autres / non reconnus », sans leur attribuer un état sain ou critique.
+Une somme partielle affiche sa couverture de saisie, effectifs inclus.
+La couleur ne remplace jamais les libellés, unités ou avertissements explicites.
+
+### Filtres et états accessibles prévus
+
+Entreprise obligatoire sans valeur inventée ; site et équipement facultatifs.
+Le sélecteur d'équipement est proposé après choix du site (DASH-04), simple
+politique UX qui ne supprime pas le support API d'un équipement sans site.
+Labels explicites, ordre clavier naturel, focus visible et bouton Appliquer.
+Les sélecteurs consommeront les listes paginées sans masquer les pages restantes.
+Changement d'entreprise : site/équipement effacés ; changement de site :
+équipement effacé. Indiquer UTC et la fin exclusive dans les champs de période.
+
+Sept jours glissants UTC (168 heures) seront le préréglage initial (DASH-05),
+avec une fin fixée à l'application et sans évolution automatique après la requête.
+Une période personnalisée conserve ses bornes validées. Au départ, inviter à
+sélectionner une entreprise ; ne pas confondre cette invitation avec un résultat
+vide de l'API, ni envoyer un GET Dashboard incomplet.
+
+Réutiliser LoadingState pour loading (une seule annonce et reduced-motion),
+EmptyState pour l'absence d'actifs/données de section, ErrorState pour error
+(relance manuelle réseau/serveur, correction des filtres sinon). success est le
+rendu réel des cinq sections ; une période sans mesures n'efface pas le parc.
+Conserver filtres, titres et focus pendant les états, sans annonces répétitives
+ni déplacement automatique de focus après un simple rechargement.
+
+### Responsive et limites de validation
+
+Réutiliser marine, bleu actif, surfaces blanches, fond gris clair, typographie
+et espacements des tokens ; aucun second thème. Cartes et filtres se replient
+selon l'espace disponible, textes longs sans débordement ; derniers relevés
+lisibles à 320/390 px. Les barres conservent des valeurs textuelles et les tableaux
+une sémantique compréhensible. Le breakpoint du Shell reste 1024 px, inclus en desktop.
+
+Les contrôles Dashboard futurs couvriront 1440, 1024, 1023, 768, 390 et 320 px,
+clavier, focus, Sidebar ouverte/fermée et zoom. La validation du socle n'est pas
+une validation visuelle d'un Dashboard encore non implémenté. **Lecteur d'écran
+réel non testé** ; cette limite reste explicite jusqu'à un test réel.
+Le warning historique 504,68 ko pour 500 ko reste à suivre, sans relever les budgets.

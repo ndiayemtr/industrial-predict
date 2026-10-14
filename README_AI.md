@@ -52,11 +52,15 @@ Les contraintes de compatibilité et la correction Sass reproductible par
 Avant une modification frontend, lire également `docs/frontend-architecture.md`
 et `docs/ui-design.md`.
 
-La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
-UI 1.7 est terminée et commitée : les quatre composants partagés sont disponibles.
-UI 1.8.1 à UI 1.8.3 sont validées ; UI 1.8.4 finalise la documentation et
-la préparation du commit responsive, sans commit automatique. Les pages métier restent
-des placeholders explicites, sans données fictives ni appels API.
+Le socle UI 1.1 à UI 1.8 est terminé et fusionné dans `main`.
+Les quatre composants partagés et le Shell responsive accessible sont disponibles.
+UI 2.1 (audit Dashboard) est validée ; UI 2.1.1 synchronise la documentation
+sur `feature/frontend-dashboard`. UI 2.2 n'est pas commencée : les pages métier
+restent des placeholders explicites, sans données fictives ni appels API.
+Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
+`docs/decisions.md` ; le contrat consommé et l'architecture cible sont décrits
+dans `docs/frontend-architecture.md`. Ne pas présenter ces éléments prévus
+comme implémentés ni étendre le Dashboard V1 aux indicateurs ML.
 
 ### Machine Learning
 

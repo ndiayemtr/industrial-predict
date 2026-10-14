@@ -148,4 +148,30 @@ Validation : 116 tests Angular, 5 tests de correctif Sass, build réussi,
 tests navigateur autour de 1024 px et zoom réel 100/200/400 % confirmé
 manuellement par l'utilisateur. **Lecteur d'écran réel non testé**.
 L'avertissement initial 504,68 ko contre 500 ko est documenté, sans relever
-les budgets. UI 1.8.4 reste en finalisation avant validation du commit.
+les budgets. UI 1.8.4 est désormais clôturée : commit `12a18c3`, fusion `acd872b`.
+
+## D014 - Dashboard frontend V1 : périmètre et consommation du contrat existant
+
+Décision validée à l'issue d'UI 2.1 et enregistrée en UI 2.1.1 le 14 octobre
+2026, sur `feature/frontend-dashboard`. **Conception uniquement : UI 2.2 n'est
+pas commencée.** Les décisions D001 à D013 restent applicables.
+
+| Identifiant | Décision V1 validée |
+| --- | --- |
+| DASH-01 | Utiliser uniquement les agrégats de `GET /api/v1/dashboard`. Aucun Health Score, RUL ou prédiction de panne ; ne pas inventer d'alertes ou de KPI. Les API ML existantes restent hors périmètre V1. |
+| DASH-02 | Cartes KPI, tableaux, répartitions et barres CSS légères ; aucune bibliothèque graphique supplémentaire. Réutiliser le thème et les composants partagés. |
+| DASH-03 | Différer l'affichage monétaire tant qu'aucune devise commune n'est définie. `maintenance.cost` reste dans le DTO cible ; `currency` vaut actuellement `null`. Aucun symbole de devise supposé. |
+| DASH-04 | Alimenter le sélecteur d'équipement après choix du site, car la liste CRUD équipements ne filtre pas par entreprise. Le service API Dashboard conserve le support d'`equipment_id` sans `site_id`, autorisé par le backend. |
+| DASH-05 | Initialiser à sept jours glissants en UTC (168 heures), avec fin fixée au moment de l'application du préréglage. Transmettre deux instants avec fuseau et conserver `[start_time, end_time)`. Les bornes appliquées restent fixes jusqu'à une nouvelle application ; aucune fenêtre glissante par timer. |
+| DASH-06 | Consommer l'URL relative `/api/v1`. Prévoir le proxy Angular en développement vers `http://127.0.0.1:8000` (port backend confirmé par l'utilisateur) et un reverse proxy en production. Ni proxy ni configuration de production créés en UI 2.1.1. |
+
+Ces choix ne changent ni le contrat backend, ni les versions, ni les budgets,
+ni le correctif Sass. Les agrégats restent calculés par le backend ; la
+présentation distingue « État actuel », « Sur la période » et « Au calcul ».
+La sélection d'entreprise ne remplace pas une autorisation : la route actuelle
+ne vérifie pas les droits d'un utilisateur sur les entreprises.
+
+Le contrat, l'architecture cible, les références, états et risques sont décrits
+dans [frontend-architecture.md](frontend-architecture.md), les cinq sections
+visuelles dans [ui-design.md](ui-design.md) et le plan UI 2.2 à UI 2.8 dans
+[roadmap.md](roadmap.md). Leur implémentation nécessite les missions suivantes.

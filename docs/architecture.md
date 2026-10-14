@@ -20,7 +20,7 @@ PostgreSQL   Models / Scoring / Recommendation Engine
 
 ## Frontend
 
-La fondation Angular standalone UI 1.1 à UI 1.6 est livrée : Shell Nebular,
+Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main` : Shell Nebular,
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
 accessible du focus. Les pages métier sont encore des placeholders ; les
 services HTTP et façades métier frontend restent à implémenter.
@@ -29,11 +29,21 @@ L'architecture cible sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (services transversaux futurs). Le dossier `core` n'est pas encore présent.
 
-UI 1.7.1 définit quatre composants de présentation dans
+UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
-Ils ne sont pas encore implémentés et restent indépendants du backend et
+Ils sont implémentés et testés, indépendants du backend et
 des modules métier. Leurs contrats figurent dans
 `frontend-architecture.md` ; les règles visuelles figurent dans `ui-design.md`.
+
+UI 2.1 a validé la conception du Dashboard V1. Son intégration reste prévue :
+page standalone lazy → façade locale → DashboardApiService → agrégats existants
+de `GET /api/v1/dashboard`. Un service de références consommera les CRUD paginés
+existants. Les composants de présentation ne calculeront pas de nouveaux KPI.
+L'URL relative `/api/v1`, le proxy Angular de développement vers
+`http://127.0.0.1:8000` et le reverse proxy de production sont des choix de
+conception D014 ; aucune de ces configurations n'est créée en UI 2.1.1.
+UI 2.2 n'est pas commencée. Les fonctionnalités ML backend ci-dessous restent
+livrées, mais leur consommation est hors périmètre Dashboard V1.
 
 ## Backend
 

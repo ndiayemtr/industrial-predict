@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-shared-components`
+`feature/frontend-dashboard`
 
 À mettre à jour à chaque changement de branche.
 
@@ -258,13 +258,16 @@ Les tests ignorés nécessitent PostgreSQL.
 
 Merger la branche `feature/2.9-predictive-maintenance-recommendations` vers `main`, puis démarrer l'étape suivante du projet.
 
-## Frontend — finalisation UI 1.8.4 du 14 octobre 2026
+## Frontend — socle UI 1.1 à UI 1.8 terminé
 
 La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
 Historique : `82fc073` a fusionné `feature/frontend-ui-foundation`, incluant
-le commit final `8c7bd9f`. Le HEAD actuel est `e3a2a2c`
-(`feat(frontend): add reusable shared UI components`) ; UI 1.7 est terminée
-et commitée. Les corrections UI 1.8.2 restent non commitées.
+le commit final `8c7bd9f`. UI 1.7 est livrée dans `e3a2a2c`
+(`feat(frontend): add reusable shared UI components`). UI 1.8 est terminée
+et commitée dans `12a18c3` (`feat(frontend): finalize responsive shell and accessibility`).
+Le HEAD de référence au début d'UI 2.1.1 est `acd872b`, fusion de
+`feature/frontend-shared-components` dans `main` ; le socle UI 1.1 à UI 1.8
+est fusionné. L'état Git initial de la branche Dashboard est propre.
 
 | Étape | État et périmètre livré |
 | --- | --- |
@@ -282,9 +285,12 @@ et commitée. Les corrections UI 1.8.2 restent non commitées.
 | UI 1.7.5 | ErrorState standalone implémenté et validé |
 | UI 1.7.6 | Validation globale et visuelle terminée ; démonstration temporaire retirée |
 | UI 1.8.1 | Audit responsive validé |
-| UI 1.8.2 | Corrections responsive validées ; sept fichiers modifiés et un test ajouté, non commités |
+| UI 1.8.2 | Corrections responsive validées ; sept fichiers modifiés et un test ajouté, livrés dans le commit UI 1.8 |
 | UI 1.8.3 | Validation approfondie validée, complétée par le zoom réel contrôlé par l'utilisateur |
-| UI 1.8.4 | Documentation, validation finale et préparation du commit en finalisation ; validation du livrable attendue |
+| UI 1.8.4 | Documentation et validation finale terminées ; commit `12a18c3`, fusion `acd872b` |
+| UI 2.1 | Audit du contrat Dashboard et architecture frontend validés |
+| UI 2.1.1 | Synchronisation documentaire Dashboard V1 ; livrable soumis à validation avant commit |
+| UI 2.2 à UI 2.8 | Planifiées ; aucune implémentation commencée |
 
 Les neuf destinations de navigation accessibles et le détail équipement sont
 encore des placeholders. Rapports et Administration restent « À venir » et
@@ -297,7 +303,7 @@ TypeScript 5.9.3, RxJS 7.8.2, Zone.js 0.16.3 et Dart Sass 1.97.3.
 Environnement constaté : Node.js 24.21.0 et npm 11.19.0.
 
 Les résultats backend ci-dessus constituent l'historique de leurs validations
-respectives ; aucune suite backend n'est relancée dans UI 1.8.4.
+respectives ; aucune suite backend n'est relancée dans UI 2.1.1.
 
 ### Responsive livré et validations
 
@@ -321,16 +327,26 @@ respectives ; aucune suite backend n'est relancée dans UI 1.8.4.
 - **Aucun test de lecteur d'écran réel réalisé** : les contrôles clavier,
   de focus et d'attributs ARIA ne constituent pas une validation vocale complète.
 
-Les commandes frontend sont relancées pour la validation finale UI 1.8.4 ;
-les résultats sont également fournis dans le rapport de livraison.
+Ces résultats sont l'historique de validation UI 1.8, pas une nouvelle exécution
+en UI 2.1.1. Cette étape documentaire contrôle le contrat dans le code et les
+tests existants, la cohérence des documents et le diff Git.
 
 ## Travail actuel
 
-UI 1.8.4 en finalisation sur `feature/frontend-shared-components` : documents
-synchronisés et contrôles finaux avant validation du commit responsive.
+UI 2.1.1 sur `feature/frontend-dashboard` : synchronisation des documents avec
+la clôture du socle et les décisions Dashboard V1 validées (D014, DASH-01 à DASH-06).
+Le backend local sur le port **8000** est confirmé par l'utilisateur.
+Le Dashboard Angular reste un placeholder ; HttpClient, proxy, DTO, services,
+façade, filtres et sections Dashboard V1 ne sont pas encore implémentés.
+
+Le périmètre prévu couvre synthèse, équipements, capteurs, mesures et maintenance,
+uniquement à partir des agrégats de `GET /api/v1/dashboard`. Health Score,
+RUL et prédictions de panne sont exclus de V1 ; l'affichage monétaire est différé.
+Voir `frontend-architecture.md` pour le contrat, les états UI et les risques,
+`ui-design.md` pour la présentation et `roadmap.md` pour UI 2.2 à UI 2.8.
 
 ## Prochaine action
 
-Faire valider le livrable UI 1.8.4 avant tout commit ou push.
-La prochaine phase est la conception puis l'implémentation du Dashboard frontend
-et de son intégration API. Elle n'est pas commencée et nécessite une mission distincte.
+Faire valider le livrable documentaire UI 2.1.1 avant tout commit.
+UI 2.2 (DTO et accès HTTP Dashboard) attend une mission d'implémentation distincte.
+Aucun code, proxy, dépendance ou budget n'est modifié en UI 2.1.1.
