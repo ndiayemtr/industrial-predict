@@ -18,7 +18,7 @@ describe('SensorSummaryComponent', () => {
   it('distinguishes equipment coverage from emission by currently active sensors on the period', () => {
     const cards = fixture.nativeElement.querySelectorAll('app-dashboard-kpi-card');
     expect(cards[1].textContent).toContain('42,86'); expect(cards[1].textContent).toContain('État actuel');
-    expect(cards[1].textContent).toContain('3 équipements avec au moins un capteur actif sur 7');
+    expect(cards[1].textContent).toContain('Équipements avec capteur actif : 3 sur 7');
     expect(cards[2].textContent).toContain('33,33'); expect(cards[2].textContent).toContain('Sur la période');
     expect(cards[2].textContent).toContain('2 capteurs actuellement actifs ayant émis sur 6');
     expect(cards[2].textContent).toContain('Fin de période exclusive');
@@ -34,5 +34,16 @@ describe('SensorSummaryComponent', () => {
     const data = emptyDashboardResponse();
     fixture.componentRef.setInput('coverage', data.sensor_coverage); fixture.componentRef.setInput('activity', data.measurements.activity); fixture.detectChanges();
     expect([...fixture.nativeElement.querySelectorAll('.kpi-value')].map((el: Element) => el.textContent)).toEqual(['Non calculable', 'Non calculable', 'Non calculable']);
+    expect(fixture.nativeElement.querySelectorAll('.information')[1].textContent).toBe('Équipements avec capteur actif : 0 sur 0');
+  });
+  it.each([
+    { numerator: 0, denominator: 2, percentage: 0 },
+    { numerator: 1, denominator: 2, percentage: 50 },
+    { numerator: 3, denominator: 7, percentage: 42.86 }
+  ])('uses neutral wording for API coverage $numerator / $denominator', coverage => {
+    const data = emptyDashboardResponse();
+    fixture.componentRef.setInput('coverage', { ...data.sensor_coverage, coverage }); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.information')[1].textContent)
+      .toBe(`Équipements avec capteur actif : ${coverage.numerator} sur ${coverage.denominator}`);
   });
 });

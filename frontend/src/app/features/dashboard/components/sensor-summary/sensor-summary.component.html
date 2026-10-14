@@ -5,7 +5,7 @@
     <app-dashboard-kpi-card label="Part des capteurs actifs" [value]="status().active_ratio.percentage === null ? 'Non calculable' : status().active_ratio.percentage" unit="%" temporalScope="État actuel"
       [information]="status().active_ratio.numerator + ' capteurs actifs sur ' + status().active_ratio.denominator + ' capteurs.'" />
     <app-dashboard-kpi-card label="Couverture des équipements" [value]="coverage().coverage.percentage === null ? 'Non calculable' : coverage().coverage.percentage" unit="%" temporalScope="État actuel"
-      [information]="coverage().coverage.numerator + ' équipements avec au moins un capteur actif sur ' + coverage().coverage.denominator + ' équipements.'" />
+      [information]="'Équipements avec capteur actif : ' + coverage().coverage.numerator + ' sur ' + coverage().coverage.denominator" />
     <app-dashboard-kpi-card label="Capteurs actifs ayant émis" [value]="activity().active_sensors_reporting_ratio.percentage === null ? 'Non calculable' : activity().active_sensors_reporting_ratio.percentage" unit="%" temporalScope="Sur la période"
       [information]="activity().active_sensors_reporting_ratio.numerator + ' capteurs actuellement actifs ayant émis sur ' + activity().active_sensors_reporting_ratio.denominator + ' capteurs actuellement actifs. Fin de période exclusive.'" />
   </div>
