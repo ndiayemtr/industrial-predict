@@ -1,0 +1,34 @@
+<app-page-header title="Dashboard" description="Vue d’ensemble du parc industriel.">
+  <button class="refresh-button" type="button" [attr.aria-disabled]="!facade.canRefresh()" (click)="facade.refresh()">
+    Actualiser
+  </button>
+</app-page-header>
+
+<app-dashboard-filters (filtersApplied)="facade.applyFilters($event)" />
+
+@let state = facade.state();
+<section class="results" aria-labelledby="dashboard-results-title" [attr.aria-busy]="state.status === 'loading'">
+  <h2 id="dashboard-results-title">Résultats du Dashboard</h2>
+  @if (state.status === 'idle') {
+    <p>Sélectionnez une entreprise, puis appliquez les filtres pour consulter le Dashboard.</p>
+  } @else if (state.status === 'loading') {
+    <app-loading-state message="Chargement du Dashboard…" />
+  } @else if (state.status === 'error') {
+    <app-error-state [title]="state.error.title" [message]="state.error.message" [retryable]="state.error.retryable" (retry)="facade.retry()" />
+  } @else {
+    <dl class="result-metadata">
+      <div><dt>Entreprise — identifiant</dt><dd>{{ state.data.scope.company_id }}</dd></div>
+      <div><dt>Site — identifiant</dt><dd>{{ state.data.scope.site_id ?? 'Tous les sites' }}</dd></div>
+      <div><dt>Équipement — identifiant</dt><dd>{{ state.data.scope.equipment_id ?? 'Tous les équipements' }}</dd></div>
+      <div><dt>Début inclus (UTC)</dt><dd>{{ state.data.period.start_time }}</dd></div>
+      <div><dt>Fin exclue (UTC)</dt><dd>{{ state.data.period.end_time }}</dd></div>
+      <div><dt>Au calcul (UTC)</dt><dd>{{ state.data.period.calculated_at }}</dd></div>
+    </dl>
+    @if (state.status === 'empty') {
+      <app-empty-state title="Aucun actif dans ce périmètre" message="Le périmètre sélectionné ne contient aucun site, équipement ou capteur." />
+    } @else {
+      <p class="results-ready">Les données du Dashboard ont été chargées. Les sections d’indicateurs seront intégrées lors des prochaines étapes.</p>
+      <p class="scope-help">Les indicateurs distingueront l’état actuel, les données sur la période et les informations au calcul.</p>
+    }
+  }
+</section>
