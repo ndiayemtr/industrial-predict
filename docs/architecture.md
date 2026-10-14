@@ -22,12 +22,13 @@ PostgreSQL   Models / Scoring / Recommendation Engine
 
 Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main` : Shell Nebular,
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
-accessible du focus. Les pages métier sont encore des placeholders ; les
-services HTTP et façades métier frontend restent à implémenter.
+accessible du focus. Dashboard V1 est développé et connecté à FastAPI ;
+les autres pages métier restent des placeholders.
 
-L'architecture cible sépare `layout` (structure globale), `features` (pages
+L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
-(services transversaux futurs). Le dossier `core` n'est pas encore présent.
+(configuration HTTP, services et modèles de références). Le dossier `core`
+est implémenté ; les autres features métier restent à développer.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -35,15 +36,20 @@ Ils sont implémentés et testés, indépendants du backend et
 des modules métier. Leurs contrats figurent dans
 `frontend-architecture.md` ; les règles visuelles figurent dans `ui-design.md`.
 
-UI 2.1 a validé la conception du Dashboard V1. Son intégration reste prévue :
+UI 2.1 à UI 2.7.1 ont livré et validé le Dashboard V1 sur
+`feature/frontend-dashboard` (HEAD `956a0b4`, fusion dans `main` à réaliser) :
 page standalone lazy → façade locale → DashboardApiService → agrégats existants
-de `GET /api/v1/dashboard`. Un service de références consommera les CRUD paginés
-existants. Les composants de présentation ne calculeront pas de nouveaux KPI.
-L'URL relative `/api/v1`, le proxy Angular de développement vers
-`http://127.0.0.1:8000` et le reverse proxy de production sont des choix de
-conception D014 ; aucune de ces configurations n'est créée en UI 2.1.1.
-UI 2.2 n'est pas commencée. Les fonctionnalités ML backend ci-dessous restent
-livrées, mais leur consommation est hors périmètre Dashboard V1.
+de `GET /api/v1/dashboard`. `ReferenceDataApiService` consomme les CRUD paginés
+existants pour entreprises, sites et équipements. Les composants de présentation
+ne calculent aucun nouveau KPI et ne font aucun appel HTTP.
+`provideHttpClient()` est configuré ; l'URL relative `/api/v1` et le proxy
+Angular de développement vers `http://127.0.0.1:8000` sont opérationnels (D014).
+Le reverse proxy de production reste à configurer et n'est pas livré ici.
+La route Dashboard n'a pas d'autorisation multi-entreprises démontrée ; sélection
+et filtrage ne remplacent pas authentification/RBAC. Cette livraison ne constitue
+pas une préparation à la production SaaS multi-tenant.
+Les fonctionnalités ML backend ci-dessous restent livrées, mais leur consommation
+est hors périmètre Dashboard V1. UI 2.8 finalise uniquement la documentation.
 
 ## Backend
 

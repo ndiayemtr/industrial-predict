@@ -289,13 +289,22 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 1.8.3 | Validation approfondie validée, complétée par le zoom réel contrôlé par l'utilisateur |
 | UI 1.8.4 | Documentation et validation finale terminées ; commit `12a18c3`, fusion `acd872b` |
 | UI 2.1 | Audit du contrat Dashboard et architecture frontend validés |
-| UI 2.1.1 | Synchronisation documentaire Dashboard V1 ; livrable soumis à validation avant commit |
-| UI 2.2 à UI 2.8 | Planifiées ; aucune implémentation commencée |
+| UI 2.1.1 | Synchronisation documentaire validée et commitée dans `e819393` |
+| UI 2.2 | DTO, HttpClient, DashboardApiService et proxy développement livrés |
+| UI 2.3 | Références paginées et filtres UTC/cascade livrés |
+| UI 2.4 | Page Dashboard lazy, façade locale et cinq états UI livrés (`4f4f77f`) |
+| UI 2.4.1 | Diagnostic du bundle validé ; lazy loading conservé, coût Forms partagé identifié |
+| UI 2.5 | KPI, équipements et capteurs livrés (`b666d7d`) |
+| UI 2.6 | Mesures et maintenance livrées (`2a6116d`) |
+| UI 2.7 | Validation intégrée terminée ; observations réelles et cas simulés distingués |
+| UI 2.7.1 | Formulation neutre de couverture corrigée et commitée (`956a0b4`) |
+| UI 2.8 | Documentation finale et validation en finalisation, avant commit documentaire |
 
-Les neuf destinations de navigation accessibles et le détail équipement sont
-encore des placeholders. Rapports et Administration restent « À venir » et
-sans route dédiée. Le frontend n'appelle pas encore les APIs backend et
-n'implémente pas l'authentification ni les écrans métier définitifs.
+Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Les huit autres destinations
+de navigation et le détail équipement restent des placeholders. Rapports et
+Administration restent « À venir » et sans route dédiée. L'authentification
+frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
+production SaaS multi-tenant faute d'autorisation multi-entreprises démontrée.
 
 Versions vérifiées dans les manifests, le lockfile et les paquets installés :
 Angular 21.2.25, CLI/build 21.2.26, Nebular 17.0.0, CDK 21.0.6,
@@ -333,20 +342,73 @@ tests existants, la cohérence des documents et le diff Git.
 
 ## Travail actuel
 
-UI 2.1.1 sur `feature/frontend-dashboard` : synchronisation des documents avec
-la clôture du socle et les décisions Dashboard V1 validées (D014, DASH-01 à DASH-06).
-Le backend local sur le port **8000** est confirmé par l'utilisateur.
-Le Dashboard Angular reste un placeholder ; HttpClient, proxy, DTO, services,
-façade, filtres et sections Dashboard V1 ne sont pas encore implémentés.
+UI 2.8 sur `feature/frontend-dashboard`, HEAD initial `956a0b4`, dépôt propre :
+synchronisation documentaire et validation finale du Dashboard V1 développé.
+UI 2.1 à UI 2.7.1 sont terminées et commitées ; la branche Dashboard n'est pas
+encore fusionnée dans `main`. Le backend local sur **127.0.0.1:8000** est consommé
+via le proxy Angular `/api/v1` de développement.
 
-Le périmètre prévu couvre synthèse, équipements, capteurs, mesures et maintenance,
+Le périmètre livré couvre synthèse, équipements, capteurs, mesures et maintenance,
 uniquement à partir des agrégats de `GET /api/v1/dashboard`. Health Score,
 RUL et prédictions de panne sont exclus de V1 ; l'affichage monétaire est différé.
 Voir `frontend-architecture.md` pour le contrat, les états UI et les risques,
-`ui-design.md` pour la présentation et `roadmap.md` pour UI 2.2 à UI 2.8.
+`ui-design.md` pour la présentation et `roadmap.md` pour l'état des étapes UI 2.
+
+### Validation Dashboard V1 — UI 2.7 / UI 2.7.1
+
+- 217 tests Angular en UI 2.7, puis **220 tests** après UI 2.7.1 ; build production
+  réussi, **5 tests de correctif Sass**, contrôles Sass conformes, `npm ls --all`
+  valide et `npm audit` sans vulnérabilité. UI 2.8 relance ces contrôles.
+- Données existantes PETROSEN, sans écriture PostgreSQL : 2 équipements,
+  2 capteurs actifs, couverture 50 %, aucune mesure sur les sept jours testés,
+  aucune maintenance ouverte ni retard. Le compresseur sans capteurs reste en
+  `success`, avec zéros et ratios non calculables distincts.
+- Fin exclusive vérifiée dans FastAPI et l'interface : 3 mesures pour
+  `[2026-09-01T10:00:00Z, 2026-09-01T10:03:00Z)`, 4 mesures en déplaçant
+  la fin à `10:03:00.001Z`. Dernier relevé du 1er septembre visible hors période
+  d'octobre ; capteur sans relevé et unité déclarée conservés.
+- Réel navigateur : idle/success, cascade, options facultatives, 168 heures UTC,
+  dates invalides bloquées, actualisation des filtres appliqués, clavier/focus,
+  menu mobile, huit tableaux avec captions, un h1 et console sans erreur/warning.
+- Simulé : empty (aucun périmètre réel sans actifs), loading Dashboard (réponse
+  locale trop rapide pour une observation durable), UI error/retry réseau/500 et
+  400/404/422, annulation des requêtes obsolètes, pagination multipage et couverture
+  partielle. Les statuts backend 400/404/422 sont aussi reproduits par GET directs,
+  sans les confondre avec un état erreur observé dans la page.
+- Les références réelles tiennent sur une page ; les tests multipages sont simulés.
+  L'absence de requêtes Dashboard automatiques/supplémentaires est vérifiée par
+  les tests HTTP et le code, sans capture réseau navigateur exhaustive.
+- Responsive : 1440/1024/1023/768/390/320 px CSS, hauteur 900 px, sans débordement
+  horizontal détecté ; desktop à 1024, mobile à 1023. La confirmation historique
+  utilisateur du zoom réel 100/200/400 % concerne UI 1.8. En UI 2.7, les raccourcis
+  de zoom du navigateur intégré restent sans effet : le zoom réel Dashboard
+  200/400 % n'est pas validé par l'assistant. En réponse à la clarification UI 2.8,
+  **l'utilisateur confirme avoir effectué et validé les trois niveaux de zoom réel
+  100 %, 200 % et 400 % sur le Dashboard V1**. Cette validation manuelle complète
+  les essais automatisés ; elle n'est pas attribuée au navigateur de l'assistant.
+- **Lecteur d'écran réel non testé**, malgré les contrôles clavier/DOM/ARIA.
+- Dette bundle : initial **565,38 ko**, budget warning **500 ko** (écart 65,38 ko),
+  seuil d'erreur 1 Mo inchangé. Angular Forms est partagé avec Nebular et émis
+  dans un chunk initial commun ; la page Dashboard reste lazy. Référence différée
+  UI 2.6 : **52,00 ko** ; après la formulation UI 2.7.1 : **51,98 ko**.
+
+La validation intégrée est terminée avec ces limites explicites ; aucune validation
+de charge à grande échelle ni garantie de sécurité multi-tenant n'est revendiquée.
+
+### Contrôles finaux UI 2.8
+
+Contrôles relancés sur HEAD `956a0b4` sans changement applicatif :
+build production réussi ; **220 tests Angular** (23 fichiers) et **5 tests de
+correctif Sass** réussis ; quatre expressions, huit breakpoints et thème unique
+conformes ; `npm ls --all` code 0 ; `npm audit` : **0 vulnérabilité**.
+Aucune nouvelle dépréciation Sass. Bundle final **565,38 ko initial**,
+**51,98 ko Dashboard différé** (référence historique 52,00 ko en UI 2.6).
+Warning de 65,38 ko conservé, aucun budget relevé.
+Les modifications UI 2.8 concernent uniquement les sept documents de contexte,
+statut, roadmap, architectures, design et décisions ; historique backend conservé.
 
 ## Prochaine action
 
-Faire valider le livrable documentaire UI 2.1.1 avant tout commit.
-UI 2.2 (DTO et accès HTTP Dashboard) attend une mission d'implémentation distincte.
-Aucun code, proxy, dépendance ou budget n'est modifié en UI 2.1.1.
+Faire valider UI 2.8, puis autoriser le commit documentaire et la fusion Dashboard
+dans `main` lors d'une action distincte. Aucun commit, push, nouvelle fonctionnalité,
+code applicatif, dépendance, contrat backend ou budget n'est modifié en UI 2.8.

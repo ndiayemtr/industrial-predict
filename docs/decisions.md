@@ -153,8 +153,10 @@ les budgets. UI 1.8.4 est désormais clôturée : commit `12a18c3`, fusion `acd8
 ## D014 - Dashboard frontend V1 : périmètre et consommation du contrat existant
 
 Décision validée à l'issue d'UI 2.1 et enregistrée en UI 2.1.1 le 14 octobre
-2026, sur `feature/frontend-dashboard`. **Conception uniquement : UI 2.2 n'est
-pas commencée.** Les décisions D001 à D013 restent applicables.
+2026, sur `feature/frontend-dashboard`. À l'enregistrement initial en UI 2.1.1,
+la décision était de conception uniquement et UI 2.2 n'était pas commencée.
+UI 2.2 à UI 2.7.1 l'ont depuis implémentée ; UI 2.8 synchronise ce suivi sans
+changer DASH-01 à DASH-06. Les décisions D001 à D013 restent applicables.
 
 | Identifiant | Décision V1 validée |
 | --- | --- |
@@ -174,4 +176,17 @@ ne vérifie pas les droits d'un utilisateur sur les entreprises.
 Le contrat, l'architecture cible, les références, états et risques sont décrits
 dans [frontend-architecture.md](frontend-architecture.md), les cinq sections
 visuelles dans [ui-design.md](ui-design.md) et le plan UI 2.2 à UI 2.8 dans
-[roadmap.md](roadmap.md). Leur implémentation nécessite les missions suivantes.
+[roadmap.md](roadmap.md). Leur implémentation UI 2.2 à UI 2.7.1 est livrée sur
+la branche Dashboard, HEAD `956a0b4`, fusion dans main à réaliser. Le proxy
+développement est désormais configuré ; le reverse proxy de production reste
+à prévoir. Les mentions « prévu » et « non créé en UI 2.1.1 » du tableau
+conservent le contexte historique de la décision initiale.
+
+Suivi UI 2.8 : aucun choix architectural nouveau ne justifie une D015.
+L'autorisation multi-entreprises n'est toujours pas démontrée dans la route ;
+Dashboard V1 fonctionnel ne signifie pas prêt pour une production SaaS multi-tenant.
+Le coût initial Angular Forms partagé avec Nebular est suivi comme dette de
+bundle (565,38 ko / 500 ko), sans changement de seuil, de dépendance, de thème
+ou de mécanisme Sass. Le lazy loading reste effectif. Les validations réelles,
+simulées et les limites zoom/lecteur d'écran figurent dans project-status.md
+et ui-design.md ; aucune garantie de sécurité ou d'accessibilité n'est ajoutée.
