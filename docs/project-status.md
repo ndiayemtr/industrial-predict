@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-feature/2.8-remaining-useful-life
+`feature/frontend-shared-components`
 
 À mettre à jour à chaque changement de branche.
 
@@ -250,10 +250,51 @@ Suite backend complète :
 
 Les tests ignorés nécessitent PostgreSQL.
 
-## Travail actuel
+## Historique de transition backend
 
 Étape 2.9 - Predictive Maintenance Recommendations terminée et validée.
 
-## Prochaine action
+### Action prévue à l'issue de l'étape 2.9 (historique)
 
 Merger la branche `feature/2.9-predictive-maintenance-recommendations` vers `main`, puis démarrer l'étape suivante du projet.
+
+## Frontend — synchronisation UI 1.7.0 du 14 octobre 2026
+
+La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
+Le HEAD de la branche frontend est `82fc073`, merge de
+`feature/frontend-ui-foundation`, incluant le commit final `8c7bd9f`.
+
+| Étape | État et périmètre livré |
+| --- | --- |
+| UI 1.1 | Audit et architecture de la fondation frontend terminés |
+| UI 1.2 | Initialisation Angular standalone, routing, SCSS et mode strict terminée |
+| UI 1.3 | Thème clair personnalisé, tokens et Shell terminés ; compatibilité CDK corrigée |
+| UI 1.4 | Sidebar, navigation centralisée et icônes terminées ; correction Sass reproductible |
+| UI 1.5 | Header global, titre dynamique et commande Sidebar terminés ; finitions visuelles validées |
+| UI 1.6 | Routing consolidé, 404 lazy, titres, lien d'évitement et gestion du focus terminés |
+| UI 1.7.1 | Conception de PageHeader, LoadingState, EmptyState et ErrorState validée ; contrats désormais documentés |
+| UI 1.7.2 | Non commencée : aucun des quatre composants n'est implémenté |
+
+Les neuf destinations de navigation accessibles et le détail équipement sont
+encore des placeholders. Rapports et Administration restent « À venir » et
+sans route dédiée. Le frontend n'appelle pas encore les APIs backend et
+n'implémente pas l'authentification ni les écrans métier définitifs.
+
+Versions vérifiées dans les manifests, le lockfile et les paquets installés :
+Angular 21.2.25, CLI/build 21.2.26, Nebular 17.0.0, CDK 21.0.6,
+TypeScript 5.9.3, RxJS 7.8.2, Zone.js 0.16.3 et Dart Sass 1.97.3.
+Environnement constaté : Node.js 24.21.0 et npm 11.19.0.
+
+Les résultats backend ci-dessus constituent l'historique de leurs validations
+respectives. Cette synchronisation documentaire ne relance pas les suites
+de tests ni le build applicatif.
+
+## Travail actuel
+
+UI 1.7 en cours sur `feature/frontend-shared-components` : synchronisation
+documentaire UI 1.7.0, avant l'implémentation des contrats validés en UI 1.7.1.
+
+## Prochaine action
+
+Faire valider les modifications documentaires avant leur commit.
+UI 1.7.2 reste à autoriser et à implémenter séparément.

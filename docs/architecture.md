@@ -18,6 +18,23 @@ Repositories  ML / Predictive Analytics
 PostgreSQL   Models / Scoring / Recommendation Engine
 ```
 
+## Frontend
+
+La fondation Angular standalone UI 1.1 à UI 1.6 est livrée : Shell Nebular,
+Sidebar, Header global, routing avec chargement différé, page 404 et gestion
+accessible du focus. Les pages métier sont encore des placeholders ; les
+services HTTP et façades métier frontend restent à implémenter.
+
+L'architecture cible sépare `layout` (structure globale), `features` (pages
+métier), `shared` (présentation réutilisable et pages transversales) et `core`
+(services transversaux futurs). Le dossier `core` n'est pas encore présent.
+
+UI 1.7.1 définit quatre composants de présentation dans
+`shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
+Ils ne sont pas encore implémentés et restent indépendants du backend et
+des modules métier. Leurs contrats figurent dans
+`frontend-architecture.md` ; les règles visuelles figurent dans `ui-design.md`.
+
 ## Backend
 
 ```text
