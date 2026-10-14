@@ -84,3 +84,23 @@ button {
 .unavailable-label {
   white-space: nowrap;
 }
+
+// Mode comes from the Shell, including the exact 1024px desktop boundary.
+:host-context(.shell-mobile) {
+  gap: tokens.$space-sm;
+
+  .header-main {
+    flex: 1;
+    gap: tokens.$space-sm;
+  }
+
+  .header-title {
+    overflow-wrap: anywhere;
+    line-height: tokens.$line-height-body;
+  }
+
+  .header-description,
+  .header-actions {
+    display: none;
+  }
+}

@@ -1,0 +1,8 @@
+<div class="empty-state">
+  @if (icon(); as iconName) {
+    <app-icon class="empty-state-icon" [name]="iconName" aria-hidden="true" />
+  }
+  <h2>{{ title() }}</h2>
+  <p class="empty-state-message">{{ message() }}</p>
+  <div class="empty-state-actions"><ng-content /></div>
+</div>

@@ -22,6 +22,35 @@ body {
   border-bottom: tokens.$border-width solid tokens.$border-color;
 }
 
+// Scoped overrides: Nebular's native compacted menu targets nb-menu, while
+// this application has its own navigation. Keep its real expanded/collapsed state.
+.shell-layout.shell-mobile {
+  nb-layout-header nav {
+    padding: tokens.$space-sm tokens.$space-md;
+  }
+
+  nb-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 1100;
+
+    .main-container {
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    .scrollable {
+      overscroll-behavior: contain;
+    }
+  }
+}
+
+body:has(.shell-layout.drawer-open) {
+  overflow: hidden;
+}
+
 .skip-link {
   position: fixed;
   top: tokens.$space-sm;

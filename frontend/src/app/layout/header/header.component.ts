@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, PRIMARY_OUTLET, Router } from '@angular/router';
 import { NbSidebarService, NbSidebarState } from '@nebular/theme';
@@ -14,6 +14,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent {
+  private readonly toggleButton = viewChild.required<ElementRef<HTMLButtonElement>>('toggleButton');
   readonly sidebarState = input.required<NbSidebarState>();
   readonly sidebarTag = input.required<string>();
   readonly sidebarId = input.required<string>();
@@ -42,5 +43,9 @@ export class HeaderComponent {
     // Nebular 17: false toggles expanded/collapsed; true would use compacted.
     // The actual NbSidebarComponent state remains the single source of truth.
     this.sidebar.toggle(false, this.sidebarTag());
+  }
+
+  focusNavigationToggle(): void {
+    this.toggleButton().nativeElement.focus({ preventScroll: true });
   }
 }

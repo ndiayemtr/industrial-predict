@@ -1,0 +1,9 @@
+<div class="error-state">
+  <div class="error-announcement" role="alert" aria-atomic="true">
+    <h2>{{ title() }}</h2>
+    <p class="error-state-message">{{ message() }}</p>
+  </div>
+  @if (retryable()) {
+    <button class="retry-button" type="button" (click)="retry.emit()">Réessayer</button>
+  }
+</div>

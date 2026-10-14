@@ -44,8 +44,19 @@ Construire une plateforme professionnelle permettant notamment :
 
 ### Frontend
 
-- Angular
-- Nebular
+- Angular 21.2.25 standalone, TypeScript strict et Angular Router
+- Nebular 17.0.0, Angular CDK 21.0.6, SCSS et Zone.js
+
+Les contraintes de compatibilité et la correction Sass reproductible par
+`postinstall` sont documentées dans `docs/decisions.md`.
+Avant une modification frontend, lire également `docs/frontend-architecture.md`
+et `docs/ui-design.md`.
+
+La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
+UI 1.7 est terminée et commitée : les quatre composants partagés sont disponibles.
+UI 1.8.1 à UI 1.8.3 sont validées ; UI 1.8.4 finalise la documentation et
+la préparation du commit responsive, sans commit automatique. Les pages métier restent
+des placeholders explicites, sans données fictives ni appels API.
 
 ### Machine Learning
 

@@ -4,6 +4,34 @@
   display: block;
 }
 
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0 0 0 tokens.$sidebar-width;
+  z-index: 1090;
+  border: 0;
+  background: rgba(tokens.$sidebar-background, 0.45);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.drawer-close {
+  min-height: 44px;
+  width: 100%;
+  margin-bottom: tokens.$space-md;
+  padding: tokens.$space-sm;
+  border: tokens.$border-width solid tokens.$sidebar-muted;
+  border-radius: tokens.$border-radius;
+  background: tokens.$sidebar-background;
+  color: tokens.$sidebar-text;
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid tokens.$sidebar-text;
+    outline-offset: 2px;
+  }
+}
+
 main {
   min-width: 0;
 

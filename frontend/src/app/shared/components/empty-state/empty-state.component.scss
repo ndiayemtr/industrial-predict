@@ -1,0 +1,54 @@
+@use '../../../../styles/tokens' as tokens;
+
+:host {
+  display: block;
+  font-family: tokens.$font-family;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: tokens.$space-md;
+  padding: tokens.$space-xl tokens.$space-md;
+  text-align: center;
+}
+
+.empty-state-icon {
+  padding: tokens.$space-md;
+  border-radius: 50%;
+  background: tokens.$content-background;
+  color: tokens.$text-secondary;
+}
+
+h2 {
+  max-width: 100%;
+  margin: 0;
+  color: tokens.$text-primary;
+  font-size: tokens.$font-size-body * 1.25;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.empty-state-message {
+  max-width: 40rem;
+  margin: 0;
+  color: tokens.$text-secondary;
+  font-size: tokens.$font-size-body;
+  line-height: tokens.$line-height-body;
+  overflow-wrap: anywhere;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: tokens.$space-sm;
+  max-width: 100%;
+
+  &:empty {
+    display: none;
+  }
+}

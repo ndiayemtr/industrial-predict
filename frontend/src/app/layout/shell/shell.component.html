@@ -1,20 +1,35 @@
 <a class="skip-link" [href]="currentUrl()" aria-controls="main-content"
   (click)="skipToContent($event)">Aller au contenu principal</a>
 
-<nb-layout class="shell-layout">
+@if (drawerOpen()) {
+  <button class="sidebar-backdrop" type="button" tabindex="-1"
+    aria-label="Fermer la navigation principale" (click)="closeMobileSidebar()"></button>
+}
+
+<nb-layout class="shell-layout" [class.shell-mobile]="mobile()" [class.drawer-open]="drawerOpen()">
   <nb-sidebar #sidebar id="shell-sidebar" tag="shell-sidebar" [containerFixed]="false"
+    [state]="initialSidebarState" (stateChange)="onSidebarStateChange($event)"
     [attr.aria-hidden]="sidebar.state === 'collapsed' ? 'true' : null"
     [attr.inert]="sidebar.state === 'collapsed' ? '' : null"
-    role="complementary" aria-label="Navigation de l’application">
-    <app-sidebar />
+    [attr.role]="mobile() ? 'dialog' : 'complementary'"
+    [attr.aria-modal]="drawerOpen() ? 'true' : null" aria-label="Navigation de l’application">
+    <div [cdkTrapFocus]="drawerOpen()">
+      @if (mobile()) {
+        <button #drawerClose class="drawer-close" type="button" (click)="closeMobileSidebar()">
+          Fermer la navigation
+        </button>
+      }
+      <app-sidebar />
+    </div>
   </nb-sidebar>
 
   <!-- Nebular 17's subheader is beside the sidebar and cannot be fixed. -->
-  <nb-layout-header subheader role="banner" aria-label="En-tête de l’application">
+  <nb-layout-header subheader role="banner" aria-label="En-tête de l’application"
+    [attr.inert]="drawerOpen() ? '' : null" [attr.aria-hidden]="drawerOpen() ? 'true' : null">
     <app-header [sidebarState]="sidebar.state" [sidebarTag]="sidebar.tag" sidebarId="shell-sidebar" />
   </nb-layout-header>
 
-  <nb-layout-column>
+  <nb-layout-column [attr.inert]="drawerOpen() ? '' : null" [attr.aria-hidden]="drawerOpen() ? 'true' : null">
     <main #mainContent id="main-content" tabindex="-1">
       <router-outlet />
     </main>
