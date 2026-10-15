@@ -19,7 +19,7 @@ HEAD de référence `956a0b4`. Le socle UI 1.1 à UI 1.8 est fusionné dans `mai
 UI 2.1 à UI 2.7.1 sont livrées et commitées, la fusion Dashboard reste à réaliser.
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente — socle et Dashboard V1
+## Structure réellement présente - socle et Dashboard V1
 
 ```text
 frontend/
@@ -66,7 +66,7 @@ de page ; la navigation initiale, les changements de query params seuls,
 les fragments et les interactions ayant repris le focus sont préservés.
 Les abonnements et callbacks restent liés au cycle de vie Angular.
 
-## Politique responsive réelle — UI 1.8.2
+## Politique responsive réelle - UI 1.8.2
 
 Le `ShellComponent` centralise la détection du mode à partir de la largeur CSS
 du viewport, via `DOCUMENT.defaultView.innerWidth` et un listener `resize`
@@ -127,7 +127,7 @@ unique partagée par `app.routes.ts` et la Sidebar.
 
 | Chemin | data.pageTitle | Composant / comportement | Sidebar |
 | --- | --- | --- | --- |
-| `/` | — | Redirection vers `/dashboard`, `pathMatch: 'full'` | Dashboard après redirection |
+| `/` | - | Redirection vers `/dashboard`, `pathMatch: 'full'` | Dashboard après redirection |
 | `/dashboard` | Dashboard | DashboardComponent standalone, connecté à FastAPI | Dashboard, correspondance exacte |
 | `/companies` | Entreprises | FeaturePlaceholderComponent | Entreprises |
 | `/sites` | Sites | FeaturePlaceholderComponent | Sites |
@@ -203,7 +203,7 @@ src/app/
 Dashboard V1 est livré. Les autres fonctionnalités ci-dessous restent des
 objectifs métier futurs ; leurs routes actuelles rendent des placeholders.
 
-### Dashboard V1 — livré en UI 2.2 à UI 2.7.1
+### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
 
 - synthèse des agrégats existants
 - équipements : statut et criticité actuels
@@ -319,7 +319,7 @@ et ne créent aucune route de démonstration persistante.
 Les contrats suivants ont été validés dans la discussion de conception
 Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 
-### PageHeaderComponent — implémenté en UI 1.7.2
+### PageHeaderComponent - implémenté en UI 1.7.2
 
 - Emplacement : `shared/components/page-header/`.
 - Entrée obligatoire : `title: string` ; entrée optionnelle : `description?: string`.
@@ -330,7 +330,7 @@ Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 - API : `input.required<string>()` pour title, `input<string>()` pour description.
 - Une description vide ou composée uniquement d'espaces n'est pas rendue.
 
-### LoadingStateComponent — implémenté en UI 1.7.3
+### LoadingStateComponent - implémenté en UI 1.7.3
 
 - Emplacement : `shared/components/loading-state/`.
 - Entrée optionnelle : `message: string`, valeur par défaut « Chargement des données… ».
@@ -340,7 +340,7 @@ Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 - Une entrée signal avec défaut et un message de repli si le texte est vide ;
   une seule région status, `aria-atomic="true"`, indicateur décoratif `aria-hidden`.
 
-### EmptyStateComponent — implémenté en UI 1.7.4
+### EmptyStateComponent - implémenté en UI 1.7.4
 
 - Emplacement : `shared/components/empty-state/`.
 - Entrées : `title: string` et `message: string`.
@@ -351,7 +351,7 @@ Industrial Predict AI puis transmis pour cette synchronisation documentaire.
 - Entrée optionnelle `icon: LocalIconName | undefined` : réutilisation de
   `IconComponent` et de son entrée existante `name`, sans enrichir le catalogue.
 
-### ErrorStateComponent — implémenté en UI 1.7.5
+### ErrorStateComponent - implémenté en UI 1.7.5
 
 - Emplacement : `shared/components/error-state/`.
 - Entrées : `title: string`, `message: string`, `retryable: boolean`.
@@ -378,7 +378,7 @@ Les états restent distincts : `loading`, `success`, `empty`, `error`.
 `success` est le rendu normal des données par la page métier ; aucun composant
 partagé spécifique n'est prévu pour cet état.
 
-## Historique de validation UI 1.8 — socle terminé
+## Historique de validation UI 1.8 - socle terminé
 
 UI 1.8.4 est clôturée : commit `12a18c3`, fusion dans `main` via `acd872b`.
 Les résultats ci-dessous proviennent de la validation du socle ; aucun build
@@ -405,7 +405,7 @@ complète cette limite de l'outillage. **Aucun lecteur d'écran réel n'a été 
 La vérification du DOM/ARIA et du clavier ne certifie pas à elle seule la
 compatibilité de toutes les technologies d'assistance.
 
-## Dashboard V1 — contrat consommé et architecture livrée UI 2
+## Dashboard V1 - contrat consommé et architecture livrée UI 2
 
 Conception validée en UI 2.1, documentée en UI 2.1.1 puis implémentée en UI 2.2
 à UI 2.7.1. UI 2.8 finalise la documentation et la validation avant commit ;

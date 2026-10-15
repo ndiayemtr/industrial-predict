@@ -1,13 +1,13 @@
 <section aria-labelledby="maintenance-summary-title">
   <h2 id="maintenance-summary-title">Maintenance</h2>
-  <p class="section-context">État actuel — interventions ouvertes (planifiées ou en cours), indépendamment de la période. Les retards de démarrage sont évalués au calcul.</p>
+  <p class="section-context">État actuel - interventions ouvertes (planifiées ou en cours), indépendamment de la période. Les retards de démarrage sont évalués au calcul.</p>
   <div class="summary-grid">
     <app-dashboard-kpi-card label="Interventions ouvertes" [value]="summary().open.total" temporalScope="État actuel" />
     <app-dashboard-kpi-card label="Retards de démarrage" [value]="summary().overdue.overdue" temporalScope="Au calcul" information="Planifiées avant le calcul, sans date de démarrage." />
     <app-dashboard-kpi-card label="Planifiées sans date prévue" [value]="summary().overdue.planned_without_planned_at" temporalScope="État actuel" information="Ces interventions ne peuvent pas être classées en retard par leur date prévue." />
   </div>
   <table>
-    <caption>Interventions ouvertes par statut — État actuel</caption>
+    <caption>Interventions ouvertes par statut - État actuel</caption>
     <thead><tr><th scope="col">Statut</th><th scope="col">Effectif</th></tr></thead>
     <tbody>
       <tr><th scope="row">Planifiées</th><td>{{ summary().open.planned }}</td></tr>
@@ -16,7 +16,7 @@
     </tbody>
   </table>
   <table>
-    <caption>Priorités des interventions ouvertes — {{ summary().open.priorities.total }} interventions — État actuel</caption>
+    <caption>Priorités des interventions ouvertes - {{ summary().open.priorities.total }} interventions - État actuel</caption>
     <thead><tr><th scope="col">Priorité déclarée</th><th scope="col">Effectif</th></tr></thead>
     <tbody>
       @for (category of summary().open.priorities.distribution; track $index) {
@@ -25,7 +25,7 @@
     </tbody>
   </table>
   <h3 class="subsection-title">Interventions terminées</h3>
-  <p class="section-context">Sur la période — date de fin dans l’intervalle UTC [début inclus, fin exclue).</p>
+  <p class="section-context">Sur la période - date de fin dans l’intervalle UTC [début inclus, fin exclue).</p>
   <div class="summary-grid">
     <app-dashboard-kpi-card label="Interventions terminées" [value]="summary().completed.total" temporalScope="Sur la période" />
     <app-dashboard-kpi-card label="Part corrective" [value]="summary().corrective.ratio.percentage === null ? 'Non calculable' : summary().corrective.ratio.percentage" unit="%" temporalScope="Sur la période"
@@ -33,7 +33,7 @@
     <app-dashboard-kpi-card label="Terminées sans date de fin" [value]="summary().completed.completed_without_completed_at" temporalScope="État actuel" information="Sur le périmètre, hors décompte de période faute de date de fin." />
   </div>
   <table>
-    <caption>Types des interventions terminées — Sur la période</caption>
+    <caption>Types des interventions terminées - Sur la période</caption>
     <thead><tr><th scope="col">Type déclaré</th><th scope="col">Effectif</th></tr></thead>
     <tbody>
       @for (category of summary().completed.types.distribution; track $index) {
@@ -42,7 +42,7 @@
     </tbody>
   </table>
   <h3 class="subsection-title">Arrêts déclarés et couverture de saisie</h3>
-  <p class="section-context">Sur la période — durées déclarées des interventions terminées, sans estimation de disponibilité.</p>
+  <p class="section-context">Sur la période - durées déclarées des interventions terminées, sans estimation de disponibilité.</p>
   <div class="summary-grid">
     <app-dashboard-kpi-card label="Arrêt déclaré en minutes" [value]="summary().downtime.total_minutes" unit="min" temporalScope="Sur la période" />
     <app-dashboard-kpi-card label="Arrêt déclaré en heures" [value]="summary().downtime.total_hours" unit="h" temporalScope="Sur la période" />

@@ -1,4 +1,4 @@
-# Étape 2.9.1 — Predictive Maintenance Recommendations
+# Étape 2.9.1 - Predictive Maintenance Recommendations
 
 ## Objectif
 

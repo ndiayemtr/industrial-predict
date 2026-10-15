@@ -1,4 +1,4 @@
-# 2.7 — Tests automatisés de Predictions Persistence
+# 2.7 - Tests automatisés de Predictions Persistence
 
 45 tests `unittest` couvrent la validation, le repository, le service,
 les trois méthodes de persistance et l'historique HTTP des équipements.

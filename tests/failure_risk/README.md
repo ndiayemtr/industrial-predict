@@ -1,4 +1,4 @@
-# 2.5.11 — Tests automatisés du modèle de risque de panne
+# 2.5.11 - Tests automatisés du modèle de risque de panne
 
 ## Bug métier documenté avant correction
 

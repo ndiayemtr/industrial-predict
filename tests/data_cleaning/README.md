@@ -1,4 +1,4 @@
-# 2.2.9 — Qualité et nettoyage des données capteurs
+# 2.2.9 - Qualité et nettoyage des données capteurs
 
 Depuis `backend`, avec Python 3.12, pandas et les dépendances du backend :
 
@@ -46,7 +46,7 @@ actuels classent/suppriment selon le libellé quality ; ils n'appellent pas cett
 politique numérique. Les tests ne prétendent donc pas qu'un `good` de valeur inf
 sera supprimé par le cleaner : cette intégration n'est pas spécifiée ici.
 
-## Bugs reproduits — aucune correction métier
+## Bugs reproduits - aucune correction métier
 
 1. **Contamination des bornes IQR avec index pandas répétés.** Concaténer deux
    séries sans `ignore_index=True` produit des index communs 0..4. Le détecteur

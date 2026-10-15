@@ -1,4 +1,4 @@
-# Étape 1.4.16.1 — Analyse et définition des KPI du dashboard
+# Étape 1.4.16.1 - Analyse et définition des KPI du dashboard
 
 ## Périmètre
 
@@ -185,7 +185,7 @@ Les chemins ci-dessous sont relatifs à la racine du dépôt.
   `675ebfea0bb5_add_equipment_criticality.py` : vérification des clés, index et
   contraintes déclarés. Leur application sur une base réelle n'a pas été vérifiée.
 
-## Prochaines modifications recommandées — hors de cette étape
+## Prochaines modifications recommandées - hors de cette étape
 
 1. Fixer le vocabulaire métier, la convention de devise et le contrat de période ;
    vérifier les valeurs réellement présentes avant de figer les catégories.

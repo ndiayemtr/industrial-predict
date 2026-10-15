@@ -1,4 +1,4 @@
-# Tests automatisés Dashboard — 1.4.16.7
+# Tests automatisés Dashboard - 1.4.16.7
 
 Depuis `backend`, avec Python 3.12 et les dépendances de
 `backend/requirements.txt` installées :

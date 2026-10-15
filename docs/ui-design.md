@@ -51,7 +51,7 @@ L'application utilise une structure SaaS classique :
 └─────────────────┴──────────────────────────────────────┘
 ```
 
-## Fondation visuelle validée — UI 1.1 à UI 1.6
+## Fondation visuelle validée - UI 1.1 à UI 1.6
 
 La Sidebar bleu marine, la sélection bleue, le Header blanc, le fond principal
 gris très clair et les cards blanches constituent les principes validés.
@@ -95,7 +95,7 @@ par cette page. Il ne commande pas la Sidebar et ne remplace pas le Header
 global. La page consommatrice fournit son contenu et organise sa hiérarchie
 de titres sémantiques.
 
-## Contrats visuels et accessibles UI 1.7 — implémentés et validés
+## Contrats visuels et accessibles UI 1.7 - implémentés et validés
 
 Les contrats conçus en UI 1.7.1 sont implémentés en UI 1.7.2 à UI 1.7.5,
 validés globalement en UI 1.7.6 et commités dans `e3a2a2c`.
@@ -165,7 +165,7 @@ Le lien d'évitement déplace réellement le focus vers `main#main-content`
 sans altérer l'URL. Le focus après navigation respecte les fragments et les
 interactions utilisateur.
 
-## Header et Sidebar selon la largeur — UI 1.8.2
+## Header et Sidebar selon la largeur - UI 1.8.2
 
 | Largeur CSS | Sidebar | Header global |
 | --- | --- | --- |
@@ -188,7 +188,7 @@ Après fermeture sans navigation, le focus revient au bouton du Header.
 Après navigation réussie, le panneau se ferme et la politique de focus du
 contenu s'applique. Les changements de mode ne laissent pas de fond bloquant.
 
-## Validations et limites d'accessibilité — UI 1.8.3 / UI 1.8.4
+## Validations et limites d'accessibilité - UI 1.8.3 / UI 1.8.4
 
 - Validation navigateur : 1440, 1024, 1023, 768, 390 et 320 px, hauteur 900 px,
   sur Dashboard, détail équipement et 404, menu ouvert/fermé ; pas de débordement
@@ -212,7 +212,7 @@ UI 2.1 a validé la conception du Dashboard V1 ; UI 2.2 à UI 2.7.1 l'ont livré
 et validé sur `feature/frontend-dashboard`. La fusion Dashboard dans main reste
 à réaliser ; UI 2.8 finalise la documentation sans changement visuel.
 
-## Dashboard V1 — présentation implémentée et validée
+## Dashboard V1 - présentation implémentée et validée
 
 Les règles suivantes sont appliquées au Dashboard livré. DASH-01 à DASH-06
 sont enregistrées dans D014 de [decisions.md](decisions.md). Le contrat et

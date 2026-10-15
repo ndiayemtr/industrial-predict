@@ -1,6 +1,6 @@
 <section aria-labelledby="equipment-summary-title">
   <h2 id="equipment-summary-title">Équipements</h2>
-  <p class="section-context">État actuel — statuts déclarés et criticités du périmètre sélectionné.</p>
+  <p class="section-context">État actuel - statuts déclarés et criticités du périmètre sélectionné.</p>
   <div class="summary-grid">
     <app-dashboard-kpi-card label="Part opérationnelle" [value]="status().operational_ratio.percentage === null ? 'Non calculable' : status().operational_ratio.percentage" unit="%" temporalScope="État actuel"
       [information]="status().operational_ratio.numerator + ' équipements opérationnels sur ' + status().operational_ratio.denominator + ' équipements.'" />
@@ -9,7 +9,7 @@
       information="Équipements de criticité élevée ou critique, en maintenance ou hors service." />
   </div>
   <table>
-    <caption>Répartition des statuts — {{ status().total }} équipements</caption>
+    <caption>Répartition des statuts - {{ status().total }} équipements</caption>
     <thead><tr><th scope="col">Statut</th><th scope="col">Effectif</th></tr></thead>
     <tbody>
       @for (category of status().distribution; track $index) {
@@ -18,7 +18,7 @@
     </tbody>
   </table>
   <table>
-    <caption>Répartition des criticités — {{ criticality().total }} équipements</caption>
+    <caption>Répartition des criticités - {{ criticality().total }} équipements</caption>
     <thead><tr><th scope="col">Criticité</th><th scope="col">Effectif</th></tr></thead>
     <tbody>
       @for (category of criticality().distribution; track $index) {

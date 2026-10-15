@@ -1,4 +1,4 @@
-# 2.6.12 — Tests automatisés du Health Score
+# 2.6.12 - Tests automatisés du Health Score
 
 48 tests `unittest` couvrent les neuf modules métier, les schémas API, le service
 et `POST /api/v1/equipments/{equipment_id}/health-score`. Les cas paramétrés

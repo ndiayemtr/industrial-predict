@@ -100,7 +100,7 @@ describe('Sidebar navigation', () => {
     const disabled = Array.from(harness.routeNativeElement!.querySelectorAll('nav [aria-disabled="true"]'));
 
     expect(disabled.map((item) => item.getAttribute('aria-label'))).toEqual([
-      'Rapports — À venir', 'Administration — À venir'
+      'Rapports - À venir', 'Administration - À venir'
     ]);
     for (const item of disabled) {
       expect(item.tagName).toBe('SPAN');

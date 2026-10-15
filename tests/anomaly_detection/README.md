@@ -1,4 +1,4 @@
-# 2.4.9 — Tests automatisés de la détection d'anomalies
+# 2.4.9 - Tests automatisés de la détection d'anomalies
 
 ## Bug métier documenté avant correction
 

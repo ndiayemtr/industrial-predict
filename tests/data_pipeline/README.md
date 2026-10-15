@@ -1,4 +1,4 @@
-# 2.1.9 — Tests automatisés du Data Pipeline
+# 2.1.9 - Tests automatisés du Data Pipeline
 
 Depuis `backend`, avec Python 3.12, les dépendances backend et pandas :
 
@@ -60,7 +60,7 @@ des instants UTC, puis le builder les convertit en UTC. Ils ne prouvent pas la
 sémantique native timestamptz. Le test PostgreSQL dédié vide l'identity map,
 utilise des bornes avec décalage `+05:30` et vérifie les timestamps réhydratés.
 
-## Bugs reproduits — aucun correctif métier appliqué
+## Bugs reproduits - aucun correctif métier appliqué
 
 1. **Fenêtre de taille 1 :** `WindowFeatureBuilder.build(..., window_size=1)`
    échoue sur un dataset non vide avec `min_periods 2 must be <= window 1`.

@@ -258,7 +258,7 @@ Les tests ignorés nécessitent PostgreSQL.
 
 Merger la branche `feature/2.9-predictive-maintenance-recommendations` vers `main`, puis démarrer l'étape suivante du projet.
 
-## Frontend — socle UI 1.1 à UI 1.8 terminé
+## Frontend - socle UI 1.1 à UI 1.8 terminé
 
 La fondation UI 1.1 à UI 1.6 est terminée et fusionnée dans `main`.
 Historique : `82fc073` a fusionné `feature/frontend-ui-foundation`, incluant
@@ -354,7 +354,7 @@ RUL et prédictions de panne sont exclus de V1 ; l'affichage monétaire est diff
 Voir `frontend-architecture.md` pour le contrat, les états UI et les risques,
 `ui-design.md` pour la présentation et `roadmap.md` pour l'état des étapes UI 2.
 
-### Validation Dashboard V1 — UI 2.7 / UI 2.7.1
+### Validation Dashboard V1 - UI 2.7 / UI 2.7.1
 
 - 217 tests Angular en UI 2.7, puis **220 tests** après UI 2.7.1 ; build production
   réussi, **5 tests de correctif Sass**, contrôles Sass conformes, `npm ls --all`

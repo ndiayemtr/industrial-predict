@@ -1,4 +1,4 @@
-# 1.4.18.8 — Tests pagination et filtres
+# 1.4.18.8 - Tests pagination et filtres
 
 Depuis `backend`, avec Python 3.12 et les dépendances du backend :
 

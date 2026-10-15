@@ -1,4 +1,4 @@
-# 1.4.17.7 — Tests des validations métier
+# 1.4.17.7 - Tests des validations métier
 
 Suite `unittest` cohérente avec les tests existants, sans dépendance supplémentaire.
 Les schémas Pydantic réels sont instanciés directement, sans mocks, serveur ni base

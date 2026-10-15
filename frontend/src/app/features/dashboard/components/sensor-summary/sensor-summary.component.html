@@ -10,7 +10,7 @@
       [information]="activity().active_sensors_reporting_ratio.numerator + ' capteurs actuellement actifs ayant émis sur ' + activity().active_sensors_reporting_ratio.denominator + ' capteurs actuellement actifs. Fin de période exclusive.'" />
   </div>
   <table>
-    <caption>Répartition des statuts — État actuel — {{ status().total }} capteurs</caption>
+    <caption>Répartition des statuts - État actuel - {{ status().total }} capteurs</caption>
     <thead><tr><th scope="col">Statut</th><th scope="col">Effectif</th></tr></thead>
     <tbody>
       @for (category of status().distribution; track $index) {

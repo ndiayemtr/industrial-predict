@@ -24,52 +24,52 @@
 
 ### Fondation terminée et fusionnée dans main
 
-- [x] UI 1.1 — Audit et architecture frontend
-- [x] UI 1.2 — Initialisation Angular standalone
-- [x] UI 1.3 — Thème global et Shell
-- [x] UI 1.4 — Sidebar et navigation centralisée
-- [x] UI 1.5 — Header global et finitions visuelles
-- [x] UI 1.6 — Routing, 404, accessibilité et consolidation des tests
+- [x] UI 1.1 - Audit et architecture frontend
+- [x] UI 1.2 - Initialisation Angular standalone
+- [x] UI 1.3 - Thème global et Shell
+- [x] UI 1.4 - Sidebar et navigation centralisée
+- [x] UI 1.5 - Header global et finitions visuelles
+- [x] UI 1.6 - Routing, 404, accessibilité et consolidation des tests
 
-### UI 1.7 — Composants partagés terminés et commités
+### UI 1.7 - Composants partagés terminés et commités
 
-- [x] UI 1.7.0 — Synchronisation documentaire validée
-- [x] UI 1.7.1 — Conception et contrats validés
-- [x] UI 1.7.2 — PageHeader
-- [x] UI 1.7.3 — LoadingState
-- [x] UI 1.7.4 — EmptyState
-- [x] UI 1.7.5 — ErrorState
-- [x] UI 1.7.6 — Validation globale et visuelle ; démonstration retirée
+- [x] UI 1.7.0 - Synchronisation documentaire validée
+- [x] UI 1.7.1 - Conception et contrats validés
+- [x] UI 1.7.2 - PageHeader
+- [x] UI 1.7.3 - LoadingState
+- [x] UI 1.7.4 - EmptyState
+- [x] UI 1.7.5 - ErrorState
+- [x] UI 1.7.6 - Validation globale et visuelle ; démonstration retirée
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
 les autres pages métier sont des placeholders.
 
-### UI 1.8 — Responsive et accessibilité terminés et fusionnés
+### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
-- [x] UI 1.8.1 — Audit responsive global
-- [x] UI 1.8.2 — Corrections responsive ciblées, validées et livrées dans `12a18c3`
-- [x] UI 1.8.3 — Validation approfondie, avec zoom réel 100/200/400 % confirmé par l'utilisateur
-- [x] UI 1.8.4 — Documentation et validation finale terminées ; commit `12a18c3`, fusion `acd872b`
+- [x] UI 1.8.1 - Audit responsive global
+- [x] UI 1.8.2 - Corrections responsive ciblées, validées et livrées dans `12a18c3`
+- [x] UI 1.8.3 - Validation approfondie, avec zoom réel 100/200/400 % confirmé par l'utilisateur
+- [x] UI 1.8.4 - Documentation et validation finale terminées ; commit `12a18c3`, fusion `acd872b`
 
 La validation historique du socle comprend 116 tests Angular, 5 tests du correctif Sass
 et un build production réussi. Le lecteur d'écran réel reste non testé.
 L'avertissement de bundle (504,68 ko pour un budget de 500 ko) reste explicite,
 sans relèvement de seuil.
 
-### UI 2 — Dashboard frontend V1 et intégration API
+### UI 2 - Dashboard frontend V1 et intégration API
 
-- [x] UI 2.1 — Audit du contrat réel et conception frontend validés
-- [x] UI 2.1.1 — Synchronisation documentaire Dashboard V1 validée et commitée
-- [x] UI 2.2 — DTO TypeScript, accès HTTP Dashboard et proxy développement
-- [x] UI 2.3 — Références paginées et filtres accessibles
-- [x] UI 2.4 — Façade locale, page lazy et états UI
-- [x] UI 2.4.1 — Diagnostic de croissance du bundle ; lazy loading confirmé
-- [x] UI 2.5 — Synthèse, équipements et capteurs (`b666d7d`)
-- [x] UI 2.6 — Mesures et maintenance (`2a6116d`)
-- [x] UI 2.7 — Validation intégrée terminée, avec limites réelles/simulées explicites
-- [x] UI 2.7.1 — Formulation neutre de couverture (`956a0b4`), 220 tests Angular
-- [ ] UI 2.8 — Documentation et validation finale en finalisation ; validation avant commit
+- [x] UI 2.1 - Audit du contrat réel et conception frontend validés
+- [x] UI 2.1.1 - Synchronisation documentaire Dashboard V1 validée et commitée
+- [x] UI 2.2 - DTO TypeScript, accès HTTP Dashboard et proxy développement
+- [x] UI 2.3 - Références paginées et filtres accessibles
+- [x] UI 2.4 - Façade locale, page lazy et états UI
+- [x] UI 2.4.1 - Diagnostic de croissance du bundle ; lazy loading confirmé
+- [x] UI 2.5 - Synthèse, équipements et capteurs (`b666d7d`)
+- [x] UI 2.6 - Mesures et maintenance (`2a6116d`)
+- [x] UI 2.7 - Validation intégrée terminée, avec limites réelles/simulées explicites
+- [x] UI 2.7.1 - Formulation neutre de couverture (`956a0b4`), 220 tests Angular
+- [ ] UI 2.8 - Documentation et validation finale en finalisation ; validation avant commit
 - [ ] Fusion de `feature/frontend-dashboard` dans `main` après autorisation distincte
 
 La conception D014/DASH-01 à DASH-06 est implémentée. Les cinq sections livrées

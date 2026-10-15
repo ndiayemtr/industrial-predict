@@ -17,9 +17,9 @@
     <app-error-state [title]="state.error.title" [message]="state.error.message" [retryable]="state.error.retryable" (retry)="facade.retry()" />
   } @else {
     <dl class="result-metadata">
-      <div><dt>Entreprise — identifiant</dt><dd>{{ state.data.scope.company_id }}</dd></div>
-      <div><dt>Site — identifiant</dt><dd>{{ state.data.scope.site_id ?? 'Tous les sites' }}</dd></div>
-      <div><dt>Équipement — identifiant</dt><dd>{{ state.data.scope.equipment_id ?? 'Tous les équipements' }}</dd></div>
+      <div><dt>Entreprise - identifiant</dt><dd>{{ state.data.scope.company_id }}</dd></div>
+      <div><dt>Site - identifiant</dt><dd>{{ state.data.scope.site_id ?? 'Tous les sites' }}</dd></div>
+      <div><dt>Équipement - identifiant</dt><dd>{{ state.data.scope.equipment_id ?? 'Tous les équipements' }}</dd></div>
       <div><dt>Début inclus (UTC)</dt><dd>{{ state.data.period.start_time }}</dd></div>
       <div><dt>Fin exclue (UTC)</dt><dd>{{ state.data.period.end_time }}</dd></div>
       <div><dt>Au calcul (UTC)</dt><dd>{{ state.data.period.calculated_at }}</dd></div>

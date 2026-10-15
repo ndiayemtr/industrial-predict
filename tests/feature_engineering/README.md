@@ -1,4 +1,4 @@
-# 2.3.10 — Tests automatisés du Feature Engineering
+# 2.3.10 - Tests automatisés du Feature Engineering
 
 44 tests `unittest`, sans base de données, couvrent les huit modules demandés.
 Les cas paramétrés utilisent `subTest` : ils ne sont pas comptés comme des tests
