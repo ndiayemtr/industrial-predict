@@ -24,7 +24,8 @@ input, button {
 button { cursor: pointer; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 button.primary { background: tokens.$navigation-active; color: tokens.$sidebar-text; border-color: tokens.$navigation-active; }
 button:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
-button:focus-visible, input:focus-visible, th:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+tbody a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
 p { line-height: tokens.$line-height-body; }
 .search-form p, .availability { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 #search-error:empty { display: none; }

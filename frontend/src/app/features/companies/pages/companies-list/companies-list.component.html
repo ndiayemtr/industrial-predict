@@ -13,7 +13,7 @@
 </form>
 @if (urlNotice()) { <p>{{ urlNotice() }}</p> }
 @if (wildcardSearch()) { <p>Les caractères % et _ sont interprétés comme des jokers par la recherche serveur.</p> }
-<p id="company-detail-unavailable" class="availability">La consultation détaillée et la création seront disponibles dans une étape ultérieure.</p>
+<p class="availability">La création sera disponible dans une étape ultérieure.</p>
 
 @let state = facade.state();
 <section class="results" aria-labelledby="companies-results-title" [attr.aria-busy]="busy()">
@@ -39,7 +39,7 @@
         <tbody>
           @for (company of state.data.items; track company.id) {
             <tr>
-              <th scope="row" tabindex="0" aria-describedby="company-detail-unavailable">{{ company.name }}</th>
+              <th scope="row"><a [routerLink]="['/companies', company.id]" [queryParams]="facade.query()">{{ company.name }}</a></th>
               <td>{{ company.code }}</td>
               <td class="description">{{ company.description?.trim() ? company.description : 'Non renseignée' }}</td>
             </tr>

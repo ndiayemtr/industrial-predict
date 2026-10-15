@@ -62,15 +62,15 @@ describe('Companies list page and URL integration', () => {
     expect(root().querySelectorAll('h1')).toHaveLength(1);
     expect(root().querySelector('table caption')?.textContent).toContain('21 au total');
     expect(root().querySelectorAll('thead th[scope="col"]')).toHaveLength(3);
-    const name = root().querySelector<HTMLElement>('tbody th[scope="row"]')!;
+    const name = root().querySelector<HTMLAnchorElement>('tbody th[scope="row"] a')!;
     expect(name.tabIndex).toBe(0);
     name.focus();
     expect(document.activeElement).toBe(name);
-    expect(name.getAttribute('aria-describedby')).toBe('company-detail-unavailable');
+    expect(name.getAttribute('href')).toBe('/companies/7?page=1&page_size=20');
     expect(root().textContent).toContain('Entreprise test');
     expect(root().textContent).toContain('TEST-7');
     expect(root().textContent).toContain('Non renseignée');
-    expect(root().querySelectorAll('a')).toHaveLength(0);
+    expect(root().querySelectorAll('tbody a')).toHaveLength(1);
     expect(root().querySelectorAll('button[type="submit"]')).toHaveLength(1);
     expect(root().querySelector('[aria-busy]')?.getAttribute('aria-busy')).toBe('false');
     http.expectNone(() => true);
