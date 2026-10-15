@@ -116,13 +116,16 @@ confirmation reçue en UI 2.8, distincte des essais du navigateur intégré.
 Lecteur d'écran réel non testé. Autorisation multi-entreprises non démontrée :
 pas de déclaration de préparation à la production SaaS multi-tenant.
 
-### UI 3 - Gestion des entreprises (Companies), prochaine phase
+### UI 3 - Gestion des entreprises (Companies), conception à valider
 
-- [ ] UI 3.1 - Analyse fonctionnelle et technique, non commencée
+- [ ] UI 3.1 - Analyse documentée, validation attendue
 
-Commencer par examiner les contrats CRUD existants, la pagination, les états UI
-et les exigences d’accessibilité avant de proposer une implémentation. La page
-Companies reste un placeholder ; aucun développement UI 3 n’est livré ici.
+Le contrat backend vérifié, la conception fonctionnelle et le découpage proposé
+UI 3.2 à UI 3.8 figurent dans [etape-ui-3.1-companies.md](etape-ui-3.1-companies.md).
+MVP proposé : liste/recherche serveur paginée, détail, création et modification ;
+suppression destructive en cascade reportée, sécurité multi-entreprises à renforcer.
+Ce découpage n’est pas encore validé. Companies reste un placeholder ; aucune
+implémentation UI 3.2 n’est commencée.
 
 ### Écrans métier restant à implémenter
 

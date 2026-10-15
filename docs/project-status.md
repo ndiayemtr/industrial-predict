@@ -6,7 +6,7 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-dashboard`
+`feature/frontend-companies` (UI 3.1, HEAD initial `b7aac19`)
 
 À mettre à jour à chaque changement de branche.
 
@@ -340,7 +340,18 @@ Ces résultats sont l'historique de validation UI 1.8, pas une nouvelle exécuti
 en UI 2.1.1. Cette étape documentaire contrôle le contrat dans le code et les
 tests existants, la cohérence des documents et le diff Git.
 
-## Travail actuel
+## Travail actuel - UI 3.1 Companies
+
+Analyse fonctionnelle et technique documentée dans
+[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), sur
+`feature/frontend-companies`, HEAD initial `b7aac19`, dépôt propre avant analyse.
+La conception est soumise à validation ; UI 3.2 n’est pas commencée et la page
+Companies reste un placeholder. Le MVP proposé couvre liste paginée, recherche
+nom/code, détail, création et modification. DELETE est proposé hors MVP :
+suppression définitive en cascade, sans autorisation multi-entreprises démontrée.
+Aucun code ni donnée modifié et aucune suite applicative relancée dans UI 3.1.
+
+## Livraison Dashboard V1 - historique
 
 Synchronisation documentaire après livraison, au 15 octobre 2026 : branche
 `main`, HEAD `23e28e5`, identique à `origin/main`, répertoire de travail propre
@@ -422,8 +433,7 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Faire valider cette synchronisation avant tout commit documentaire. La prochaine
-phase est UI 3 - Gestion des entreprises (Companies), en commençant par UI 3.1 :
-analyse fonctionnelle et technique des contrats CRUD, de la pagination, des états
-UI et de l’accessibilité. Cette analyse et son implémentation ne sont pas commencées.
-Aucun commit, push, merge ou développement UI 3 dans la présente intervention.
+Faire valider la conception UI 3.1 et les décisions proposées, notamment le
+report de la suppression, les validations du formulaire et les limites de sécurité.
+UI 3.2 ne commencera qu’après autorisation. Aucun développement Angular ou
+FastAPI, commit, push ou merge n’est réalisé dans cette étape documentaire.

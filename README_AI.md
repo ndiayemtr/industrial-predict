@@ -55,14 +55,18 @@ et `docs/ui-design.md`.
 Le socle UI 1.1 à UI 1.8 est terminé et fusionné dans `main`.
 Les quatre composants partagés et le Shell responsive accessible sont disponibles.
 UI 2.1 à UI 2.8 sont terminées. Dashboard V1 est fusionné dans `main`
-(commit de fusion `f3f6f2c`) et publié sur GitHub ; référence de reprise
+(commit de fusion `f3f6f2c`) et publié sur GitHub ; référence de livraison
 `23e28e5`, identique à `origin/main` au contrôle du 15 octobre 2026.
 Dashboard V1 consomme FastAPI via `/api/v1/dashboard` :
 filtres UTC, références paginées, façade locale et cinq sections de présentation.
 UI 2.8 est enregistrée dans `9ce0cac` ; la publication du code ne constitue
-pas un déploiement de production. Prochaine phase : UI 3 - Gestion des
-entreprises (Companies), en commençant par l’analyse fonctionnelle et technique
-UI 3.1. Cette phase n’est pas commencée ; attendre une demande avant intervention.
+pas un déploiement de production. La phase UI 3 - Gestion des entreprises
+(Companies) est au stade de l’analyse fonctionnelle et technique UI 3.1,
+sur `feature/frontend-companies`, HEAD de départ `b7aac19`.
+Le contrat vérifié, le MVP et le plan proposés figurent dans
+`docs/etape-ui-3.1-companies.md` ; validation attendue avant UI 3.2.
+Aucun code Companies n’est encore implémenté. La suppression en cascade est
+proposée hors MVP et l’autorisation backend reste à renforcer.
 Les autres pages métier restent des placeholders. Aucun identifiant d'entreprise
 par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de

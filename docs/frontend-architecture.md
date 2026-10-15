@@ -724,11 +724,17 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-1. Layout global
-2. Dashboard
-3. Liste des équipements
-4. Détail équipement
-5. Prédictions
-6. Recommandations
-7. Maintenance
-8. Autres modules
+Le layout et Dashboard V1 sont livrés. L’étape actuelle est la
+conception UI 3.1 de Companies, documentée dans
+[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), en attente de validation
+avant UI 3.2. Aucun service, formulaire ou route Companies proposé dans ce
+document n’est encore implémenté.
+
+L’ordre antérieur des autres intentions frontend reste indicatif :
+
+1. Liste des équipements
+2. Détail équipement
+3. Prédictions
+4. Recommandations
+5. Maintenance
+6. Autres modules

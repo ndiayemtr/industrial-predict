@@ -49,9 +49,10 @@ La route Dashboard n'a pas d'autorisation multi-entreprises démontrée ; sélec
 et filtrage ne remplacent pas authentification/RBAC. Cette livraison ne constitue
 pas une préparation à la production SaaS multi-tenant.
 Les fonctionnalités ML backend ci-dessous restent livrées, mais leur consommation
-est hors périmètre Dashboard V1. UI 2.8 a clôturé la documentation Dashboard ;
-UI 3 - Gestion des entreprises (Companies) commencera par l’analyse UI 3.1,
-qui n’est pas encore commencée.
+est hors périmètre Dashboard V1. UI 2.8 a clôturé la documentation Dashboard.
+L’analyse UI 3.1 - Gestion des entreprises (Companies) est documentée dans
+[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md) et soumise à validation ;
+aucune implémentation Companies n’est encore livrée.
 
 ## Backend
 
