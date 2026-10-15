@@ -71,12 +71,17 @@ describe('Routing configuration invariants', () => {
     expect(children.filter((route) => route.path === 'equipments/:equipmentId')).toHaveLength(1);
   });
 
-  it('declares deferred component loaders for Shell and every page without eager components', () => {
+  it('declares deferred loaders for Shell and every feature without eager components', () => {
     const componentRoutes = [routes[0], ...children.filter((route) => route.redirectTo === undefined)];
     for (const route of componentRoutes) {
-      expect(typeof route.loadComponent).toBe('function');
       expect(route.component).toBeUndefined();
-      expect(route.loadChildren).toBeUndefined();
+      if (route.path === 'companies') {
+        expect(typeof route.loadChildren).toBe('function');
+        expect(route.loadComponent).toBeUndefined();
+      } else {
+        expect(typeof route.loadComponent).toBe('function');
+        expect(route.loadChildren).toBeUndefined();
+      }
     }
   });
 });
