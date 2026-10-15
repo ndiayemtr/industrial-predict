@@ -155,7 +155,7 @@ les budgets. UI 1.8.4 est désormais clôturée : commit `12a18c3`, fusion `acd8
 Décision validée à l'issue d'UI 2.1 et enregistrée en UI 2.1.1 le 14 octobre
 2026, sur `feature/frontend-dashboard`. À l'enregistrement initial en UI 2.1.1,
 la décision était de conception uniquement et UI 2.2 n'était pas commencée.
-UI 2.2 à UI 2.7.1 l'ont depuis implémentée ; UI 2.8 synchronise ce suivi sans
+UI 2.2 à UI 2.7.1 l’ont depuis implémentée ; UI 2.8 a synchronisé ce suivi sans
 changer DASH-01 à DASH-06. Les décisions D001 à D013 restent applicables.
 
 | Identifiant | Décision V1 validée |
@@ -176,8 +176,10 @@ ne vérifie pas les droits d'un utilisateur sur les entreprises.
 Le contrat, l'architecture cible, les références, états et risques sont décrits
 dans [frontend-architecture.md](frontend-architecture.md), les cinq sections
 visuelles dans [ui-design.md](ui-design.md) et le plan UI 2.2 à UI 2.8 dans
-[roadmap.md](roadmap.md). Leur implémentation UI 2.2 à UI 2.7.1 est livrée sur
-la branche Dashboard, HEAD `956a0b4`, fusion dans main à réaliser. Le proxy
+[roadmap.md](roadmap.md). Leur implémentation UI 2.2 à UI 2.7.1 et la clôture
+documentaire UI 2.8 (`9ce0cac`) sont fusionnées dans `main` (`f3f6f2c`).
+Le code est publié sur GitHub, référence `23e28e5`. Ce suivi de livraison ne
+modifie aucune décision et ne justifie pas de nouvelle numérotation. Le proxy
 développement est désormais configuré ; le reverse proxy de production reste
 à prévoir. Les mentions « prévu » et « non créé en UI 2.1.1 » du tableau
 conservent le contexte historique de la décision initiale.

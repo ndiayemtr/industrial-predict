@@ -54,10 +54,15 @@ et `docs/ui-design.md`.
 
 Le socle UI 1.1 à UI 1.8 est terminé et fusionné dans `main`.
 Les quatre composants partagés et le Shell responsive accessible sont disponibles.
-UI 2.1 à UI 2.7.1 sont terminées et commitées sur `feature/frontend-dashboard`
-(HEAD `956a0b4`). Dashboard V1 consomme FastAPI via `/api/v1/dashboard` :
+UI 2.1 à UI 2.8 sont terminées. Dashboard V1 est fusionné dans `main`
+(commit de fusion `f3f6f2c`) et publié sur GitHub ; référence de reprise
+`23e28e5`, identique à `origin/main` au contrôle du 15 octobre 2026.
+Dashboard V1 consomme FastAPI via `/api/v1/dashboard` :
 filtres UTC, références paginées, façade locale et cinq sections de présentation.
-UI 2.8 finalise la documentation ; la fusion dans `main` reste à réaliser.
+UI 2.8 est enregistrée dans `9ce0cac` ; la publication du code ne constitue
+pas un déploiement de production. Prochaine phase : UI 3 - Gestion des
+entreprises (Companies), en commençant par l’analyse fonctionnelle et technique
+UI 3.1. Cette phase n’est pas commencée ; attendre une demande avant intervention.
 Les autres pages métier restent des placeholders. Aucun identifiant d'entreprise
 par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
@@ -66,7 +71,10 @@ dans `docs/frontend-architecture.md`. Ne pas étendre le Dashboard V1 aux
 indicateurs ML : les fonctions backend correspondantes ne sont pas intégrées
 à cette page. L'autorisation multi-entreprises n'est pas démontrée sur la route
 Dashboard ; ne pas déclarer une préparation à la production SaaS multi-tenant.
-La validation comprend 220 tests Angular ; lecteur d'écran réel non testé.
+La validation finale comprend 220 tests Angular et un build production réussis ;
+zoom réel Dashboard 100 %, 200 % et 400 % validé manuellement par l’utilisateur.
+Lecteur d’écran réel non testé. Le nettoyage typographique `23e28e5` remplace
+90 tirets cadratins par des tirets simples dans 24 fichiers ; conserver cette convention.
 Le bundle initial de 565,38 ko dépasse le warning de 500 ko, sans relèvement.
 
 ### Machine Learning

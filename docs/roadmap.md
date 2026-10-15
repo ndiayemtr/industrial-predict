@@ -57,7 +57,7 @@ et un build production réussi. Le lecteur d'écran réel reste non testé.
 L'avertissement de bundle (504,68 ko pour un budget de 500 ko) reste explicite,
 sans relèvement de seuil.
 
-### UI 2 - Dashboard frontend V1 et intégration API
+### UI 2 - Dashboard frontend V1 et intégration API clôturés
 
 - [x] UI 2.1 - Audit du contrat réel et conception frontend validés
 - [x] UI 2.1.1 - Synchronisation documentaire Dashboard V1 validée et commitée
@@ -69,20 +69,23 @@ sans relèvement de seuil.
 - [x] UI 2.6 - Mesures et maintenance (`2a6116d`)
 - [x] UI 2.7 - Validation intégrée terminée, avec limites réelles/simulées explicites
 - [x] UI 2.7.1 - Formulation neutre de couverture (`956a0b4`), 220 tests Angular
-- [ ] UI 2.8 - Documentation et validation finale en finalisation ; validation avant commit
-- [ ] Fusion de `feature/frontend-dashboard` dans `main` après autorisation distincte
+- [x] UI 2.8 - Documentation et validation finale terminées (`9ce0cac`)
+- [x] Fusion de `feature/frontend-dashboard` dans `main` (`f3f6f2c`)
+- [x] Publication sur GitHub du code sur `main`, référence `23e28e5`
+- [x] Nettoyage typographique : 90 tirets cadratins remplacés dans 24 fichiers (`23e28e5`)
 
 La conception D014/DASH-01 à DASH-06 est implémentée. Les cinq sections livrées
 sont synthèse, équipements, capteurs, mesures et maintenance ; les prédictions
 ML et l'affichage monétaire sont exclus de V1. Le backend local sur le port
 8000 est consommé via le proxy Angular de développement ; le reverse proxy
-de production reste à configurer. UI 2.8 ne modifie que la documentation.
+de production reste à configurer. UI 2.8 a uniquement modifié la documentation ;
+la publication sur GitHub ne constitue pas un déploiement de production.
 
 #### Découpage validé et critères de livraison
 
 Les chemins ci-dessous sont relatifs à `frontend/`. UI 2.2 à UI 2.6 sont
 implémentées ; UI 2.7 a validé ces critères avec la distinction réel/simulé
-décrite dans project-status.md. UI 2.8 finalise les documents et relance les checks.
+décrite dans project-status.md. UI 2.8 a finalisé les documents et relancé les contrôles.
 
 | Étape | Fichiers / périmètre | Critères validés ou contrôle final |
 | --- | --- | --- |
@@ -92,7 +95,7 @@ décrite dans project-status.md. UI 2.8 finalise les documents et relance les ch
 | UI 2.5 | `features/dashboard/components/dashboard-kpi-card/`, `equipment-summary/`, `sensor-summary/` | Rendu des effectifs et ratios renvoyés, zéro distinct de null, catégories inconnues conservées ; libellés « État actuel » et « Sur la période » justes ; aucune santé ou prédiction inventée ; rendu responsive. |
 | UI 2.6 | `features/dashboard/components/measurement-summary/`, `maintenance-summary/` | Bornes UTC, jours partiels et zéros quotidiens ; dernières mesures hors période ou absentes ; maintenance ouverte/current et terminée/période distinctes ; couvertures partielles, zéro/null, dates manquantes ; aucun coût monétaire affiché faute de devise. |
 | UI 2.7 | Audit et suites existantes, validation navigateur ; UI 2.7.1 a corrigé uniquement la formulation de couverture | PETROSEN et GET backend réels ; erreurs UI/réseau/serveur et absence de doublons HTTP simulées ; six largeurs CSS, clavier, menu mobile, focus, console et bundle contrôlés. Zoom réel Dashboard 100/200/400 % validé manuellement par l'utilisateur, confirmé en UI 2.8. Aucune mesure de charge à grande échelle ; lecteur d'écran réel non testé. |
-| UI 2.8 | Documents de statut, architecture, UI et décisions si nécessaire | Documentation conforme au code livré et au contrat inchangé ; bilan des tests, tailles, avertissements et limites ; validation avant commit, aucune publication automatique. |
+| UI 2.8 | Documents de statut, architecture, UI et décisions si nécessaire | Documentation conforme au code livré et au contrat inchangé ; bilan des tests, tailles, avertissements et limites validé et commité dans `9ce0cac`, puis fusionné dans `main`. |
 
 À chaque étape d'implémentation : `npm run build`, `npm test -- --watch=false`,
 `npm ls --all`, `npm audit` et contrôles Sass pertinents. Préserver les tests
@@ -113,12 +116,20 @@ confirmation reçue en UI 2.8, distincte des essais du navigateur intégré.
 Lecteur d'écran réel non testé. Autorisation multi-entreprises non démontrée :
 pas de déclaration de préparation à la production SaaS multi-tenant.
 
+### UI 3 - Gestion des entreprises (Companies), prochaine phase
+
+- [ ] UI 3.1 - Analyse fonctionnelle et technique, non commencée
+
+Commencer par examiner les contrats CRUD existants, la pagination, les états UI
+et les exigences d’accessibilité avant de proposer une implémentation. La page
+Companies reste un placeholder ; aucun développement UI 3 n’est livré ici.
+
 ### Écrans métier restant à implémenter
 
 La présence de routes et de placeholders ne signifie pas que les fonctionnalités
 ci-dessous sont livrées ou connectées aux APIs.
 
-[x] Dashboard V1 développé sur la branche dédiée ; fusion dans main à réaliser
+[x] Dashboard V1 livré, fusionné dans `main` et publié sur GitHub
 [ ] Equipment monitoring
 [ ] Alerts
 [ ] Analytics

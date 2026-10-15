@@ -209,8 +209,10 @@ contenu s'applique. Les changements de mode ne laissent pas de fond bloquant.
 UI 1.8 est terminée, commitée dans `12a18c3` et fusionnée via `acd872b`.
 Les résultats ci-dessus sont historiques et ne sont pas relancés en UI 2.1.1.
 UI 2.1 a validé la conception du Dashboard V1 ; UI 2.2 à UI 2.7.1 l'ont livré
-et validé sur `feature/frontend-dashboard`. La fusion Dashboard dans main reste
-à réaliser ; UI 2.8 finalise la documentation sans changement visuel.
+et validé sur `feature/frontend-dashboard`. UI 2.8 a finalisé la documentation ;
+Dashboard V1 est fusionné dans `main` (`f3f6f2c`) et publié sur GitHub
+(référence `23e28e5`). Le nettoyage de 90 tirets cadratins dans 24 fichiers
+conserve le design et les comportements ; utiliser désormais le tiret simple.
 
 ## Dashboard V1 - présentation implémentée et validée
 

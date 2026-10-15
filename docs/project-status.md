@@ -298,7 +298,7 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 2.6 | Mesures et maintenance livrées (`2a6116d`) |
 | UI 2.7 | Validation intégrée terminée ; observations réelles et cas simulés distingués |
 | UI 2.7.1 | Formulation neutre de couverture corrigée et commitée (`956a0b4`) |
-| UI 2.8 | Documentation finale et validation en finalisation, avant commit documentaire |
+| UI 2.8 | Documentation et validation finale terminées (`9ce0cac`) ; Dashboard fusionné dans `main` (`f3f6f2c`) et publié sur GitHub |
 
 Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Les huit autres destinations
 de navigation et le détail équipement restent des placeholders. Rapports et
@@ -342,11 +342,12 @@ tests existants, la cohérence des documents et le diff Git.
 
 ## Travail actuel
 
-UI 2.8 sur `feature/frontend-dashboard`, HEAD initial `956a0b4`, dépôt propre :
-synchronisation documentaire et validation finale du Dashboard V1 développé.
-UI 2.1 à UI 2.7.1 sont terminées et commitées ; la branche Dashboard n'est pas
-encore fusionnée dans `main`. Le backend local sur **127.0.0.1:8000** est consommé
-via le proxy Angular `/api/v1` de développement.
+Synchronisation documentaire après livraison, au 15 octobre 2026 : branche
+`main`, HEAD `23e28e5`, identique à `origin/main`, répertoire de travail propre
+avant intervention. UI 2.1 à UI 2.8 sont terminées ; Dashboard V1 est fusionné
+dans `main` via `f3f6f2c` et son code est publié sur GitHub. Cela ne constitue
+pas un déploiement de production. Le backend local sur **127.0.0.1:8000**
+est consommé via le proxy Angular `/api/v1` de développement.
 
 Le périmètre livré couvre synthèse, équipements, capteurs, mesures et maintenance,
 uniquement à partir des agrégats de `GET /api/v1/dashboard`. Health Score,
@@ -358,7 +359,7 @@ Voir `frontend-architecture.md` pour le contrat, les états UI et les risques,
 
 - 217 tests Angular en UI 2.7, puis **220 tests** après UI 2.7.1 ; build production
   réussi, **5 tests de correctif Sass**, contrôles Sass conformes, `npm ls --all`
-  valide et `npm audit` sans vulnérabilité. UI 2.8 relance ces contrôles.
+  valide et `npm audit` sans vulnérabilité. UI 2.8 a relancé ces contrôles.
 - Données existantes PETROSEN, sans écriture PostgreSQL : 2 équipements,
   2 capteurs actifs, couverture 50 %, aucune mesure sur les sept jours testés,
   aucune maintenance ouverte ni retard. Le compresseur sans capteurs reste en
@@ -404,11 +405,25 @@ conformes ; `npm ls --all` code 0 ; `npm audit` : **0 vulnérabilité**.
 Aucune nouvelle dépréciation Sass. Bundle final **565,38 ko initial**,
 **51,98 ko Dashboard différé** (référence historique 52,00 ko en UI 2.6).
 Warning de 65,38 ko conservé, aucun budget relevé.
-Les modifications UI 2.8 concernent uniquement les sept documents de contexte,
+Les modifications UI 2.8 concernaient uniquement les sept documents de contexte,
 statut, roadmap, architectures, design et décisions ; historique backend conservé.
+
+### Livraison et nettoyage typographique
+
+La documentation UI 2.8 est commitée dans `9ce0cac`, puis fusionnée dans
+`main` via `f3f6f2c`. Le commit publié `23e28e5` remplace exactement
+**90 tirets cadratins dans 24 fichiers** par des tirets simples, sans changement
+fonctionnel. Les 220 tests Angular et le build production ont réussi après ce
+nettoyage ; le bundle initial reste à 565,38 ko. Ces validations sont historiques :
+la présente synchronisation documentaire ne relance pas les tests applicatifs.
+
+Les limites restent ouvertes : budget initial de 500 ko dépassé, lecteur d’écran
+réel non testé et autorisation multi-entreprises à renforcer avant production.
 
 ## Prochaine action
 
-Faire valider UI 2.8, puis autoriser le commit documentaire et la fusion Dashboard
-dans `main` lors d'une action distincte. Aucun commit, push, nouvelle fonctionnalité,
-code applicatif, dépendance, contrat backend ou budget n'est modifié en UI 2.8.
+Faire valider cette synchronisation avant tout commit documentaire. La prochaine
+phase est UI 3 - Gestion des entreprises (Companies), en commençant par UI 3.1 :
+analyse fonctionnelle et technique des contrats CRUD, de la pagination, des états
+UI et de l’accessibilité. Cette analyse et son implémentation ne sont pas commencées.
+Aucun commit, push, merge ou développement UI 3 dans la présente intervention.

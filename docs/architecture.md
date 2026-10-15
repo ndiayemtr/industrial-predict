@@ -36,8 +36,8 @@ Ils sont implémentés et testés, indépendants du backend et
 des modules métier. Leurs contrats figurent dans
 `frontend-architecture.md` ; les règles visuelles figurent dans `ui-design.md`.
 
-UI 2.1 à UI 2.7.1 ont livré et validé le Dashboard V1 sur
-`feature/frontend-dashboard` (HEAD `956a0b4`, fusion dans `main` à réaliser) :
+UI 2.1 à UI 2.8 ont livré et validé le Dashboard V1, fusionné dans `main`
+via `f3f6f2c` et publié sur GitHub (référence `23e28e5`) :
 page standalone lazy → façade locale → DashboardApiService → agrégats existants
 de `GET /api/v1/dashboard`. `ReferenceDataApiService` consomme les CRUD paginés
 existants pour entreprises, sites et équipements. Les composants de présentation
@@ -49,7 +49,9 @@ La route Dashboard n'a pas d'autorisation multi-entreprises démontrée ; sélec
 et filtrage ne remplacent pas authentification/RBAC. Cette livraison ne constitue
 pas une préparation à la production SaaS multi-tenant.
 Les fonctionnalités ML backend ci-dessous restent livrées, mais leur consommation
-est hors périmètre Dashboard V1. UI 2.8 finalise uniquement la documentation.
+est hors périmètre Dashboard V1. UI 2.8 a clôturé la documentation Dashboard ;
+UI 3 - Gestion des entreprises (Companies) commencera par l’analyse UI 3.1,
+qui n’est pas encore commencée.
 
 ## Backend
 

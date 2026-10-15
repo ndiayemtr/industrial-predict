@@ -14,9 +14,10 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé en UI 2.8 sur `feature/frontend-dashboard`,
-HEAD de référence `956a0b4`. Le socle UI 1.1 à UI 1.8 est fusionné dans `main` ;
-UI 2.1 à UI 2.7.1 sont livrées et commitées, la fusion Dashboard reste à réaliser.
+État documentaire synchronisé après livraison, le 15 octobre 2026, sur `main`
+au HEAD `23e28e5`, identique à `origin/main` au contrôle initial. Le socle UI 1.1
+à UI 1.8 et Dashboard V1 (UI 2.1 à UI 2.8) sont livrés et fusionnés dans `main` ;
+le code Dashboard est publié sur GitHub (fusion `f3f6f2c`).
 Voir `decisions.md` pour les limites de compatibilité.
 
 ## Structure réellement présente - socle et Dashboard V1
@@ -408,8 +409,8 @@ compatibilité de toutes les technologies d'assistance.
 ## Dashboard V1 - contrat consommé et architecture livrée UI 2
 
 Conception validée en UI 2.1, documentée en UI 2.1.1 puis implémentée en UI 2.2
-à UI 2.7.1. UI 2.8 finalise la documentation et la validation avant commit ;
-la fusion dans `main` est encore à réaliser. Les choix DASH-01 à DASH-06 sont
+à UI 2.7.1. UI 2.8 a finalisé la documentation et la validation (`9ce0cac`) ;
+Dashboard V1 est fusionné dans `main` et publié sur GitHub. Les choix DASH-01 à DASH-06 sont
 enregistrés dans D014 de [decisions.md](decisions.md).
 Le plan de tests et les étapes UI 2.2 à UI 2.8 figurent dans [roadmap.md](roadmap.md).
 
@@ -662,7 +663,8 @@ l'utilisateur**, confirmé en réponse à la clarification UI 2.8 ; ce contrôle
 n'est pas attribué à l'assistant. Voir [ui-design.md](ui-design.md) pour la portée
 des essais de zoom et la distinction avec l'historique du socle.
 **Lecteur d'écran réel non testé** ; aucun résultat vocal ou certification déduit
-des tests DOM/ARIA. La fusion Dashboard dans main reste à réaliser.
+des tests DOM/ARIA. Dashboard V1 est désormais fusionné dans `main` ;
+la publication du code ne vaut pas validation de production SaaS multi-tenant.
 
 ### Risques et dette technique restant à traiter
 
