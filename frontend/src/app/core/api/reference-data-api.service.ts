@@ -13,6 +13,10 @@ export class ReferenceDataApiService {
     return this.http.get<Page<CompanyRead>>(`${API_PREFIX}/companies`, { params: this.params(query) });
   }
 
+  getCompanyById(id: number): Observable<CompanyRead> {
+    return this.http.get<CompanyRead>(`${API_PREFIX}/companies/${id}`);
+  }
+
   getSites(companyId: number, query: ReferencePageQuery = {}): Observable<Page<SiteRead>> {
     return this.http.get<Page<SiteRead>>(`${API_PREFIX}/sites`, {
       params: this.params(query).set('company_id', companyId)

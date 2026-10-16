@@ -423,10 +423,11 @@ un snapshot immutable et switchMap/takeUntilDestroyed pour les lectures.
 Page détail et page de formulaire gardent leurs états locaux et leur propre
 gestion des identifiants/réponses obsolètes. Aucun polling ni store global.
 
-SitesApiService : list(companyId, query), getById, create, update ; aucun delete.
+SitesApiService : list(query), avec company_id obligatoire dans SiteListQuery,
+getById, create, update ; aucun delete.
 SiteCreate reflète name/code/company_id requis, description facultative nullable.
-SiteUpdate reflète les quatre champs facultatifs nullables du backend, mais la
-page de formulaire construit un PATCH de name/code/description seulement.
+SiteUpdate est limité aux trois champs facultatifs nullables name/code/description
+du MVP. Le backend accepte aussi company_id, exclu de ce DTO et du PATCH frontend.
 Les horodatages restent des strings dans SiteRead et ne sont jamais réécrits.
 
 Pour vérifier/précharger une entreprise par id sans importer un service de la

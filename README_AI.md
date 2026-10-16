@@ -100,9 +100,10 @@ réussi et `npm audit` sans vulnérabilité signalée. Ces résultats historique
 ne sont pas de nouvelles exécutions lors de la synchronisation documentaire.
 Voir `docs/frontend-datetime-display.md` et `docs/dashboard-date-precision.md`.
 UI 4 - Sites industriels : [conception UI 4.1](docs/etape-ui-4.1-sites.md)
-validée fonctionnellement sur `feature/frontend-sites`, commit documentaire
-en attente d'autorisation. UI 4.2 n'est pas
-commencée ; aucune fonctionnalité Sites frontend n'est encore implémentée.
+validée fonctionnellement et commitée dans `1630ebc` sur `feature/frontend-sites`.
+La couche de données UI 4.2 (DTO, service HTTP et tests simulés) est implémentée,
+en attente de validation ; [bilan UI 4.2](docs/ui-4.2-sites-data-access.md).
+Aucune page ou route Sites métier créée ; UI 4.3 n'est pas commencée.
 
 ### Machine Learning
 

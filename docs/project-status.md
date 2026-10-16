@@ -6,10 +6,9 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-sites`, créée depuis `main` propre au commit `54dd128`,
-synchronisé avec `origin/main` après `git fetch origin` le 16 octobre 2026
-(0 commit d'écart). UI 4.1 : conception fonctionnelle validée, documentation
-uniquement ; commit en attente d'autorisation.
+`feature/frontend-sites`, HEAD de référence `1630ebc`, dépôt propre au départ
+d'UI 4.2. Conception UI 4.1 validée et commitée ; couche de données UI 4.2
+implémentée, en attente de validation. Aucune page Sites métier créée.
 
 À mettre à jour à chaque changement de branche.
 
@@ -564,11 +563,10 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Obtenir l'autorisation du commit documentaire de la
-[conception UI 4.1 Sites industriels](etape-ui-4.1-sites.md), validée
-fonctionnellement : sélection explicite d'entreprise, code unique globalement,
-suppression et transfert exclus, entreprise en lecture seule dans l'édition
-sans company_id dans PATCH, gestion prudente des 409 et limite de sécurité
-multi-entreprises explicite. Aucun développement UI 4.2 n'est commencé.
-Cette étape modifie uniquement la documentation, sans changement applicatif,
-de dépendance ou de budget ; aucun commit, push ou merge effectué.
+Faire valider la [couche de données UI 4.2 Sites](ui-4.2-sites-data-access.md)
+avant tout commit et avant UI 4.3. La conception UI 4.1 reste applicable :
+entreprise explicite, code unique globalement, suppression et transfert exclus,
+aucun company_id dans PATCH et aucune interprétation arbitraire des 409.
+L'absence d'autorisation multi-entreprises reste une limite de sécurité.
+Aucun backend, PostgreSQL, dépendance ou budget modifié ; aucun commit, push
+ou merge effectué dans cette étape.

@@ -43,6 +43,29 @@ describe('ReferenceDataApiService', () => {
     req.flush({ items: [], total: 0, page: 1, page_size: 20, pages: 0 });
   });
 
+  it('loads an individual company reference without rewriting timestamps or requesting its list', () => {
+    let received: unknown;
+    const response = { id: 7, name: 'Entreprise', code: 'C7', description: null,
+      created_at: '2026-10-01T12:34:56.123456', updated_at: '2026-10-02T08:00:00Z' };
+    api.getCompanyById(7).subscribe(value => received = value);
+    const req = http.expectOne('/api/v1/companies/7');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+    req.flush(response);
+    expect(received).toEqual(response);
+    http.expectNone(() => true);
+  });
+
+  it.each([404, 422, 500])('propagates company reference HTTP %s unchanged without retry', status => {
+    let error: HttpErrorResponse | undefined;
+    api.getCompanyById(7).subscribe({ error: value => error = value });
+    const body = { detail: 'Company reference error' };
+    http.expectOne('/api/v1/companies/7').flush(body, { status, statusText: 'Error' });
+    expect(error?.status).toBe(status);
+    expect(error?.error).toEqual(body);
+    http.expectNone(() => true);
+  });
+
   it.each([400, 404, 422, 500])('propagates HTTP %s without retries', status => {
     let error: HttpErrorResponse | undefined;
     api.getSites(7).subscribe({ error: value => error = value });
