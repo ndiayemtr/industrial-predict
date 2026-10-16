@@ -38,7 +38,7 @@
         <h4>{{ reading.sensor_name }} - {{ reading.sensor_code }}</h4>
         @if (reading.timestamp === null) { <p>Aucun relevé disponible au calcul pour ce capteur.</p> }
         <dl>
-          <div><dt>Équipement - identifiant</dt><dd>{{ reading.equipment_id }}</dd></div>
+          <div><dt>Équipement</dt><dd aria-live="polite">{{ equipmentLabel(reading.equipment_id) }}</dd></div>
           <div><dt>Date du relevé (UTC)</dt><dd>{{ formatDateTime(reading.timestamp) }}</dd></div>
           <div><dt>Valeur</dt><dd>{{ reading.value ?? 'Non renseignée' }}</dd></div>
           <div><dt>Unité déclarée</dt><dd>{{ reading.unit ?? 'Non renseignée' }}</dd></div>

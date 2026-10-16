@@ -52,20 +52,23 @@ describe('Sites list page and URL', () => {
     expect(button('Rechercher').disabled).toBe(true); http.expectNone(() => true);
   });
 
-  it('renders only available fields with semantic headers and no future action links', async () => {
+  it('renders semantic fields and a focusable detail link without write actions', async () => {
     await ready();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
     expect(root().querySelectorAll('thead th[scope="col"]')).toHaveLength(3);
     expect(root().querySelector('tbody th[scope="row"]')?.textContent).toBe(site.name);
-    expect(root().querySelector('caption')?.textContent).toContain('21 au total');
-    expect(root().querySelector('caption')?.textContent).toContain('identifiants croissants');
-    expect(root().querySelector('.selected-company')?.textContent).toContain('Entreprise test - C7 (identifiant 7)');
-    expect(root().textContent).toContain('Non renseignée'); expect(root().querySelectorAll('a')).toHaveLength(0);
+    expect(root().querySelector('caption')?.textContent?.trim()).toBe('21 sites trouvés');
+    expect(root().textContent).not.toContain('identifiant');
+    expect(root().querySelector('.selected-company')?.textContent).toContain('Entreprise test - C7');
+    expect(root().textContent).toContain('Non renseignée'); expect(root().querySelectorAll('a')).toHaveLength(1);
+    const detail = root().querySelector<HTMLAnchorElement>('tbody a')!;
+    expect(detail.getAttribute('href')).toBe('/sites/3?company_id=7&page=1&page_size=20');
+    detail.focus(); expect(document.activeElement).toBe(detail);
     expect(root().textContent).not.toContain('Nouveau site');
     expect(root().querySelector('#companies-help')).toBeNull();
     expect(root().querySelector('#sites-company')?.getAttribute('aria-describedby')).toBe('companies-count');
     expect(root().querySelector('nav.pagination')).not.toBeNull();
-    expect(root().textContent).toContain('21 site(s) - 2 page(s)');
+    expect(root().textContent?.replace(/\s+/g, ' ')).toContain('21 sites - 2 pages');
   });
 
   it('restores company guidance on deselection while retaining the catalog information', async () => {
@@ -75,6 +78,36 @@ describe('Sites list page and URL', () => {
     expect(root().querySelector('#companies-help')?.textContent).toBe('Sélectionnez une entreprise pour afficher ses sites.');
     expect(root().querySelector('#companies-count')?.textContent).toContain('1 / 1 entreprises chargées');
     http.expectNone(() => true);
+  });
+
+  it.each([['PETROSEN', 'PETROSEN', 'PETROSEN'], ['PETROSEN', 'PTR-001', 'PETROSEN - PTR-001']])(
+    'shows business company labels for %s / %s while preserving numeric URL and HTTP filters', async (name, code, expected) => {
+      await open('/sites?company_id=7&page_size=1');
+      const selected = { ...company, name, code };
+      companies().flush({ ...catalog, items: [selected] }); parent().flush(selected);
+      const req = list(); expect(req.request.params.get('company_id')).toBe('7');
+      expect(req.request.params.get('page_size')).toBe('1');
+      req.flush({ ...page, total: 1, pages: 1, page_size: 1 }); await settle();
+      const select = root().querySelector<HTMLSelectElement>('#sites-company')!;
+      expect(select.selectedOptions[0].textContent?.trim()).toBe(expected);
+      expect(component.company.value).toBe(7);
+      expect(root().querySelector('.selected-company')?.textContent).toBe(`Entreprise : ${expected}`);
+      expect(root().querySelector('caption')?.textContent?.trim()).toBe('1 site trouvé');
+      expect(root().textContent?.replace(/\s+/g, ' ')).toContain('1 site - 1 page');
+      expect(root().querySelector('nav.pagination')?.textContent).toContain('1 site par page');
+      expect(root().textContent).not.toContain('identifiant');
+      expect(TestBed.inject(Router).url).toBe('/sites?company_id=7&page_size=1');
+      http.expectNone(() => true);
+    }
+  );
+
+  it('does not invent missing backend result totals or page counts', async () => {
+    await open('/sites?company_id=7'); companies().flush(catalog); parent().flush(company);
+    list().flush({ items: [site], page: 1, page_size: 20 }); await settle();
+    expect(root().querySelector('caption')?.textContent?.trim()).toBe('Sites industriels');
+    expect(root().querySelector('.results > [role="status"]')?.textContent?.trim()).toBe('');
+    expect(root().textContent).not.toContain('undefined');
+    expect(root().textContent).not.toContain('NaN');
   });
 
   it('checks a deep-link company outside the catalog and appends its selected option', async () => {
@@ -139,7 +172,7 @@ describe('Sites list page and URL', () => {
     await open(`/sites?company_id=7${filtered ? '&search=Absent' : ''}`); companies().flush(catalog); parent().flush(company);
     list().flush({ ...page, items: [], total: 0, pages: 0 }); await settle();
     expect(root().textContent).toContain(filtered ? 'Aucun résultat' : 'Aucun site pour cette entreprise');
-    expect(root().textContent).toContain('0 site(s)');
+    expect(root().textContent).toContain('0 sites');
     expect(root().querySelector('nav.pagination')).toBeNull();
     expect(root().querySelector('.results')?.textContent).not.toContain('page(s)');
     expect(button('Précédent')).toBeUndefined(); expect(button('Suivant')).toBeUndefined();
@@ -151,7 +184,7 @@ describe('Sites list page and URL', () => {
       expect(req.request.params.get('page')).toBe('1'); expect(req.request.params.has('search')).toBe(false);
       req.flush(page); await settle();
       expect(root().querySelector('nav.pagination')).not.toBeNull();
-      expect(root().textContent).toContain('21 site(s) - 2 page(s)');
+      expect(root().textContent?.replace(/\s+/g, ' ')).toContain('21 sites - 2 pages');
     }
   });
 

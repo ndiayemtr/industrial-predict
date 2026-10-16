@@ -1,5 +1,9 @@
 # UI 4.3 - Liste et recherche des sites industriels
 
+Livraison : UI 4.3 et UI 4.3.1 commitées dans `43f72f8`. Les résultats et états
+Git de ce document sont historiques ; le détail est traité dans le
+[bilan UI 4.4](ui-4.4-site-detail.md).
+
 Suivi : les finitions UX UI 4.3.1 et leurs validations plus récentes sont
 consignées dans la dernière section de ce rapport.
 

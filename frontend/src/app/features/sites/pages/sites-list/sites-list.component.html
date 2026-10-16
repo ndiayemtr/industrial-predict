@@ -4,7 +4,7 @@
   <label for="sites-company">Entreprise (obligatoire)</label>
   <select id="sites-company" [formControl]="company" [attr.aria-describedby]="company.value === null ? 'companies-help companies-count' : 'companies-count'">
     <option [ngValue]="null">Sélectionnez une entreprise</option>
-    @for (item of options(); track item.id) { <option [ngValue]="item.id">{{ item.name }} - {{ item.code }} (identifiant {{ item.id }})</option> }
+    @for (item of options(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
   </select>
   @if (company.value === null) { <p id="companies-help">Sélectionnez une entreprise pour afficher ses sites.</p> }
   <p id="companies-count">{{ catalog().items.length }} / {{ catalog().total }} entreprises chargées</p>
@@ -41,7 +41,7 @@
 <section class="results" aria-labelledby="sites-results-title" [attr.aria-busy]="busy()">
   <h2 id="sites-results-title">Liste des sites</h2>
   @if (facade.company(); as selected) {
-    <p class="selected-company">Entreprise : {{ selected.name }} - {{ selected.code }} (identifiant {{ selected.id }})</p>
+    <p class="selected-company">Entreprise : {{ referenceLabel(selected) }}</p>
   }
   @if (state.status === 'idle') {
     <p role="status">Sélectionnez une entreprise pour consulter ses sites.</p>
@@ -60,11 +60,11 @@
       <button type="button" (click)="recoverPage()">Revenir à une page disponible</button>
     } @else {
       <table>
-        <caption>Sites - page {{ state.data.page }} - {{ state.data.total }} au total - identifiants croissants</caption>
+        <caption>@if (state.data.total != null) { {{ state.data.total }} {{ state.data.total === 1 ? 'site trouvé' : 'sites trouvés' }} } @else { Sites industriels }</caption>
         <thead><tr><th scope="col">Nom</th><th scope="col">Code</th><th scope="col">Description</th></tr></thead>
         <tbody>
           @for (site of state.data.items; track site.id) {
-            <tr><th scope="row">{{ site.name }}</th><td>{{ site.code }}</td>
+            <tr><th scope="row"><a [routerLink]="['/sites', site.id]" [queryParams]="facade.query()">{{ site.name }}</a></th><td>{{ site.code }}</td>
               <td class="description">{{ site.description?.trim() ? site.description : 'Non renseignée' }}</td></tr>
           }
         </tbody>
@@ -74,11 +74,11 @@
   @if (facade.query() && state.status !== 'empty') {
     <nav class="pagination" aria-label="Pagination des sites">
       <button type="button" (click)="changePage(page() - 1)" [disabled]="busy() || page() === 1">Précédent</button>
-      <p>Page {{ page() }} - {{ pageSize() }} sites par page</p>
+      <p>Page {{ page() }} - {{ pageSize() }} {{ pageSize() === 1 ? 'site' : 'sites' }} par page</p>
       <button type="button" (click)="changePage(page() + 1)" [disabled]="!canNext()">Suivant</button>
     </nav>
   }
   @if (state.status === 'success' || state.status === 'empty') {
-    <p role="status" aria-atomic="true">{{ state.data.total }} site(s)@if (state.status === 'success') { - {{ state.data.pages }} page(s)}</p>
+    <p role="status" aria-atomic="true">@if (state.data.total != null) { {{ state.data.total }} {{ state.data.total === 1 ? 'site' : 'sites' }} }@if (state.status === 'success' && state.data.pages != null) { - {{ state.data.pages }} {{ state.data.pages === 1 ? 'page' : 'pages' }} }</p>
   }
 </section>

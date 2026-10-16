@@ -1,6 +1,7 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Observable } from 'rxjs';
 import { ReferenceDataApiService } from './reference-data-api.service';
 
 describe('ReferenceDataApiService', () => {
@@ -64,6 +65,17 @@ describe('ReferenceDataApiService', () => {
     expect(error?.status).toBe(status);
     expect(error?.error).toEqual(body);
     http.expectNone(() => true);
+  });
+
+  it.each(['sites', 'equipments'] as const)('reads an individual %s reference with the exact GET and no date conversion', kind => {
+    const response = { id: 9, name: 'Référence', code: 'R9', company_id: 7, site_id: 8,
+      created_at: '2026-10-01T12:34:56.123456', updated_at: '2026-10-02T08:00:00Z' };
+    let received: unknown;
+    const result: Observable<unknown> = kind === 'sites' ? api.getSiteById(9) : api.getEquipmentById(9);
+    result.subscribe(value => received = value);
+    const req = http.expectOne(`/api/v1/${kind}/9`);
+    expect(req.request.method).toBe('GET'); expect(req.request.params.keys()).toEqual([]);
+    req.flush(response); expect(received).toEqual(response); http.expectNone(() => true);
   });
 
   it.each([400, 404, 422, 500])('propagates HTTP %s without retries', status => {

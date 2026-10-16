@@ -48,14 +48,17 @@ describe('Company detail page', () => {
     request.flush(company);
     await settle();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
-    expect(root().querySelectorAll('dt')).toHaveLength(6);
+    expect([...root().querySelectorAll('dt')].map(el => el.textContent)).toEqual([
+      'Nom', 'Code', 'Description', 'Création', 'Dernière modification'
+    ]);
     expect(root().querySelector('.company-edit')?.getAttribute('href')).toBe('/companies/7/edit?page=1&page_size=20');
     expect([...root().querySelectorAll('dd')].map(el => el.textContent)).toEqual([
-      company.name, company.code, '7', 'Non renseigné', '01/10/2026 à 12:00', '02/10/2026 à 13:00'
+      company.name, company.code, 'Non renseigné', '01/10/2026 à 12:00', '02/10/2026 à 13:00'
     ]);
     expect(root().querySelector('.timestamp-note')?.textContent).toBe('Dates affichées selon les informations horaires du serveur.');
     expect(root().querySelector('[aria-busy]')?.getAttribute('aria-busy')).toBe('false');
     expect(root().querySelector('button')).toBeNull();
+    expect(component.state()).toMatchObject({ status: 'success', data: company });
     http.expectNone(() => true);
   });
 
@@ -144,7 +147,9 @@ describe('Company detail page', () => {
     await settle();
     read(9).flush({ ...company, id: 9 });
     await settle();
-    expect(root().querySelectorAll('dd')[2].textContent).toBe('9');
+    expect(component.state()).toMatchObject({ status: 'success', data: { id: 9 } });
+    expect(root().querySelector('.company-edit')?.getAttribute('href')).toBe('/companies/9/edit?page=1&page_size=20');
+    expect([...root().querySelectorAll('dd')].map(el => el.textContent)).not.toContain('9');
   });
 
   it('cancels even when an identifier becomes invalid and cancels on page destruction', async () => {

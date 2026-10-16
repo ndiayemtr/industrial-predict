@@ -108,7 +108,10 @@ describe('DashboardComponent', () => {
       timestamp: '2026-09-01T00:00:00Z', value: 0, unit: null, quality: null, age_seconds: 123 }];
     response.maintenance.completed.completed_without_completed_at = 9;
     apply(); request().flush(response); fixture.detectChanges();
+    http.expectOne('/api/v1/equipments/42').flush({ id: 42, name: 'Pompe', code: 'P42', site_id: 9 });
+    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-measurement-summary').textContent).toContain('01/09/2026 à 00:00:00 UTC');
+    expect(fixture.nativeElement.querySelector('.last-readings dd').textContent).toBe('Pompe - P42');
     expect(fixture.nativeElement.querySelector('app-maintenance-summary').textContent).toContain('Terminées sans date de fin');
     expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
     expect(fixture.nativeElement.querySelectorAll('.kpi-grid app-dashboard-kpi-card')).toHaveLength(6);
@@ -135,5 +138,64 @@ describe('DashboardComponent', () => {
     http.expectOne(req => req.url === '/api/v1/companies').flush({ items: [], total: 0, page: 1, page_size: 50, pages: 0 });
     expect(other.componentInstance.facade).not.toBe(fixture.componentInstance.facade);
     apply(); request().flush(emptyDashboardResponse()); expect(other.componentInstance.facade.state().status).toBe('idle'); other.destroy();
+  });
+
+  it('keeps applied business labels during draft edits and refresh, then changes them only on application', () => {
+    apply(); request().flush(emptyDashboardResponse()); fixture.detectChanges();
+    const metadata = () => fixture.nativeElement.querySelector('.result-metadata') as HTMLElement;
+    expect(metadata().textContent).toContain('EntrepriseTest company - TEST');
+    expect(metadata().textContent).toContain('Site industrielTous les sites');
+    expect(metadata().textContent).toContain('ÉquipementTous les équipements');
+    expect(metadata().textContent).not.toContain('identifiant');
+    form.form.controls.company_id.setValue(8);
+    http.expectOne(req => req.url === '/api/v1/sites').flush({ items: [], total: 0, page: 1, page_size: 50, pages: 0 });
+    form.companies.update(current => ({ ...current, items: [...current.items, { ...current.items[0], id: 8, name: 'PETROSEN', code: 'PETROSEN' }] }));
+    fixture.detectChanges(); expect(metadata().textContent).toContain('Test company - TEST');
+    fixture.componentInstance.facade.refresh();
+    const refreshed = request(); expect(refreshed.request.params.get('company_id')).toBe('7');
+    refreshed.flush(emptyDashboardResponse()); fixture.detectChanges();
+    expect(metadata().textContent).toContain('Test company - TEST');
+    form.filtersApplied.emit({ ...filters, company_id: 8 });
+    const next = request(); expect(next.request.params.get('company_id')).toBe('8');
+    const response = emptyDashboardResponse(); response.scope.company_id = 8;
+    next.flush(response); fixture.detectChanges();
+    expect(metadata().textContent).toContain('EntreprisePETROSEN');
+    expect(metadata().textContent).not.toContain('Test company'); http.expectNone(() => true);
+  });
+
+  it('shows unavailable rather than a different business reference if response scope differs from applied IDs', () => {
+    apply(); const response = emptyDashboardResponse(); response.scope.company_id = 99;
+    request().flush(response); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.result-metadata dd').textContent).toBe('Référence indisponible');
+    http.expectNone(() => true);
+  });
+
+  it('uses references loaded on later catalog pages without extra detail requests', () => {
+    form.loadCompanies(2);
+    const more = http.expectOne(req => req.url === '/api/v1/companies');
+    expect(more.request.params.get('page')).toBe('2');
+    more.flush({ items: [{ id: 8, name: 'Seconde page', code: 'C8', description: null, created_at: '', updated_at: '' }], total: 51, page: 2, page_size: 50, pages: 2 });
+    form.filtersApplied.emit({ ...filters, company_id: 8 });
+    const response = emptyDashboardResponse(); response.scope.company_id = 8;
+    request().flush(response); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.result-metadata').textContent).toContain('Seconde page - C8');
+    http.expectNone(() => true);
+  });
+
+  it('renders all selected business references with the exact HTTP scope and millisecond bounds', () => {
+    const site = { id: 9, company_id: 7, name: 'Usine', code: 'US-9', description: null, created_at: '', updated_at: '' };
+    const equipment = { ...site, id: 12, site_id: 9, name: 'Pompe', code: 'P12', equipment_type: 'pump',
+      status: 'operational' as const, criticality: 'high' as const };
+    form.sites.update(current => ({ ...current, items: [site] }));
+    form.equipments.update(current => ({ ...current, items: [equipment] }));
+    const selected = { ...filters, site_id: 9, equipment_id: 12,
+      start_time: '2026-10-01T00:00:00.123Z', end_time: '2026-10-02T00:00:00.124Z' };
+    form.filtersApplied.emit(selected);
+    const req = request();
+    for (const [key, value] of Object.entries(selected)) expect(req.request.params.get(key)).toBe(String(value));
+    const response = emptyDashboardResponse(); response.scope = { company_id: 7, site_id: 9, equipment_id: 12 };
+    req.flush(response); fixture.detectChanges();
+    const values = [...fixture.nativeElement.querySelectorAll('.result-metadata dd')].slice(0, 3).map((el: Element) => el.textContent);
+    expect(values).toEqual(['Test company - TEST', 'Usine - US-9', 'Pompe - P12']); http.expectNone(() => true);
   });
 });

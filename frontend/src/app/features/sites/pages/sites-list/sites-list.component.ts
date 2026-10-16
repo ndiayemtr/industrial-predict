@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, Subject, catchError, switchMap, tap } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { Page } from '../../../../core/models/page.model';
@@ -12,17 +12,19 @@ import { LoadingStateComponent } from '../../../../shared/components/loading-sta
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { SitesListFacade } from '../../sites-list.facade';
+import { businessReferenceLabel } from '../../../../shared/utils/business-reference-label';
 
 type Catalog = Page<CompanyRead> & { status: 'loading' | 'ready' | 'error'; requestedPage: number; retryable: boolean };
 
 @Component({
   selector: 'app-sites-list', standalone: true,
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [ReactiveFormsModule, RouterLink, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
   providers: [SitesListFacade],
   templateUrl: './sites-list.component.html', styleUrl: './sites-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SitesListComponent {
+  readonly referenceLabel = businessReferenceLabel;
   readonly facade = inject(SitesListFacade);
   private readonly references = inject(ReferenceDataApiService);
   private readonly router = inject(Router);

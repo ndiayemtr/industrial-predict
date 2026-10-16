@@ -1,0 +1,36 @@
+<app-page-header title="Détail du site" description="Informations du site industriel en lecture seule.">
+  <a class="site-back" routerLink="/sites" [queryParams]="listQuery()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5 M12 5l-7 7 7 7" /></svg>
+    <span>Retour à la liste des sites</span>
+  </a>
+</app-page-header>
+@let current = state();
+<section class="site-detail" aria-labelledby="site-information-title" [attr.aria-busy]="current.status === 'loading'">
+  <h2 id="site-information-title">Informations du site</h2>
+  @if (current.status === 'loading') {
+    <app-loading-state message="Chargement du site..." />
+  } @else if (current.status === 'error') {
+    <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
+  } @else {
+    <dl>
+      <div><dt>Nom</dt><dd>{{ display(current.data.name) }}</dd></div>
+      <div><dt>Code</dt><dd>{{ display(current.data.code) }}</dd></div>
+      <div class="company"><dt>Entreprise de rattachement</dt><dd [attr.aria-busy]="current.company.status === 'loading'">
+        @if (current.company.status === 'loading') {
+          <app-loading-state message="Chargement de la référence entreprise..." />
+        } @else if (current.company.status === 'error') {
+          <app-error-state [title]="current.company.title" [message]="current.company.message" [retryable]="current.company.retryable" (retry)="retryCompany()" />
+        } @else {
+          <p class="company-reference">{{ referenceLabel(current.company.data) }}</p>
+        }
+      </dd></div>
+      <div class="description"><dt>Description</dt><dd>{{ current.data.description?.trim() ? current.data.description : 'Non renseignée' }}</dd></div>
+      @if (current.data.created_at) { <div><dt>Création</dt><dd>{{ formatDateTime(current.data.created_at) }}</dd></div> }
+      @if (current.data.updated_at) { <div><dt>Dernière modification</dt><dd>{{ formatDateTime(current.data.updated_at) }}</dd></div> }
+    </dl>
+    @if (listQuery().company_id !== current.data.company_id) {
+      <p role="status">Ce site est rattaché à une autre entreprise que celle du contexte de retour.</p>
+    }
+    <p class="timestamp-note">Dates affichées selon les informations horaires du serveur.</p>
+  }
+</section>

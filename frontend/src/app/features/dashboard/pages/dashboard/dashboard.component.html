@@ -4,7 +4,7 @@
   </button>
 </app-page-header>
 
-<app-dashboard-filters (filtersApplied)="facade.applyFilters($event)" />
+<app-dashboard-filters #filters (filtersApplied)="applyFilters($event, filters.referenceSnapshot())" />
 
 @let state = facade.state();
 <section class="results" aria-labelledby="dashboard-results-title" [attr.aria-busy]="state.status === 'loading'">
@@ -17,9 +17,9 @@
     <app-error-state [title]="state.error.title" [message]="state.error.message" [retryable]="state.error.retryable" (retry)="facade.retry()" />
   } @else {
     <dl class="result-metadata">
-      <div><dt>Entreprise - identifiant</dt><dd>{{ state.data.scope.company_id }}</dd></div>
-      <div><dt>Site - identifiant</dt><dd>{{ state.data.scope.site_id ?? 'Tous les sites' }}</dd></div>
-      <div><dt>Équipement - identifiant</dt><dd>{{ state.data.scope.equipment_id ?? 'Tous les équipements' }}</dd></div>
+      <div><dt>Entreprise</dt><dd aria-live="polite">{{ references.label('company', state.data.scope.company_id) }}</dd></div>
+      <div><dt>Site industriel</dt><dd aria-live="polite">{{ references.label('site', state.data.scope.site_id) }}</dd></div>
+      <div><dt>Équipement</dt><dd aria-live="polite">{{ references.label('equipment', state.data.scope.equipment_id) }}</dd></div>
       <div><dt>Début inclus (UTC)</dt><dd>{{ formatDateTime(state.data.period.start_time) }}</dd></div>
       <div><dt>Fin exclue (UTC)</dt><dd>{{ formatDateTime(state.data.period.end_time) }}</dd></div>
       <div><dt>Au calcul (UTC)</dt><dd>{{ formatDateTime(state.data.period.calculated_at) }}</dd></div>
@@ -44,7 +44,7 @@
       </section>
       <app-equipment-summary [status]="state.data.equipment_status" [criticality]="state.data.equipment_criticality" />
       <app-sensor-summary [status]="state.data.sensor_status" [coverage]="state.data.sensor_coverage" [activity]="state.data.measurements.activity" />
-      <app-measurement-summary [summary]="state.data.measurements" [period]="state.data.period" />
+      <app-measurement-summary [summary]="state.data.measurements" [period]="state.data.period" [equipmentLabels]="references.equipmentLabels()" />
       <app-maintenance-summary [summary]="state.data.maintenance" />
     }
   }

@@ -8,6 +8,8 @@ import { CompanyRead, EquipmentRead, SiteRead } from '../../../../core/models/re
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
 import { DashboardFilters } from '../../models/dashboard-filters.model';
+import type { DashboardReferenceCatalog } from '../../dashboard-references';
+import { businessReferenceLabel } from '../../../../shared/utils/business-reference-label';
 
 interface ReferenceRequest { parent: number | null; page: number }
 interface ReferenceList<T> extends Page<T> {
@@ -55,6 +57,7 @@ function periodValidator(group: AbstractControl): ValidationErrors | null {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardFiltersComponent {
+  readonly referenceLabel = businessReferenceLabel;
   private readonly api = inject(ReferenceDataApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly initialEnd = wholeMinute(Date.now());
@@ -120,6 +123,10 @@ export class DashboardFiltersComponent {
   }
 
   loadCompanies(page: number): void { this.companyRequests.next({ parent: 0, page }); }
+
+  referenceSnapshot(): DashboardReferenceCatalog {
+    return { companies: this.companies().items, sites: this.sites().items, equipments: this.equipments().items };
+  }
   loadSites(page: number): void { this.siteRequests.next({ parent: this.form.controls.company_id.value, page }); }
   loadEquipments(page: number): void { this.equipmentRequests.next({ parent: this.form.controls.site_id.value, page }); }
 

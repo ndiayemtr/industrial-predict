@@ -5,7 +5,7 @@
       <label for="dashboard-company">Entreprise (obligatoire)</label>
       <select id="dashboard-company" formControlName="company_id" required aria-describedby="dashboard-filter-help company-count">
         <option [ngValue]="null">Sélectionnez une entreprise</option>
-        @for (item of companies().items; track item.id) { <option [ngValue]="item.id">{{ item.name }} - {{ item.code }}</option> }
+        @for (item of companies().items; track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
       </select>
       <p id="company-count" class="reference-count">{{ companies().items.length }} / {{ companies().total }} entreprises chargées</p>
       @if (companies().status === 'loading') { <app-loading-state message="Chargement des entreprises…" /> }
@@ -20,7 +20,7 @@
       <label for="dashboard-site">Site</label>
       <select id="dashboard-site" formControlName="site_id" aria-describedby="site-count">
         <option [ngValue]="null">Tous les sites</option>
-        @for (item of sites().items; track item.id) { <option [ngValue]="item.id">{{ item.name }} - {{ item.code }}</option> }
+        @for (item of sites().items; track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
       </select>
       <p id="site-count" class="reference-count">{{ sites().items.length }} / {{ sites().total }} sites chargés</p>
       @if (sites().status === 'loading') { <app-loading-state message="Chargement des sites…" /> }
@@ -35,7 +35,7 @@
       <label for="dashboard-equipment">Équipement</label>
       <select id="dashboard-equipment" formControlName="equipment_id" aria-describedby="equipment-help equipment-count">
         <option [ngValue]="null">Tous les équipements</option>
-        @for (item of equipments().items; track item.id) { <option [ngValue]="item.id">{{ item.name }} - {{ item.code }}</option> }
+        @for (item of equipments().items; track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
       </select>
       <p id="equipment-help" class="reference-count">Sélectionnez un site pour choisir un équipement.</p>
       <p id="equipment-count" class="reference-count">{{ equipments().items.length }} / {{ equipments().total }} équipements chargés</p>

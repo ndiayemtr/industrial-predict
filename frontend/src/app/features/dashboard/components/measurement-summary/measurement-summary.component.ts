@@ -18,6 +18,11 @@ export class MeasurementSummaryComponent {
   readonly formatDateTime = formatUtcDateTime;
   readonly summary = input.required<MeasurementSummary>();
   readonly period = input.required<DashboardPeriod>();
+  readonly equipmentLabels = input<Readonly<Record<number, string>>>({});
+  equipmentLabel(id: number): string {
+    const label = this.equipmentLabels()[id];
+    return !label || label === 'Référence indisponible' ? 'Équipement indisponible' : label;
+  }
   qualityLabel(value: string): string {
     return Object.hasOwn(qualityLabels, value) ? qualityLabels[value] : `Autres / non reconnus : ${value}`;
   }

@@ -23,6 +23,14 @@ export class ReferenceDataApiService {
     });
   }
 
+  getSiteById(id: number): Observable<SiteRead> {
+    return this.http.get<SiteRead>(`${API_PREFIX}/sites/${id}`);
+  }
+
+  getEquipmentById(id: number): Observable<EquipmentRead> {
+    return this.http.get<EquipmentRead>(`${API_PREFIX}/equipments/${id}`);
+  }
+
   getEquipments(siteId: number, query: ReferencePageQuery = {}): Observable<Page<EquipmentRead>> {
     return this.http.get<Page<EquipmentRead>>(`${API_PREFIX}/equipments`, {
       params: this.params(query).set('site_id', siteId)

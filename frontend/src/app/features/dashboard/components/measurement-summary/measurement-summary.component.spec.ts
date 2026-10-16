@@ -41,7 +41,14 @@ describe('MeasurementSummaryComponent', () => {
       timestamp: '2026-09-01T12:00:00Z', value: 0.123456, unit: 'vendor/unit', quality: 'vendor_quality', age_seconds: 123.456 }];
     fixture.componentRef.setInput('summary', data.measurements); fixture.detectChanges();
     const text = fixture.nativeElement.querySelector('.last-readings').textContent;
-    for (const value of ['Pression', 'P-01', '42', '01/09/2026 à 12:00:00 UTC', '0.123456', 'vendor/unit', 'vendor_quality', '123.456']) expect(text).toContain(value);
+    for (const value of ['Pression', 'P-01', 'Équipement indisponible', '01/09/2026 à 12:00:00 UTC', '0.123456', 'vendor/unit', 'vendor_quality', '123.456']) expect(text).toContain(value);
+    expect(fixture.nativeElement.querySelector('.last-readings dd').textContent).not.toContain('42');
+    fixture.componentRef.setInput('equipmentLabels', { 42: 'Pompe - P42' }); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.last-readings dd').textContent).toBe('Pompe - P42');
+    expect(data.measurements.last_measurements[0].equipment_id).toBe(42);
+    fixture.componentRef.setInput('equipmentLabels', { 42: 'Référence indisponible' }); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.last-readings dd').textContent).toBe('Équipement indisponible');
+    expect(fixture.nativeElement.querySelector('.last-readings dd').getAttribute('aria-live')).toBe('polite');
     expect(fixture.nativeElement.textContent).toContain('14/10/2026 à 00:00:00 UTC');
     expect(fixture.nativeElement.textContent).toContain('indépendamment de la période sélectionnée');
     expect(fixture.nativeElement.textContent).toContain('n’est pas actualisé automatiquement');

@@ -91,7 +91,7 @@ La référence Companies UI 3.7.1 comprend trois suites complètes à 348/348 te
 « neuf liens attendus, zéro reçu » n'est pas reproduit ; les timeouts sous
 concurrence justifient des validations séquentielles, sans correctif spéculatif.
 Voir `docs/ui-3.7.1-test-stability.md`. Ces tests ne sont pas relancés en UI 3.8.
-Bundle initial actuel : 600,89 ko pour un budget de 500 ko, dont +32,48 ko après
+Bundle initial actuel : 601,28 ko pour un budget de 500 ko, dont +32,48 ko après
 intégration de NbToastrService ; aucun budget relevé. Zoom Companies 200/400 %
 non validé, lecteur d'écran réel non testé et autorisation multi-entreprises non
 démontrée. Companies n'est pas prêt pour une production SaaS multi-tenant.
@@ -102,10 +102,11 @@ Voir `docs/frontend-datetime-display.md` et `docs/dashboard-date-precision.md`.
 UI 4 - Sites industriels : [conception UI 4.1](docs/etape-ui-4.1-sites.md)
 validée fonctionnellement et commitée dans `1630ebc` sur `feature/frontend-sites`.
 La couche de données UI 4.2 est validée et commitée dans `cd2389d` ;
-[bilan UI 4.2](docs/ui-4.2-sites-data-access.md). La liste `/sites` UI 4.3 est
-implémentée, en attente de validation : entreprise explicite, recherche serveur
-et pagination ; [bilan UI 4.3](docs/ui-4.3-sites-list.md). Aucun lien vers un
-détail ou formulaire Sites non disponible ; UI 4.4 n'est pas commencée.
+[bilan UI 4.2](docs/ui-4.2-sites-data-access.md). La liste `/sites` UI 4.3 et ses
+finitions UI 4.3.1 sont livrées dans `43f72f8` ; [bilan UI 4.3](docs/ui-4.3-sites-list.md).
+La [fiche détail Sites UI 4.4](docs/ui-4.4-site-detail.md) est implémentée, en
+attente de validation, avec retour au contexte de liste. Aucun formulaire Sites,
+bouton Modifier ou Supprimer ; UI 4.5 n'est pas commencée.
 
 ### Machine Learning
 

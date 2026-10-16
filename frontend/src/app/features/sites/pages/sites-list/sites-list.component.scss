@@ -17,7 +17,8 @@ input, select, button {
 button { cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
 button.primary { background: tokens.$navigation-active; color: tokens.$sidebar-text; border-color: tokens.$navigation-active; }
 button:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+tbody a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
 .search-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-sm; }
 p { line-height: tokens.$line-height-body; }
 .filters p { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
