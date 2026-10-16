@@ -38,7 +38,7 @@ describe('DashboardComponent', () => {
     const response = emptyDashboardResponse(); response.assets.sites = 1; req.flush(response); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.results').getAttribute('aria-busy')).toBe('false');
     expect(fixture.nativeElement.querySelector('.results-ready')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.result-metadata').textContent).toContain(response.period.calculated_at);
+    expect(fixture.nativeElement.querySelector('.result-metadata').textContent).toContain('14/10/2026 à 00:00:00 UTC');
     expect(fixture.debugElement.query(By.directive(DashboardFiltersComponent)).componentInstance).toBe(form);
     expect(document.activeElement).toBe(field);
   });
@@ -47,6 +47,32 @@ describe('DashboardComponent', () => {
     expect(fixture.nativeElement.querySelector('app-empty-state')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.result-metadata').textContent).toContain('Tous les sites');
     expect(fixture.nativeElement.querySelector('app-equipment-summary, app-sensor-summary, .kpi-grid')).toBeNull();
+  });
+
+  it('formats result instants while retaining raw API fractions and exact requested bounds on refresh', () => {
+    const precise = { ...filters, start_time: '2026-10-01T00:00:00.123Z', end_time: '2026-10-02T00:00:00.124Z' };
+    form.filtersApplied.emit(precise); fixture.detectChanges();
+    const req = request();
+    expect(req.request.params.get('start_time')).toBe(precise.start_time);
+    expect(req.request.params.get('end_time')).toBe(precise.end_time);
+    const response = emptyDashboardResponse();
+    response.period = { start_time: '2026-10-01T00:00:00.123456Z', end_time: '2026-10-02T00:00:00.124567Z',
+      calculated_at: '2026-10-16T13:51:15.910577+02:00' };
+    const original = JSON.stringify(response);
+    req.flush(response); fixture.detectChanges();
+    const metadata = fixture.nativeElement.querySelector('.result-metadata').textContent;
+    expect(metadata).toContain('Début inclus (UTC)01/10/2026 à 00:00:00 UTC');
+    expect(metadata).toContain('Fin exclue (UTC)02/10/2026 à 00:00:00 UTC');
+    expect(metadata).toContain('16/10/2026 à 11:51:15 UTC');
+    expect(JSON.stringify(response)).toBe(original);
+    const state = fixture.componentInstance.facade.state();
+    if (state.status !== 'empty') throw Error('Expected empty results');
+    expect(state.data.period).toEqual(response.period);
+    fixture.componentInstance.facade.refresh();
+    const refreshed = request();
+    expect(refreshed.request.params.get('start_time')).toBe(precise.start_time);
+    expect(refreshed.request.params.get('end_time')).toBe(precise.end_time);
+    refreshed.flush(response);
   });
   it('renders the six actual KPI fields and summaries only on success, without another request', () => {
     expect(fixture.nativeElement.querySelector('.kpi-grid')).toBeNull();
@@ -82,7 +108,7 @@ describe('DashboardComponent', () => {
       timestamp: '2026-09-01T00:00:00Z', value: 0, unit: null, quality: null, age_seconds: 123 }];
     response.maintenance.completed.completed_without_completed_at = 9;
     apply(); request().flush(response); fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-measurement-summary').textContent).toContain('2026-09-01T00:00:00Z');
+    expect(fixture.nativeElement.querySelector('app-measurement-summary').textContent).toContain('01/09/2026 à 00:00:00 UTC');
     expect(fixture.nativeElement.querySelector('app-maintenance-summary').textContent).toContain('Terminées sans date de fin');
     expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
     expect(fixture.nativeElement.querySelectorAll('.kpi-grid app-dashboard-kpi-card')).toHaveLength(6);

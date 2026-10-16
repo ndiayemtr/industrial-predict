@@ -8,6 +8,7 @@ import { CompanyFormComponent, CompanyField, CompanyFieldErrors } from '../../co
 import { CompaniesApiService } from '../../data-access/companies-api.service';
 import { CompanyCreate, CompanyUpdate } from '../../models/company-write.model';
 import { CompanyRead } from '../../../../core/models/reference-data.model';
+import { formatAdministrativeDateTime } from '../../../../shared/utils/datetime-display';
 import { EMPTY, Subject, catchError, distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
@@ -22,6 +23,7 @@ type SaveState = 'loading' | 'load-error' | 'idle' | 'saving' | 'success' | 'err
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompanyFormPageComponent {
+  readonly formatDateTime = formatAdministrativeDateTime;
   private readonly api = inject(CompaniesApiService);
   private readonly toastr = inject(NbToastrService);
   private readonly router = inject(Router);

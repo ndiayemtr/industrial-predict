@@ -41,8 +41,8 @@ describe('MeasurementSummaryComponent', () => {
       timestamp: '2026-09-01T12:00:00Z', value: 0.123456, unit: 'vendor/unit', quality: 'vendor_quality', age_seconds: 123.456 }];
     fixture.componentRef.setInput('summary', data.measurements); fixture.detectChanges();
     const text = fixture.nativeElement.querySelector('.last-readings').textContent;
-    for (const value of ['Pression', 'P-01', '42', '2026-09-01T12:00:00Z', '0.123456', 'vendor/unit', 'vendor_quality', '123.456']) expect(text).toContain(value);
-    expect(fixture.nativeElement.textContent).toContain(data.period.calculated_at);
+    for (const value of ['Pression', 'P-01', '42', '01/09/2026 à 12:00:00 UTC', '0.123456', 'vendor/unit', 'vendor_quality', '123.456']) expect(text).toContain(value);
+    expect(fixture.nativeElement.textContent).toContain('14/10/2026 à 00:00:00 UTC');
     expect(fixture.nativeElement.textContent).toContain('indépendamment de la période sélectionnée');
     expect(fixture.nativeElement.textContent).toContain('n’est pas actualisé automatiquement');
   });

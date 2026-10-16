@@ -15,6 +15,13 @@ interface ReferenceList<T> extends Page<T> {
   requestedPage: number;
 }
 const PAGE_SIZE = 50;
+const WEEK = 168 * 60 * 60 * 1000;
+const wholeMinute = (instant: number) => Math.floor(instant / 60_000) * 60_000;
+const minuteValue = (instant: number) => new Date(instant).toISOString().slice(0, 16);
+function hasSubminutePrecision(value: string): boolean {
+  const match = /T\d{2}:\d{2}:(\d{2})(?:\.(\d+))?$/.exec(value);
+  return !!match && (Number(match[1]) !== 0 || /[1-9]/.test(match[2] ?? ''));
+}
 function emptyList<T>(): ReferenceList<T> {
   return { items: [], total: 0, page: 0, page_size: PAGE_SIZE, pages: 0, status: 'idle', requestedPage: 1 };
 }
@@ -50,14 +57,17 @@ function periodValidator(group: AbstractControl): ValidationErrors | null {
 export class DashboardFiltersComponent {
   private readonly api = inject(ReferenceDataApiService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly initialEnd = Date.now();
+  private readonly initialEnd = wholeMinute(Date.now());
+  private readonly precisionRequested = signal(false);
+  readonly precisionConversionPending = signal(false);
+  readonly precisionNotice = signal('');
   readonly filtersApplied = output<DashboardFilters>();
   readonly form = new FormGroup({
     company_id: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
     site_id: new FormControl<number | null>({ value: null, disabled: true }),
     equipment_id: new FormControl<number | null>({ value: null, disabled: true }),
-    start_time: new FormControl(new Date(this.initialEnd - 168 * 60 * 60 * 1000).toISOString().slice(0, -1), { nonNullable: true }),
-    end_time: new FormControl(new Date(this.initialEnd).toISOString().slice(0, -1), { nonNullable: true })
+    start_time: new FormControl(minuteValue(this.initialEnd - WEEK), { nonNullable: true }),
+    end_time: new FormControl(minuteValue(this.initialEnd), { nonNullable: true })
   }, { validators: periodValidator });
   readonly companies = signal(emptyList<CompanyRead>());
   readonly sites = signal(emptyList<SiteRead>());
@@ -68,12 +78,15 @@ export class DashboardFiltersComponent {
   private readonly values = toSignal(this.form.valueChanges.pipe(
     map(() => this.form.getRawValue()), startWith(this.form.getRawValue())
   ), { requireSync: true });
+  // Loading precise values activates the native precise control without rewriting them.
+  readonly advancedPrecision = computed(() => this.precisionRequested()
+    || hasSubminutePrecision(this.values().start_time) || hasSubminutePrecision(this.values().end_time));
   readonly canApply = computed(() => {
     const value = this.values();
     const company = this.companies();
     const sites = this.sites();
     const equipments = this.equipments();
-    return this.form.valid && company.status === 'ready'
+    return !this.precisionConversionPending() && this.form.valid && company.status === 'ready'
       && company.items.some((item) => item.id === value.company_id)
       && (value.company_id == null || sites.status === 'ready')
       && (value.site_id == null || sites.items.some((item) => item.id === value.site_id && item.company_id === value.company_id))
@@ -82,6 +95,11 @@ export class DashboardFiltersComponent {
   });
 
   constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (hasSubminutePrecision(this.form.controls.start_time.value) || hasSubminutePrecision(this.form.controls.end_time.value)) {
+        this.precisionRequested.set(true);
+      }
+    });
     this.connect(this.companyRequests, this.companies, this.form.controls.company_id,
       (_, page) => this.api.getCompanies({ page, page_size: PAGE_SIZE }));
     this.connect(this.siteRequests, this.sites, this.form.controls.site_id,
@@ -105,14 +123,57 @@ export class DashboardFiltersComponent {
   loadSites(page: number): void { this.siteRequests.next({ parent: this.form.controls.company_id.value, page }); }
   loadEquipments(page: number): void { this.equipmentRequests.next({ parent: this.form.controls.site_id.value, page }); }
 
+  changePrecision(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    this.precisionNotice.set('');
+    if (checkbox.checked) {
+      this.precisionRequested.set(true);
+      this.precisionConversionPending.set(false);
+    } else if (hasSubminutePrecision(this.form.controls.start_time.value)
+      || hasSubminutePrecision(this.form.controls.end_time.value)) {
+      this.precisionConversionPending.set(true);
+      checkbox.checked = true;
+    } else {
+      this.useMinutePrecision();
+    }
+  }
+
+  canConvertToMinutes(): boolean {
+    return !!utcDate(this.form.controls.start_time.value) && !!utcDate(this.form.controls.end_time.value);
+  }
+
+  confirmMinutePrecision(): void {
+    if (!this.precisionConversionPending() || !this.canConvertToMinutes()) return;
+    this.form.controls.start_time.markAsDirty();
+    this.form.controls.end_time.markAsDirty();
+    this.useMinutePrecision();
+    this.precisionNotice.set('Les deux bornes ont été ramenées à la minute inférieure. Vérifiez la période avant de l’appliquer.');
+  }
+
+  keepAdvancedPrecision(): void {
+    this.precisionRequested.set(true);
+    this.precisionConversionPending.set(false);
+    this.precisionNotice.set('Précision avancée conservée. Les dates sont inchangées.');
+  }
+
+  private useMinutePrecision(): void {
+    for (const control of [this.form.controls.start_time, this.form.controls.end_time]) {
+      if (utcDate(control.value)) control.setValue(control.value.slice(0, 16));
+    }
+    this.precisionRequested.set(false);
+    this.precisionConversionPending.set(false);
+  }
+
   applyFilters(): void {
+    if (this.precisionConversionPending()) return;
     // Finalize the untouched initial preset at application time; preserve custom dates.
     if (this.form.controls.start_time.pristine && this.form.controls.end_time.pristine
-      && this.form.controls.start_time.value === new Date(this.initialEnd - 168 * 60 * 60 * 1000).toISOString().slice(0, -1)
-      && this.form.controls.end_time.value === new Date(this.initialEnd).toISOString().slice(0, -1)) {
-      const end = Date.now();
-      this.form.patchValue({ start_time: new Date(end - 168 * 60 * 60 * 1000).toISOString().slice(0, -1),
-        end_time: new Date(end).toISOString().slice(0, -1) });
+      && this.form.controls.start_time.value === minuteValue(this.initialEnd - WEEK)
+      && this.form.controls.end_time.value === minuteValue(this.initialEnd)) {
+      const precise = this.advancedPrecision();
+      const end = precise ? Date.now() : wholeMinute(Date.now());
+      const value = (instant: number) => precise ? new Date(instant).toISOString().slice(0, -1) : minuteValue(instant);
+      this.form.patchValue({ start_time: value(end - WEEK), end_time: value(end) });
     }
     // Revalidate against the current clock on submission; no timer changes the chosen period.
     this.form.updateValueAndValidity();

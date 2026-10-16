@@ -28,6 +28,12 @@ select, input, button {
 }
 button { cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
 .reference-count, #period-help { font-size: tokens.$font-size-small; color: tokens.$text-secondary; margin: 0; }
+.precision-options { grid-column: 1 / -1; }
+.precision-toggle { display: flex; align-items: center; gap: tokens.$space-sm; min-height: 2.75rem; }
+.precision-toggle input { width: 1.125rem; height: 1.125rem; min-height: 0; padding: 0; flex-shrink: 0; }
+.precision-confirmation { margin: tokens.$space-sm 0; padding: tokens.$space-sm; border: tokens.$border-width solid tokens.$border-color; }
+.precision-confirmation button + button { margin-top: tokens.$space-sm; }
+#precision-notice:empty { display: none; }
 #period-help { margin-top: tokens.$space-md; }
 .validation-error { min-height: 1.5em; margin: tokens.$space-sm 0; }
 .apply-button:not(:disabled) { background: tokens.$navigation-active; color: tokens.$sidebar-text; }

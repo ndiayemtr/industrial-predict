@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DashboardPeriod, MeasurementSummary } from '../../models/dashboard.model';
 import { DashboardKpiCardComponent } from '../dashboard-kpi-card/dashboard-kpi-card.component';
+import { formatUtcDateTime } from '../../../../shared/utils/datetime-display';
 
 const qualityLabels: Readonly<Record<string, string>> = {
   good: 'Bonne', suspect: 'Suspecte', bad: 'Mauvaise', missing: 'Manquante', estimated: 'Estimée'
@@ -14,6 +15,7 @@ const qualityLabels: Readonly<Record<string, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MeasurementSummaryComponent {
+  readonly formatDateTime = formatUtcDateTime;
   readonly summary = input.required<MeasurementSummary>();
   readonly period = input.required<DashboardPeriod>();
   qualityLabel(value: string): string {

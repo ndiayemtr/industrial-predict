@@ -38,7 +38,7 @@ describe('Company detail page', () => {
     harness.fixture.detectChanges();
   }
 
-  it('loads one GET and renders all real fields, nullable description and unconverted timestamps', async () => {
+  it('loads one GET and formats timestamps without changing timezone-free hours', async () => {
     await open();
     expect(root().querySelector('[aria-busy]')?.getAttribute('aria-busy')).toBe('true');
     expect(root().querySelector('[role="status"]')?.textContent).toContain('Chargement de l’entreprise');
@@ -51,22 +51,22 @@ describe('Company detail page', () => {
     expect(root().querySelectorAll('dt')).toHaveLength(6);
     expect(root().querySelector('.company-edit')?.getAttribute('href')).toBe('/companies/7/edit?page=1&page_size=20');
     expect([...root().querySelectorAll('dd')].map(el => el.textContent)).toEqual([
-      company.name, company.code, '7', 'Non renseigné', company.created_at, company.updated_at
+      company.name, company.code, '7', 'Non renseigné', '01/10/2026 à 12:00', '02/10/2026 à 13:00'
     ]);
-    expect(root().textContent).toContain('Sans fuseau explicite');
+    expect(root().querySelector('.timestamp-note')?.textContent).toBe('Dates affichées selon les informations horaires du serveur.');
     expect(root().querySelector('[aria-busy]')?.getAttribute('aria-busy')).toBe('false');
     expect(root().querySelector('button')).toBeNull();
     http.expectNone(() => true);
   });
 
-  it('keeps full text, line breaks and explicit timezone strings without interpreting HTML', async () => {
+  it('keeps full text and converts explicit offsets to UTC without interpreting HTML', async () => {
     await open();
     const description = '<script>alert(1)</script>\n' + 'Long texte '.repeat(100);
     read().flush({ ...company, description, updated_at: '2026-10-02T13:00:00+02:00' });
     await settle();
     expect(root().querySelector('.description dd')?.textContent).toBe(description);
     expect(root().querySelector('script')).toBeNull();
-    expect(root().textContent).toContain('2026-10-02T13:00:00+02:00');
+    expect(root().textContent).toContain('02/10/2026 à 11:00 UTC');
   });
 
   it('shows explicit missing values without assuming UTC for absent timestamps', async () => {
@@ -74,8 +74,22 @@ describe('Company detail page', () => {
     // Defensive rendering of an incomplete response, not a change to CompanyRead.
     read().flush({ ...company, description: '   ', created_at: null, updated_at: '' });
     await settle();
-    expect([...root().querySelectorAll('dd')].filter(el => el.textContent === 'Non renseigné')).toHaveLength(3);
+    expect(root().querySelector('.description dd')?.textContent).toBe('Non renseigné');
+    expect([...root().querySelectorAll('dd')].filter(el => el.textContent === 'Non disponible')).toHaveLength(2);
     expect(root().textContent).not.toContain('Invalid Date');
+  });
+
+  it('hides administrative seconds/fractions only in the DOM and retains the server DTO', async () => {
+    await open();
+    const source = { ...company, created_at: '2026-08-31T14:58:20.179290', updated_at: 'invalid' };
+    read().flush(source); await settle();
+    expect([...root().querySelectorAll('dd')].slice(-2).map(el => el.textContent))
+      .toEqual(['31/08/2026 à 14:58', 'Non disponible']);
+    const state = component.state();
+    if (state.status !== 'success') throw Error('Expected success');
+    expect(state.data).toEqual(source);
+    expect(state.data.created_at).toBe('2026-08-31T14:58:20.179290');
+    http.expectNone(() => true);
   });
 
   it.each(['0', '-1', 'abc', '1.5', '9007199254740992'])('blocks invalid identifier %s without an HTTP request', async id => {

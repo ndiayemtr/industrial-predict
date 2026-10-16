@@ -63,6 +63,36 @@ describe('Company editing using the existing form page', () => {
     http.expectNone(() => true);
   });
 
+  it('shows read-only tracking between fields and actions without including dates in FormGroup, PATCH or dirty detection', async () => {
+    const source = { ...company, created_at: '2026-08-31T14:58:20.179290', updated_at: '2026-10-16T01:30:59.999999+02:00' };
+    await loaded(source);
+    const tracking = root().querySelector('.tracking-information')!;
+    expect(tracking.querySelector('h2')?.textContent).toBe('Informations de suivi');
+    expect([...tracking.querySelectorAll('dd')].map(el => el.textContent)).toEqual([
+      '31/08/2026 à 14:58', '15/10/2026 à 23:30 UTC'
+    ]);
+    expect(tracking.querySelector('input, textarea, select')).toBeNull();
+    expect(tracking.querySelector('p')).toBeNull();
+    expect(root().querySelector('form > fieldset + .tracking-information + .actions')).not.toBeNull();
+    expect(Object.keys(page.editor()!.form.controls)).toEqual(['name', 'code', 'description']);
+    expect(page.editor()!.hasChanges()).toBe(false);
+    expect(page.original()).toEqual(source);
+    await submit(); http.expectNone(() => true);
+    page.editor()!.form.controls.code.setValue('Changed'); await submit();
+    const patch = request();
+    expect(patch.request.method).toBe('PATCH');
+    expect(patch.request.body).toEqual({ code: 'Changed' });
+    patch.flush(null, { status: 409, statusText: 'Conflict' }); await settle();
+  });
+
+  it('shows unavailable tracking dates for invalid or absent server timestamps', async () => {
+    await open(); request().flush({ ...company, created_at: null, updated_at: '2026-02-30T12:00:00' }); await settle();
+    expect([...root().querySelectorAll('.tracking-information dd')].map(el => el.textContent))
+      .toEqual(['Non disponible', 'Non disponible']);
+    expect(page.editor()!.hasChanges()).toBe(false);
+    http.expectNone(() => true);
+  });
+
   it.each(['0', '-1', 'abc', '1.5', '9007199254740992'])('blocks invalid identifier %s without HTTP', async id => {
     await open(`/companies/${id}/edit`);
     expect(page.state()).toBe('load-error');

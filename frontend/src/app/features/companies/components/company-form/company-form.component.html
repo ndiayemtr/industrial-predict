@@ -20,6 +20,7 @@
       <p id="description-error" class="field-error">{{ error('description') }}</p>
     </div>
   </fieldset>
+  <ng-content select="[companyTracking]" />
   <div class="actions">
     <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours...' : editMode() ? 'Enregistrer les modifications' : 'Créer l’entreprise' }}</button>
     <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
