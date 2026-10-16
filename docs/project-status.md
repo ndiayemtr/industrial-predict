@@ -6,8 +6,9 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-companies` (UI 3.8 en finalisation documentaire,
-HEAD initial `ac2dc3a`, le 16 octobre 2026, dépôt propre).
+`main`, commit publié `2c49c4f`, synchronisé avec `origin/main` après
+`git fetch origin` le 16 octobre 2026 (0 commit d'écart). Dépôt propre avant
+la présente synchronisation documentaire.
 
 À mettre à jour à chaque changement de branche.
 
@@ -301,17 +302,17 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 2.7.1 | Formulation neutre de couverture corrigée et commitée (`956a0b4`) |
 | UI 2.8 | Documentation et validation finale terminées (`9ce0cac`) ; Dashboard fusionné dans `main` (`f3f6f2c`) et publié sur GitHub |
 | UI 3.1 | Conception Companies validée (`d6d31ec`) |
-| UI 3.2 | DTO et service API Companies livrés sur la branche (`07d2bc3`) |
+| UI 3.2 | DTO et service API Companies livrés (`07d2bc3`) |
 | UI 3.3 | Liste, recherche serveur et pagination (`84f7f18`) |
 | UI 3.4 | Détail entreprise (`a1e332e`) |
 | UI 3.5 | Création et formulaire partagé (`d8e6c48`) |
 | UI 3.6 / UI 3.6.1 | Modification et notifications CRUD Nebular (`ab99551`) |
 | UI 3.7 | Validation intégrée terminée ; lectures réelles et écritures simulées distinguées |
 | UI 3.7.1 | Diagnostic de stabilité validé et commité (`ac2dc3a`), sans correctif spéculatif |
-| UI 3.8 | Documentation finale en finalisation ; livraison dans `main` à valider |
+| UI 3.8 | Documentation finale terminée (`a495f90`) ; Companies fusionné dans `main` (`537822c`) et publié |
 
-Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Companies MVP est implémenté
-sur la branche courante, avant livraison dans `main`. Les sept autres destinations
+Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Companies MVP est terminé,
+fusionné dans `main` et publié. Les sept autres destinations
 de navigation et le détail équipement restent des placeholders. Rapports et
 Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
@@ -351,13 +352,29 @@ Ces résultats sont l'historique de validation UI 1.8, pas une nouvelle exécuti
 en UI 2.1.1. Cette étape documentaire contrôle le contrat dans le code et les
 tests existants, la cohérence des documents et le diff Git.
 
-## Travail actuel - UI 3.8 Companies MVP
+## Livraison UI 3 - Companies MVP et finition des dates
 
-UI 3.1 à UI 3.7.1 sont terminées et validées. Prérequis UI 3.8 vérifiés : rapport
-[ui-3.7.1-test-stability.md](ui-3.7.1-test-stability.md) suivi et commité dans
-`ac2dc3a`, branche correcte, dépôt propre au départ. UI 3.8 synchronise uniquement
-les documents et prépare la livraison, avant validation. Companies n'est pas
-encore déclaré fusionné dans `main`, publié ou déployé.
+UI 3.1 à UI 3.8 sont terminées. Le rapport de stabilité
+[UI 3.7.1](ui-3.7.1-test-stability.md) est commité dans `ac2dc3a`, puis la
+documentation UI 3.8 dans `a495f90`. Companies MVP est fusionné dans `main`
+via `537822c` et publié. La finition des dates est livrée dans `9c183e0`,
+documentée dans `3e83b0b`, puis fusionnée et publiée via `2c49c4f`.
+Cette publication du code ne constitue pas un déploiement de production.
+
+Le [formatage Dashboard et Companies](frontend-datetime-display.md) est livré :
+dates administratives à la minute, résultats Dashboard à la seconde, fractions
+masquées uniquement à l'affichage et dates Companies sans fuseau conservées
+sans conversion locale. Les [filtres Dashboard](dashboard-date-precision.md)
+offrent un mode simple à la minute et une précision avancée à la milliseconde.
+Le mode précis est automatique pour les valeurs précises existantes ; le retour
+à la minute exige une confirmation en cas de perte de précision. UTC, intervalle
+initial de 168 heures, début inclus et fin exclusive sont conservés.
+
+Validation finale de livraison : **386 tests Angular réussis dans 32 fichiers**,
+build production réussi et `npm audit` sans vulnérabilité signalée. Ces résultats
+de livraison sont consignés à partir des rapports et du bilan communiqué par
+l'utilisateur ; aucun test, build ou audit npm n'est relancé pour cette mise à
+jour documentaire. Le bundle initial reste à **600,89 ko pour 500 ko** de budget.
 
 Le MVP comprend liste, recherche serveur sur nom/code, pagination, détail,
 création et modification. La liste conserve `page`, `page_size` et `search` dans
@@ -449,7 +466,7 @@ POST/PATCH ne sont pas validées de bout en bout, les horodatages Company resten
 sans garantie de fuseau et aucun verrou de version serveur n'est fourni.
 **Le module n'est pas prêt pour une production SaaS multi-tenant.**
 
-### Contrôles de la présente étape UI 3.8
+### Contrôles documentaires UI 3.8 - historique
 
 Relecture du code et des tests, cohérence des documents, liens internes, tirets
 simples, périmètre documentaire, `git diff --check` et état Git. Aucune suite
@@ -462,7 +479,7 @@ Contrôles documentaires UI 3.8 réussis : 39 liens internes, dont huit liens
 avec ancre, `git diff --check`, absence de tiret cadratin dans les huit documents
 modifiés et absence de changement hors documentation. Le contenu D001 à D014
 est conservé intégralement ; le rapport UI 3.7.1 reste inchangé. Branche et HEAD
-inchangés, huit fichiers documentaires modifiés et non commités.
+inchangés à l'issue des contrôles, avant le commit documentaire `a495f90`.
 
 ## Livraison Dashboard V1 - historique
 
@@ -546,8 +563,7 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Faire valider le diff documentaire UI 3.8 et le bilan Companies, puis autoriser
-séparément le commit documentaire et la livraison de `feature/frontend-companies`
-dans `main`. Proposition de commit : `docs(frontend): finalize Companies MVP delivery documentation`.
-Aucun développement Angular/FastAPI/PostgreSQL, changement de dépendance ou de
-budget, commit, push ou merge réalisé dans UI 3.8. UI 4 n'est pas commencée.
+Faire valider cette synchronisation documentaire post-livraison avant tout
+commit. La prochaine phase est UI 4 - Sites industriels ; UI 4.1 n'est pas
+commencée. Aucun développement applicatif, changement de dépendance ou de budget,
+commit, push ou merge n'est réalisé dans cette synchronisation.

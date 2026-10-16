@@ -3,6 +3,11 @@
 Note de suivi : la section historique sur les contrôles natifs Dashboard est
 remplacée par la [correction des modes simple et avancé](dashboard-date-precision.md).
 Ce nouveau rapport contient les validations les plus récentes des filtres.
+Livraison effectuée : code `9c183e0`, documentation `3e83b0b`, fusion dans `main`
+et publication `2c49c4f`. Bilan final : 386 tests Angular réussis, build production
+réussi et `npm audit` sans vulnérabilité signalée. Aucune relance dans cette
+synchronisation documentaire. Les résultats et états Git ci-dessous décrivent
+les étapes historiques avant livraison ; les limites d'accessibilité restent ouvertes.
 
 Date : 16 octobre 2026. Branche : `fix/frontend-datetime-display`.
 Base : `main` propre, synchronisée par `git fetch origin` et comparée à
@@ -50,7 +55,7 @@ temporels, les DTO Companies, le FormGroup Companies et la construction du PATCH
 ne sont pas modifiés. PATCH différentiel, protection d'abandon, verrou de
 soumission et notifications Nebular sont conservés et couverts par les suites.
 
-## Limitation des contrôles natifs Dashboard
+## Limitation des contrôles natifs Dashboard - historique remplacé
 
 Les deux champs `datetime-local` gardent `step="0.001"`, leurs valeurs exactes,
 leur validation et leur interprétation UTC déjà définie par le filtre. Leur
@@ -157,7 +162,7 @@ La comparaison utilise les artefacts de référence UI 3.7.1, dont les sources
 frontend sont identiques à la base `537822c` (comparaison Git vérifiée), et le
 build courant. Aucun nouveau build de référence n'est présenté comme exécuté.
 
-Branche finale `fix/frontend-datetime-display`, HEAD `537822c` inchangé.
+État historique avant livraison : branche `fix/frontend-datetime-display`, HEAD `537822c` inchangé.
 22 fichiers concernés, non commités. Le diff reste limité à l'affichage des
 dates, sa section de suivi, ses tests et ce rapport. Validation utilisateur
 attendue avant tout commit ; aucun push ou merge.

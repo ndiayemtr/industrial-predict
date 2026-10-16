@@ -60,13 +60,15 @@ UI 2.1 à UI 2.8 sont terminées. Dashboard V1 est fusionné dans `main`
 Dashboard V1 consomme FastAPI via `/api/v1/dashboard` :
 filtres UTC, références paginées, façade locale et cinq sections de présentation.
 UI 2.8 est enregistrée dans `9ce0cac` ; la publication du code ne constitue
-pas un déploiement de production. Companies MVP est implémenté sur
-`feature/frontend-companies` : liste, recherche serveur nom/code, pagination,
+pas un déploiement de production. UI 3 Companies MVP est terminée, fusionnée
+dans `main` via `537822c` et publiée : liste, recherche serveur nom/code, pagination,
 détail, création, modification et notifications `NbToastrService`.
-UI 3.1 à UI 3.7.1 sont terminées et validées ; UI 3.8 est en finalisation
-documentaire, avant validation de livraison dans `main`. Au début d'UI 3.8,
-le 16 octobre 2026, HEAD `ac2dc3a`, rapport de stabilité commité et dépôt propre.
-Le module Companies n'est pas encore déclaré fusionné ou déployé.
+UI 3.1 à UI 3.8 sont terminées. La finition transversale des dates Dashboard et
+Companies est également livrée, avec les filtres Dashboard en mode simple à la
+minute ou en précision avancée (secondes et millisecondes), sans conversion
+silencieuse. Référence publiée : `2c49c4f`, fusion de
+`fix/frontend-datetime-display`, identique à `origin/main` au contrôle du
+16 octobre 2026. Publication du code et déploiement de production restent distincts.
 Le contrat initial reste dans `docs/etape-ui-3.1-companies.md` ; l'architecture
 réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 `docs/project-status.md`. DELETE est exclu du MVP en raison de la cascade.
@@ -93,8 +95,11 @@ Bundle initial actuel : 600,89 ko pour un budget de 500 ko, dont +32,48 ko aprè
 intégration de NbToastrService ; aucun budget relevé. Zoom Companies 200/400 %
 non validé, lecteur d'écran réel non testé et autorisation multi-entreprises non
 démontrée. Companies n'est pas prêt pour une production SaaS multi-tenant.
-La validation documentaire puis la livraison Git restent à autoriser ; aucun
-commit, push, merge ou début d'UI 4 dans UI 3.8.
+Validation finale de livraison : 386 tests Angular réussis, build production
+réussi et `npm audit` sans vulnérabilité signalée. Ces résultats historiques
+ne sont pas de nouvelles exécutions lors de la synchronisation documentaire.
+Voir `docs/frontend-datetime-display.md` et `docs/dashboard-date-precision.md`.
+Prochaine phase : UI 4 - Sites industriels ; UI 4.1 n'est pas commencée.
 
 ### Machine Learning
 

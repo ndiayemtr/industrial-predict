@@ -1,7 +1,11 @@
 # Dashboard - Précision des filtres temporels
 
-Validation locale du 16 octobre 2026, branche `fix/frontend-datetime-display`,
-HEAD `537822c`. Aucun commit, push ou merge effectué.
+Livré et publié dans `main` via `2c49c4f` : code `9c183e0`, documentation
+`3e83b0b`. Validation finale : 386 tests Angular réussis, build production réussi
+et `npm audit` sans vulnérabilité signalée. Aucune relance lors de la présente
+synchronisation documentaire. Les vérifications locales détaillées ci-dessous
+ont été réalisées le 16 octobre 2026 sur `fix/frontend-datetime-display`,
+base `537822c`, avant commit et fusion.
 
 ## Correction appliquée
 
@@ -109,5 +113,5 @@ pour la confirmation à 320 px (`dashboard-precision-*.png`).
 
 Les journaux de cette exécution sont dans `frontend/tmp/datetime/` :
 `tests-precision.log`, `build-precision.log` et `preview-requests.log`.
-Ce répertoire de validation est ignoré par Git. La correction attend validation
-avant tout commit.
+Ce répertoire de validation est ignoré par Git. La correction est désormais
+fusionnée et publiée ; cela ne constitue pas un déploiement de production.

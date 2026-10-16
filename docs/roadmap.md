@@ -116,7 +116,7 @@ confirmation reçue en UI 2.8, distincte des essais du navigateur intégré.
 Lecteur d'écran réel non testé. Autorisation multi-entreprises non démontrée :
 pas de déclaration de préparation à la production SaaS multi-tenant.
 
-### UI 3 - Companies MVP implémenté, livraison en préparation
+### UI 3 - Companies MVP terminé, fusionné et publié
 
 - [x] UI 3.1 - Conception fonctionnelle et technique validée (`d6d31ec`)
 - [x] UI 3.2 - DTO et service HTTP Companies (`07d2bc3`)
@@ -127,11 +127,14 @@ pas de déclaration de préparation à la production SaaS multi-tenant.
 - [x] UI 3.6.1 - Notifications Nebular après création/modification (incluses dans `ab99551`)
 - [x] UI 3.7 - Validation intégrée, lectures FastAPI réelles et écritures simulées
 - [x] UI 3.7.1 - Diagnostic de stabilité validé, rapport commité (`ac2dc3a`)
-- [ ] UI 3.8 - Documentation finale en finalisation, validation de livraison attendue
-- [ ] Commit documentaire, revue et fusion de `feature/frontend-companies` dans `main`, après autorisation
+- [x] UI 3.8 - Documentation finale terminée (`a495f90`)
+- [x] Fusion de `feature/frontend-companies` dans `main` (`537822c`), code publié
+- [x] Formatage des dates Dashboard et Companies, filtres simples et précision avancée (`9c183e0`)
+- [x] Publication de la finition des dates dans `main`, référence `2c49c4f`
 
-État contrôlé le 16 octobre 2026 : branche `feature/frontend-companies`, HEAD
-initial UI 3.8 `ac2dc3a`, dépôt propre. La conception d'origine est conservée
+État contrôlé le 16 octobre 2026 : branche `main`, HEAD publié `2c49c4f`,
+synchronisé avec `origin/main`, dépôt propre avant synchronisation documentaire.
+La conception d'origine est conservée
 dans [etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), avec renvoi vers
 l'implémentation actuelle. Le [bilan Companies](project-status.md#companies-mvp---validation-historique-ui-37)
 distingue les observations réelles des simulations : liste/détail/recherche
@@ -147,12 +150,24 @@ spéculatif n'est appliqué. Exécuter les validations de livraison séquentiell
 Build production, cinq tests Sass et contrôles des breakpoints/thème réussis
 historiquement ; aucune suite applicative relancée dans UI 3.8 documentaire.
 
+Validation finale après finition des dates : **386 tests Angular réussis**,
+build production réussi et `npm audit` sans vulnérabilité signalée. Ces résultats
+de livraison ne sont pas de nouvelles exécutions documentaires. Voir les rapports
+[dates Dashboard et Companies](frontend-datetime-display.md) et
+[précision des filtres](dashboard-date-precision.md). Le mode simple saisit les
+minutes ; le mode avancé conserve secondes et millisecondes, avec confirmation
+explicite en cas de conversion vers la minute. Les bornes UTC sont préservées.
+
 Dette actuelle : 600,89 ko initial pour un budget de 500 ko, dont +32,48 ko après
 intégration de NbToastrService ; dépassement 100,89 ko, seuils inchangés.
 Liste/détail/formulaire Companies restent différés. DELETE est exclu du MVP à
 cause de la cascade. L'autorisation multi-entreprises reste non démontrée ;
-le module n'est pas prêt pour une production SaaS multi-tenant. UI 4 ne commence
-pas dans cette préparation documentaire et aucune livraison Git n'est effectuée.
+le module n'est pas prêt pour une production SaaS multi-tenant. Les écritures
+réelles POST/PATCH restent non testées de bout en bout.
+
+### UI 4 - Sites industriels, prochaine phase
+
+- [ ] UI 4.1 - Non commencée ; attendre une demande dédiée avant tout développement
 
 ### Écrans métier restant à implémenter
 
