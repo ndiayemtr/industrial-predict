@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
 import { CompanyCreate } from '../../models/company-write.model';
+import { CompanyRead } from '../../../../core/models/reference-data.model';
 
 export type CompanyField = 'name' | 'code' | 'description';
 export type CompanyFieldErrors = Partial<Record<CompanyField, string>>;
@@ -18,6 +19,8 @@ const requiredText = (maximum: number): ValidatorFn => (control: AbstractControl
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompanyFormComponent {
+  readonly initialCompany = input<CompanyRead | null>(null);
+  readonly editMode = input(false);
   readonly saving = input(false);
   readonly blocked = input(false);
   readonly fieldErrors = input<CompanyFieldErrors>({});
@@ -32,11 +35,21 @@ export class CompanyFormComponent {
   });
 
   constructor() {
+    effect(() => {
+      const company = this.initialCompany();
+      this.form.reset({ name: company?.name ?? '', code: company?.code ?? '', description: company?.description ?? '' }, { emitEvent: false });
+    });
     this.form.valueChanges.pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.edited.emit());
   }
 
   hasChanges(): boolean {
-    return Object.values(this.form.getRawValue()).some(value => value !== '');
+    const value = this.form.getRawValue(), original = this.initialCompany();
+    return value.name !== (original?.name ?? '') || value.code !== (original?.code ?? '')
+      || value.description !== (original?.description ?? '');
+  }
+
+  focusField(field: CompanyField): void {
+    this.formElement().nativeElement.querySelector<HTMLElement>(`#company-${field}`)?.focus();
   }
 
   error(field: CompanyField): string {

@@ -1,4 +1,4 @@
-<form #formElement [formGroup]="form" (ngSubmit)="submit()" aria-label="Création d’une entreprise" [attr.aria-busy]="saving()" novalidate>
+<form #formElement [formGroup]="form" (ngSubmit)="submit()" [attr.aria-label]="editMode() ? 'Modification d’une entreprise' : 'Création d’une entreprise'" [attr.aria-busy]="saving()" novalidate>
   <p>Les champs marqués « obligatoire » doivent être renseignés.</p>
   <fieldset [disabled]="saving()">
     <legend>Informations de l’entreprise</legend>
@@ -21,7 +21,7 @@
     </div>
   </fieldset>
   <div class="actions">
-    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours...' : 'Créer l’entreprise' }}</button>
+    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours...' : editMode() ? 'Enregistrer les modifications' : 'Créer l’entreprise' }}</button>
     <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
   </div>
 </form>

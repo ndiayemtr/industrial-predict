@@ -5,6 +5,10 @@
     </svg>
     <span>Retour à la liste des entreprises</span>
   </a>
+  @let loaded = state();
+  @if (loaded.status === 'success') {
+    <a class="company-edit" [routerLink]="['/companies', loaded.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>
+  }
 </app-page-header>
 
 @let current = state();
@@ -16,6 +20,7 @@
     <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
   } @else {
     @if (createdCompanyId === current.data.id) { <p role="status">Entreprise créée.</p> }
+    @if (updatedCompanyId === current.data.id) { <p role="status">Entreprise modifiée.</p> }
     <dl>
       <div><dt>Nom</dt><dd>{{ display(current.data.name) }}</dd></div>
       <div><dt>Code</dt><dd>{{ display(current.data.code) }}</dd></div>

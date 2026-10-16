@@ -22,6 +22,21 @@ describe('CompanyFormComponent', () => {
     expect(component.hasChanges()).toBe(false);
   });
 
+  it('prefills editing without treating loaded or reverted values as unsaved edits', () => {
+    fixture.componentRef.setInput('editMode', true);
+    fixture.componentRef.setInput('initialCompany', { id: 7, name: ' Original ', code: 'Code', description: null,
+      created_at: '2026-10-01T12:00:00', updated_at: '2026-10-01T12:00:00' });
+    fixture.detectChanges(); TestBed.tick(); fixture.detectChanges();
+    expect(component.form.getRawValue()).toEqual({ name: ' Original ', code: 'Code', description: '' });
+    expect(component.hasChanges()).toBe(false);
+    expect(element().querySelector('form')?.getAttribute('aria-label')).toBe('Modification d’une entreprise');
+    expect(element().querySelector('button[type="submit"]')?.textContent).toBe('Enregistrer les modifications');
+    component.form.controls.name.setValue('Changed');
+    expect(component.hasChanges()).toBe(true);
+    component.form.controls.name.setValue(' Original ');
+    expect(component.hasChanges()).toBe(false);
+  });
+
   it('rejects blank values, announces local validation and focuses the first invalid field', () => {
     const submit = vi.fn();
     component.submitted.subscribe(submit);

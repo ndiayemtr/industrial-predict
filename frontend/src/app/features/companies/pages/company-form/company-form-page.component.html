@@ -1,14 +1,22 @@
-<app-page-header title="Nouvelle entreprise" description="Créer une entreprise avec son nom, son code et une description facultative." />
-<section class="creation" aria-label="Nouvelle entreprise">
+<app-page-header [title]="editMode ? 'Modifier l’entreprise' : 'Nouvelle entreprise'" [description]="editMode ? 'Modifier le nom, le code ou la description de l’entreprise.' : 'Créer une entreprise avec son nom, son code et une description facultative.'" />
+<section class="creation" [attr.aria-label]="editMode ? 'Modification de l’entreprise' : 'Nouvelle entreprise'" [attr.aria-busy]="state() === 'loading' || state() === 'saving'">
+  @if (state() === 'loading') { <app-loading-state message="Chargement de l’entreprise..." /> }
+  @if (state() === 'load-error') {
+    <app-error-state [title]="loadError().title" [message]="loadError().message" [retryable]="loadError().retryable" (retry)="retryLoad()" />
+    <a routerLink="/companies" [queryParams]="listQuery">Retour à la liste des entreprises</a>
+  }
   @if (state() === 'saving') { <app-loading-state message="Enregistrement de l’entreprise en cours..." /> }
   @if (state() === 'error') {
-    <app-error-state title="Création non confirmée" [message]="message()" />
+    <app-error-state [title]="editMode ? 'Modification non confirmée' : 'Création non confirmée'" [message]="message()" />
     @if (uncertain()) {
-      <p><a routerLink="/companies" [queryParams]="listQuery" target="_blank" rel="noopener">Vérifier la liste dans un nouvel onglet</a></p>
-      <button type="button" (click)="acknowledgeVerification()">J’ai vérifié la liste, autoriser une nouvelle soumission</button>
+      <p><a [routerLink]="editMode ? ['/companies', original()!.id] : ['/companies']" [queryParams]="listQuery" target="_blank" rel="noopener">{{ editMode ? 'Vérifier la fiche dans un nouvel onglet' : 'Vérifier la liste dans un nouvel onglet' }}</a></p>
+      <button type="button" (click)="acknowledgeVerification()">{{ editMode ? 'J’ai vérifié la fiche, autoriser une nouvelle soumission' : 'J’ai vérifié la liste, autoriser une nouvelle soumission' }}</button>
     }
   }
-  @if (state() === 'success') { <p role="status">Entreprise créée. <a routerLink="/companies" [queryParams]="listQuery">Retour à la liste</a></p> }
-  <app-company-form [saving]="state() === 'saving'" [blocked]="uncertain() || state() === 'success'" [fieldErrors]="fieldErrors()"
+  @if (state() === 'success') { <p role="status">{{ editMode ? 'Entreprise modifiée.' : 'Entreprise créée.' }} <a routerLink="/companies" [queryParams]="listQuery">Retour à la liste</a></p> }
+  @if (notice()) { <p role="status">{{ notice() }}</p> }
+  @if (state() !== 'loading' && state() !== 'load-error') {
+  <app-company-form [editMode]="editMode" [initialCompany]="original()" [saving]="state() === 'saving'" [blocked]="uncertain() || state() === 'success'" [fieldErrors]="fieldErrors()"
     (submitted)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()" />
+  }
 </section>

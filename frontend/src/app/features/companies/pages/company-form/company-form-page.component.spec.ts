@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { NbToastrService } from '@nebular/theme';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { COMPANY_ROUTES } from '../../companies.routes';
@@ -13,8 +14,10 @@ describe('Company creation page', () => {
   const root = () => harness.routeNativeElement!;
   const pending = () => http.expectOne(request => request.url === '/api/v1/companies');
 
+  const toastr = { success: vi.fn() };
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
+    toastr.success.mockClear();
+    TestBed.configureTestingModule({ providers: [{ provide: NbToastrService, useValue: toastr }, provideHttpClient(), provideHttpClientTesting(),
       provideRouter([{ path: 'companies', children: COMPANY_ROUTES }])] });
     http = TestBed.inject(HttpTestingController);
   });
@@ -69,6 +72,7 @@ describe('Company creation page', () => {
       created_at: '2026-10-15T12:00:00', updated_at: '2026-10-15T12:00:00' });
     await settle();
     expect(root().querySelector('[role="status"]')?.textContent).toBe('Entreprise créée.');
+    expect(toastr.success).toHaveBeenCalledExactlyOnceWith('Entreprise créée avec succès.', '');
     expect(confirm).not.toHaveBeenCalled();
   });
 
@@ -78,6 +82,7 @@ describe('Company creation page', () => {
     await settle();
     expect(root().querySelector('#code-error')?.textContent).toContain('déjà utilisé');
     expect(component.editor()!.form.controls.name.value).toBe(' New Company ');
+    expect(toastr.success).not.toHaveBeenCalled();
     expect(root().querySelector('app-error-state button')).toBeNull();
     component.editor()!.form.controls.code.setValue('Different');
     await settle();
@@ -99,6 +104,7 @@ describe('Company creation page', () => {
     expect(root().querySelector('[role="alert"]')?.textContent).toContain('autre contrainte');
     expect(root().querySelector('b')).toBeNull();
     expect(component.uncertain()).toBe(false);
+    expect(toastr.success).not.toHaveBeenCalled();
   });
 
   it.each([0, 500, 503])('treats status %s as uncertain, never as a code conflict or automatic retry', async status => {
@@ -108,6 +114,7 @@ describe('Company creation page', () => {
     else request.flush('Database error', { status, statusText: 'Server Error' });
     await settle();
     expect(root().querySelector('[role="alert"]')?.textContent).toContain('peut avoir été créée');
+    expect(toastr.success).not.toHaveBeenCalled();
     expect(root().querySelector('#code-error')?.textContent).toBe('');
     expect(root().querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
     expect(root().querySelector('a[target="_blank"]')?.getAttribute('href')).toBe('/companies?page=1&page_size=20');
@@ -123,6 +130,7 @@ describe('Company creation page', () => {
     pending().flush({ detail: 'Refused' }, { status, statusText: 'Error' });
     await settle();
     expect(component.state()).toBe('error');
+    expect(toastr.success).not.toHaveBeenCalled();
     expect(root().querySelector('[role="alert"]')).not.toBeNull();
     expect(root().querySelector('#code-error')?.textContent).toBe('');
     expect(component.editor()!.form.controls.code.value).toBe('New-é');
@@ -137,6 +145,17 @@ describe('Company creation page', () => {
     const req = pending(); expect(req.request.method).toBe('GET');
     req.flush({ items: [], total: 0, page: 2, page_size: 50, pages: 0 });
     expect(confirm).not.toHaveBeenCalled();
+    expect(toastr.success).not.toHaveBeenCalled();
+  });
+
+  it('does not notify before a response or after a pending POST is cancelled on destruction', async () => {
+    await open(); fill(); await submit();
+    const request = pending();
+    expect(toastr.success).not.toHaveBeenCalled();
+    harness.fixture.destroy();
+    expect(request.cancelled).toBe(true);
+    expect(() => request.flush({ id: 87 })).toThrow();
+    expect(toastr.success).not.toHaveBeenCalled();
   });
 
   it('asks before discarding edits on Cancel or other route navigation and preserves data on refusal', async () => {

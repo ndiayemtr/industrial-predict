@@ -49,6 +49,7 @@ describe('Company detail page', () => {
     await settle();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
     expect(root().querySelectorAll('dt')).toHaveLength(6);
+    expect(root().querySelector('.company-edit')?.getAttribute('href')).toBe('/companies/7/edit?page=1&page_size=20');
     expect([...root().querySelectorAll('dd')].map(el => el.textContent)).toEqual([
       company.name, company.code, '7', 'Non renseigné', company.created_at, company.updated_at
     ]);

@@ -24,6 +24,7 @@ type DetailState =
 })
 export class CompanyDetailComponent {
   readonly createdCompanyId = inject(Router).currentNavigation()?.extras.state?.['createdCompanyId'];
+  readonly updatedCompanyId = inject(Router).currentNavigation()?.extras.state?.['updatedCompanyId'];
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(CompaniesApiService);
   private readonly refresh = new Subject<void>();
