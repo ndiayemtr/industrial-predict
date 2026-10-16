@@ -22,11 +22,13 @@ export const routes: Routes = [
         path: item.path.slice(1),
         title: `${item.label} | Industrial Predict AI`,
         data: { pageTitle: item.label },
-        loadComponent: item.id === 'dashboard'
+        ...(item.id === 'companies'
+          ? { loadChildren: () => import('./features/companies/companies.routes').then(m => m.COMPANY_ROUTES) }
+          : { loadComponent: item.id === 'dashboard'
           ? () => import('./features/dashboard/pages/dashboard/dashboard.component').then(
               (m) => m.DashboardComponent
             )
-          : loadFeaturePlaceholder
+          : loadFeaturePlaceholder })
       })),
       {
         path: `${equipmentItem.path.slice(1)}/:equipmentId`,

@@ -43,7 +43,7 @@
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
-les autres pages métier sont des placeholders.
+Companies les réutilise également ; les autres pages métier restent des placeholders.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
@@ -100,7 +100,7 @@ décrite dans project-status.md. UI 2.8 a finalisé les documents et relancé le
 À chaque étape d'implémentation : `npm run build`, `npm test -- --watch=false`,
 `npm ls --all`, `npm audit` et contrôles Sass pertinents. Préserver les tests
 existants sans duplication, les budgets, les dépendances et le backend.
-Le bundle historique du socle est 504,68 ko. Le Dashboard actuel reste à
+Le bundle historique du socle est 504,68 ko. À la clôture UI 2.8, Dashboard était à
 565,38 ko initial pour un budget warning de 500 ko ; référence différée UI 2.6
 52,00 ko, 51,98 ko après UI 2.7.1. Angular Forms partagé avec Nebular explique
 l'essentiel de la hausse UI 2.4 ; aucun seuil relevé. Mesurer initial et différé
@@ -116,13 +116,43 @@ confirmation reçue en UI 2.8, distincte des essais du navigateur intégré.
 Lecteur d'écran réel non testé. Autorisation multi-entreprises non démontrée :
 pas de déclaration de préparation à la production SaaS multi-tenant.
 
-### UI 3 - Gestion des entreprises (Companies), prochaine phase
+### UI 3 - Companies MVP implémenté, livraison en préparation
 
-- [ ] UI 3.1 - Analyse fonctionnelle et technique, non commencée
+- [x] UI 3.1 - Conception fonctionnelle et technique validée (`d6d31ec`)
+- [x] UI 3.2 - DTO et service HTTP Companies (`07d2bc3`)
+- [x] UI 3.3 - Liste, recherche serveur et pagination (`84f7f18`)
+- [x] UI 3.4 - Détail entreprise (`a1e332e`)
+- [x] UI 3.5 - Création avec formulaire partagé (`d8e6c48`)
+- [x] UI 3.6 - Modification par PATCH différentiel (`ab99551`)
+- [x] UI 3.6.1 - Notifications Nebular après création/modification (incluses dans `ab99551`)
+- [x] UI 3.7 - Validation intégrée, lectures FastAPI réelles et écritures simulées
+- [x] UI 3.7.1 - Diagnostic de stabilité validé, rapport commité (`ac2dc3a`)
+- [ ] UI 3.8 - Documentation finale en finalisation, validation de livraison attendue
+- [ ] Commit documentaire, revue et fusion de `feature/frontend-companies` dans `main`, après autorisation
 
-Commencer par examiner les contrats CRUD existants, la pagination, les états UI
-et les exigences d’accessibilité avant de proposer une implémentation. La page
-Companies reste un placeholder ; aucun développement UI 3 n’est livré ici.
+État contrôlé le 16 octobre 2026 : branche `feature/frontend-companies`, HEAD
+initial UI 3.8 `ac2dc3a`, dépôt propre. La conception d'origine est conservée
+dans [etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), avec renvoi vers
+l'implémentation actuelle. Le [bilan Companies](project-status.md#companies-mvp---validation-historique-ui-37)
+distingue les observations réelles des simulations : liste/détail/recherche
+FastAPI réels ; POST/PATCH, erreurs d'écriture et pagination multipage simulés.
+Le responsive des quatre parcours a été contrôlé aux six largeurs CSS prévues ;
+zoom Companies 200/400 % non validé, lecteur d'écran réel non testé.
+
+[UI 3.7.1](ui-3.7.1-test-stability.md) : trois suites complètes séquentielles
+à 348/348, 31 fichiers, et six tests 404 réussis dans neuf lancements. Le défaut
+initial « neuf liens attendus, zéro reçu » reste non reproduit. Des timeouts
+Sidebar/Shell sous concurrence sont observés ; aucun correctif de synchronisation
+spéculatif n'est appliqué. Exécuter les validations de livraison séquentiellement.
+Build production, cinq tests Sass et contrôles des breakpoints/thème réussis
+historiquement ; aucune suite applicative relancée dans UI 3.8 documentaire.
+
+Dette actuelle : 600,89 ko initial pour un budget de 500 ko, dont +32,48 ko après
+intégration de NbToastrService ; dépassement 100,89 ko, seuils inchangés.
+Liste/détail/formulaire Companies restent différés. DELETE est exclu du MVP à
+cause de la cascade. L'autorisation multi-entreprises reste non démontrée ;
+le module n'est pas prêt pour une production SaaS multi-tenant. UI 4 ne commence
+pas dans cette préparation documentaire et aucune livraison Git n'est effectuée.
 
 ### Écrans métier restant à implémenter
 

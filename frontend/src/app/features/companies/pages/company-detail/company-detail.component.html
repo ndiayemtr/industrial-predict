@@ -1,0 +1,34 @@
+<app-page-header title="Détail entreprise" description="Informations de l’entreprise en lecture seule.">
+  <a class="company-back" routerLink="/companies" [queryParams]="listQuery()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5 M12 5l-7 7 7 7" />
+    </svg>
+    <span>Retour à la liste des entreprises</span>
+  </a>
+  @let loaded = state();
+  @if (loaded.status === 'success') {
+    <a class="company-edit" [routerLink]="['/companies', loaded.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>
+  }
+</app-page-header>
+
+@let current = state();
+<section class="company-detail" aria-labelledby="company-information-title" [attr.aria-busy]="current.status === 'loading'">
+  <h2 id="company-information-title">Informations de l’entreprise</h2>
+  @if (current.status === 'loading') {
+    <app-loading-state message="Chargement de l’entreprise..." />
+  } @else if (current.status === 'error') {
+    <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
+  } @else {
+    @if (createdCompanyId === current.data.id) { <p role="status">Entreprise créée.</p> }
+    @if (updatedCompanyId === current.data.id) { <p role="status">Entreprise modifiée.</p> }
+    <dl>
+      <div><dt>Nom</dt><dd>{{ display(current.data.name) }}</dd></div>
+      <div><dt>Code</dt><dd>{{ display(current.data.code) }}</dd></div>
+      <div><dt>Identifiant</dt><dd>{{ current.data.id }}</dd></div>
+      <div class="description"><dt>Description</dt><dd>{{ display(current.data.description) }}</dd></div>
+      <div><dt>Création</dt><dd>{{ display(current.data.created_at) }}</dd></div>
+      <div><dt>Dernière modification</dt><dd>{{ display(current.data.updated_at) }}</dd></div>
+    </dl>
+    <p class="timestamp-note">Horodatages affichés tels que fournis par le serveur. Sans fuseau explicite, ils ne sont pas interprétés comme UTC.</p>
+  }
+</section>

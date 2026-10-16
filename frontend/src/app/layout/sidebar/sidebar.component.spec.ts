@@ -112,7 +112,7 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/companies', 'Entreprises'], ['/sites', 'Sites'], ['/equipments', 'Équipements'],
+    ['/sites', 'Sites'], ['/equipments', 'Équipements'],
     ['/sensors', 'Capteurs'], ['/measurements', 'Mesures'], ['/maintenance', 'Maintenance'],
     ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {

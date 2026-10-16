@@ -1,0 +1,22 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; overflow-wrap: anywhere; color: tokens.$text-primary; }
+fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
+legend { font-weight: 600; margin-bottom: tokens.$space-md; }
+.field { margin-bottom: tokens.$space-lg; }
+label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
+input, textarea, button { box-sizing: border-box; min-height: 2.75rem; padding: tokens.$space-sm tokens.$space-md; font: inherit;
+  border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius;
+  color: tokens.$text-primary; background: tokens.$surface-background; }
+input, textarea { display: block; width: 100%; min-width: 0; }
+textarea { resize: vertical; }
+.help { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
+p { line-height: tokens.$line-height-body; }
+.field-error { font-weight: 600; }
+.field-error:empty { display: none; }
+.actions { display: flex; flex-wrap: wrap; gap: tokens.$space-sm; }
+button { cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
+button.primary { background: tokens.$navigation-active; border-color: tokens.$navigation-active; color: tokens.$sidebar-text; }
+button:disabled { cursor: not-allowed; background: tokens.$content-background; color: tokens.$text-secondary; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+@media (max-width: 30rem) { .actions { flex-direction: column; } }

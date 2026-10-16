@@ -22,13 +22,15 @@ PostgreSQL   Models / Scoring / Recommendation Engine
 
 Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main` : Shell Nebular,
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
-accessible du focus. Dashboard V1 est développé et connecté à FastAPI ;
-les autres pages métier restent des placeholders.
+accessible du focus. Dashboard V1 est connecté à FastAPI ; Companies MVP est
+implémenté sur `feature/frontend-companies`, en préparation de livraison dans
+`main`. Les sept autres destinations disponibles et le détail équipement
+restent des placeholders.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
-est implémenté ; les autres features métier restent à développer.
+est implémenté ; `features/dashboard` et `features/companies` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -49,9 +51,33 @@ La route Dashboard n'a pas d'autorisation multi-entreprises démontrée ; sélec
 et filtrage ne remplacent pas authentification/RBAC. Cette livraison ne constitue
 pas une préparation à la production SaaS multi-tenant.
 Les fonctionnalités ML backend ci-dessous restent livrées, mais leur consommation
-est hors périmètre Dashboard V1. UI 2.8 a clôturé la documentation Dashboard ;
-UI 3 - Gestion des entreprises (Companies) commencera par l’analyse UI 3.1,
-qui n’est pas encore commencée.
+est hors périmètre Dashboard V1. UI 2.8 a clôturé la documentation Dashboard.
+Companies MVP couvre liste/recherche serveur paginée, détail, création et
+modification. La liste suit page → façade locale → CompaniesApiService ; le
+GET liste réutilise ReferenceDataApiService. Détail et formulaire partagé
+création/modification ont des états locaux et utilisent le même service API.
+CompanyRead, Page et ReferencePageQuery sont réutilisés ; CompanyCreate et
+CompanyUpdate décrivent les écritures. Les routes Companies sont différées
+par `loadChildren`, puis `loadComponent`, sous le Shell existant.
+
+POST crée une entreprise ; PATCH ne transmet que les champs modifiés et ne
+part pas sans changement. Un succès déclenche un toast Nebular et une navigation
+vers le détail, avec confirmation textuelle persistante. L'overlay est configuré
+au niveau application. Aucun DELETE n'est exposé par l'UI ou le service Angular :
+la cascade backend justifie son exclusion du MVP. L'endpoint DELETE reste
+accessible directement dans l'API existante.
+
+L'intégration FastAPI réelle UI 3.7 est limitée aux lectures ; les écritures
+POST/PATCH ont été simulées. Ni autorisation multi-entreprises ni sécurité de
+production SaaS multi-tenant ne sont démontrées. UI 3.1 à UI 3.7.1 sont terminées ;
+UI 3.8 finalise uniquement les documents, au HEAD initial `ac2dc3a` le 16 octobre
+2026, avant validation de livraison. Les tests historiques (348 tests Angular,
+trois suites séquentielles réussies en UI 3.7.1), les observations responsive et
+les limites sont détaillés dans [project-status.md](project-status.md).
+L'architecture frontend actuelle figure dans
+[frontend-architecture.md](frontend-architecture.md) ;
+[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md) conserve la conception
+initiale et les écarts d'implémentation. Aucun backend ni contrat modifié ici.
 
 ## Backend
 
@@ -87,7 +113,7 @@ Company
 
 Représente une entreprise cliente de la plateforme.
 
-Une entreprise possède un ou plusieurs sites.
+Une entreprise peut posséder zéro à plusieurs sites.
 
 ### Site
 

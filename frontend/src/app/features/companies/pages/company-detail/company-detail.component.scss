@@ -1,0 +1,27 @@
+@use '../../../../../styles/tokens' as tokens;
+@use '../../styles/company-actions' as actions;
+
+:host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
+a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
+a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+.company-back { @include actions.navigation-action(); }
+.company-edit { @include actions.navigation-action($primary: true); }
+.company-detail {
+  margin-top: tokens.$space-lg;
+  padding: tokens.$space-md;
+  background: tokens.$surface-background;
+  border: tokens.$border-width solid tokens.$border-color;
+  border-radius: tokens.$border-radius;
+}
+h2 { margin-top: 0; font-size: 1.25rem; }
+dl { display: grid; gap: tokens.$space-lg; margin: 0; }
+dl > div { min-width: 0; }
+dt { font-weight: 600; }
+dd { margin: tokens.$space-xs 0 0; line-height: tokens.$line-height-body; }
+.description dd { white-space: pre-wrap; }
+.timestamp-note { color: tokens.$text-secondary; font-size: tokens.$font-size-small; line-height: tokens.$line-height-body; }
+@media (min-width: 48rem) {
+  dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .description { grid-column: 1 / -1; }
+}
+@media (max-width: 30rem) { .company-detail { padding: tokens.$space-sm; } }

@@ -39,6 +39,7 @@ nb.$nb-themes: nb.nb-register-theme(
     card-border-color: tokens.$border-color,
     card-padding: tokens.$space-xl,
     card-margin-bottom: 0,
+    toastr-success-text-color: tokens.$text-primary,
     menu-text-color: tokens.$sidebar-text,
     menu-item-active-background-color: tokens.$navigation-active,
     menu-item-active-text-color: tokens.$sidebar-text
@@ -54,5 +55,10 @@ nb.$nb-enabled-themes: (industrial-predict);
   @include components.nb-layout-theme();
   @include components.nb-sidebar-theme();
   @include components.nb-card-theme();
+  @include components.nb-toast-theme();
+  nb-toast {
+    max-width: calc(100vw - 2rem);
+    overflow-wrap: anywhere;
+  }
   @include typography.nb-typography();
 }

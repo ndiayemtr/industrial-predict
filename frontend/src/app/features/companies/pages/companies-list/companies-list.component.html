@@ -1,0 +1,65 @@
+<app-page-header title="Entreprises" description="Consultez les entreprises et recherchez par nom ou code.">
+  <a class="new-company" routerLink="/companies/new" [queryParams]="facade.query()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <path d="M12 5v14 M5 12h14" />
+    </svg>
+    <span>Nouvelle entreprise</span>
+  </a>
+</app-page-header>
+
+<form class="search-form" (submit)="applySearch($event)" aria-label="Recherche d’entreprises">
+  <label for="company-search">Rechercher par nom ou code</label>
+  <div class="search-controls">
+    <input id="company-search" type="search" [formControl]="search" maxlength="100"
+      aria-describedby="search-help search-error" [attr.aria-invalid]="search.touched && search.invalid ? 'true' : null" />
+    <button type="submit" class="primary">Rechercher</button>
+    <button type="button" (click)="clearSearch()">Effacer la recherche</button>
+  </div>
+  <p id="search-help">Recherche sur toutes les entreprises, pas seulement sur la page affichée.</p>
+  <p id="search-error">@if (search.touched && search.invalid) { La recherche est limitée à 100 caractères. }</p>
+</form>
+@if (urlNotice()) { <p>{{ urlNotice() }}</p> }
+@if (wildcardSearch()) { <p>Les caractères % et _ sont interprétés comme des jokers par la recherche serveur.</p> }
+
+@let state = facade.state();
+<section class="results" aria-labelledby="companies-results-title" [attr.aria-busy]="busy()">
+  <h2 id="companies-results-title">Liste des entreprises</h2>
+  @if (state.status === 'loading') {
+    <app-loading-state message="Chargement des entreprises..." />
+  } @else if (state.status === 'error') {
+    <app-error-state title="Chargement impossible" [message]="state.error.message"
+      [retryable]="state.error.retryable" (retry)="facade.retry()" />
+  } @else if (state.status === 'empty') {
+    <app-empty-state [title]="state.query.search ? 'Aucun résultat' : 'Aucune entreprise'"
+      [message]="state.query.search ? 'Aucune entreprise ne correspond à cette recherche.' : 'Aucune entreprise n’est actuellement enregistrée.'" icon="companies">
+      @if (state.query.search) { <button type="button" (click)="clearSearch()">Effacer la recherche</button> }
+    </app-empty-state>
+  } @else if (state.status === 'success') {
+    @if (state.data.items.length === 0) {
+      <p>Cette page ne contient plus d’entreprise, mais la liste n’est pas vide.</p>
+      <button type="button" (click)="recoverPage()">Revenir à une page disponible</button>
+    } @else {
+      <table>
+        <caption>Entreprises - page {{ state.data.page }} - {{ state.data.total }} au total</caption>
+        <thead><tr><th scope="col">Nom</th><th scope="col">Code</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (company of state.data.items; track company.id) {
+            <tr>
+              <th scope="row"><a [routerLink]="['/companies', company.id]" [queryParams]="facade.query()">{{ company.name }}</a></th>
+              <td>{{ company.code }}</td>
+              <td class="description">{{ company.description?.trim() ? company.description : 'Non renseignée' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+  <nav class="pagination" aria-label="Pagination des entreprises">
+    <button type="button" (click)="changePage(page() - 1)" [disabled]="busy() || page() === 1">Précédent</button>
+    <p>Page {{ page() }} - {{ pageSize() }} entreprises par page</p>
+    <button type="button" (click)="changePage(page() + 1)" [disabled]="!canNext()">Suivant</button>
+  </nav>
+  @if (state.status === 'success' || state.status === 'empty') {
+    <p role="status" aria-atomic="true">{{ state.data.total }} entreprise(s) - {{ state.data.pages }} page(s)</p>
+  }
+</section>

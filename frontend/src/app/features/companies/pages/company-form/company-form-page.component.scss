@@ -1,0 +1,11 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; overflow-wrap: anywhere; color: tokens.$text-primary; }
+.creation { margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
+  border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius; }
+a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
+button { min-height: 2.75rem; max-width: 100%; padding: tokens.$space-sm tokens.$space-md; font: inherit; white-space: normal;
+  overflow-wrap: anywhere; cursor: pointer; color: tokens.$text-primary; background: tokens.$surface-background;
+  border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius; }
+a:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+@media (max-width: 30rem) { .creation { padding: tokens.$space-sm; } }

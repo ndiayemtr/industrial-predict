@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
+import { NbGlobalPhysicalPosition, NbSidebarModule, NbThemeModule, NbToastrModule } from '@nebular/theme';
 
 import { routes } from './app.routes';
 
@@ -19,7 +19,15 @@ export const appConfig: ApplicationConfig = {
         { name: 'industrial-predict' },
         [{ name: 'industrial-predict', base: 'default', variables: {} }]
       ),
-      NbSidebarModule.forRoot()
+      NbSidebarModule.forRoot(),
+      NbToastrModule.forRoot({
+        position: NbGlobalPhysicalPosition.TOP_RIGHT,
+        duration: 5000,
+        hasIcon: false,
+        // Nebular 17 derives icon visibility from icon.icon, ignoring hasIcon alone.
+        icon: { icon: '' },
+        destroyByClick: false
+      })
     )
   ]
 };
