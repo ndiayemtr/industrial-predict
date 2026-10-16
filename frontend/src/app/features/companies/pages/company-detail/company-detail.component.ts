@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, catchError, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 import { CompanyRead } from '../../../../core/models/reference-data.model';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -23,6 +23,7 @@ type DetailState =
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompanyDetailComponent {
+  readonly createdCompanyId = inject(Router).currentNavigation()?.extras.state?.['createdCompanyId'];
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(CompaniesApiService);
   private readonly refresh = new Subject<void>();

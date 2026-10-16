@@ -29,16 +29,18 @@ describe('Companies deferred routing in the Shell', () => {
     return harness;
   }
 
-  it('defers the feature routes and both pages without premature create/edit routes', () => {
+  it('defers all Companies pages with the static creation route before the identifier', () => {
     const parent = routes[0].children!.find(route => route.path === 'companies')!;
     expect(typeof parent.loadChildren).toBe('function');
     expect(parent.loadComponent).toBeUndefined();
-    expect(COMPANY_ROUTES).toHaveLength(2);
+    expect(COMPANY_ROUTES).toHaveLength(3);
     expect(COMPANY_ROUTES[0].path).toBe('');
     expect(COMPANY_ROUTES[0].pathMatch).toBe('full');
     expect(typeof COMPANY_ROUTES[0].loadComponent).toBe('function');
     expect(COMPANY_ROUTES[0].component).toBeUndefined();
-    expect(COMPANY_ROUTES[1].path).toBe(':companyId');
+    expect(COMPANY_ROUTES[1].path).toBe('new');
+    expect(COMPANY_ROUTES[1].canDeactivate).toHaveLength(1);
+    expect(COMPANY_ROUTES[2].path).toBe(':companyId');
     expect(typeof COMPANY_ROUTES[1].loadComponent).toBe('function');
     expect(COMPANY_ROUTES[1].component).toBeUndefined();
   });
@@ -52,6 +54,17 @@ describe('Companies deferred routing in the Shell', () => {
     expect(root.querySelector('app-header .header-title')?.textContent).toBe('Entreprises');
     expect(TestBed.inject(Title).getTitle()).toBe('Entreprises | Industrial Predict AI');
     expect(root.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/companies');
+  });
+
+  it('opens creation in the Shell with correct titles and no initial detail or write request', async () => {
+    const harness = await open('/companies/new?page=2&search=Test');
+    const root = harness.routeNativeElement!;
+    expect(root.querySelector('app-company-form-page')).not.toBeNull();
+    expect(root.querySelectorAll('h1')).toHaveLength(1);
+    expect(root.querySelector('app-header .header-title')?.textContent).toBe('Nouvelle entreprise');
+    expect(TestBed.inject(Title).getTitle()).toBe('Nouvelle entreprise | Industrial Predict AI');
+    expect(root.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/companies');
+    TestBed.inject(HttpTestingController).expectNone(() => true);
   });
 
   it('keeps detail in the Shell with Companies active, route titles and accessible main focus', async () => {

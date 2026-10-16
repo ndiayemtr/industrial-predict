@@ -1,4 +1,11 @@
-<app-page-header title="Entreprises" description="Consultez les entreprises et recherchez par nom ou code." />
+<app-page-header title="Entreprises" description="Consultez les entreprises et recherchez par nom ou code.">
+  <a class="new-company" routerLink="/companies/new" [queryParams]="facade.query()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <path d="M12 5v14 M5 12h14" />
+    </svg>
+    <span>Nouvelle entreprise</span>
+  </a>
+</app-page-header>
 
 <form class="search-form" (submit)="applySearch($event)" aria-label="Recherche d’entreprises">
   <label for="company-search">Rechercher par nom ou code</label>
@@ -13,7 +20,6 @@
 </form>
 @if (urlNotice()) { <p>{{ urlNotice() }}</p> }
 @if (wildcardSearch()) { <p>Les caractères % et _ sont interprétés comme des jokers par la recherche serveur.</p> }
-<p class="availability">La création sera disponible dans une étape ultérieure.</p>
 
 @let state = facade.state();
 <section class="results" aria-labelledby="companies-results-title" [attr.aria-busy]="busy()">

@@ -67,6 +67,15 @@ describe('Companies list page and URL integration', () => {
     name.focus();
     expect(document.activeElement).toBe(name);
     expect(name.getAttribute('href')).toBe('/companies/7?page=1&page_size=20');
+    expect(root().querySelector('.new-company')?.getAttribute('href')).toBe('/companies/new?page=1&page_size=20');
+    const create = root().querySelector<HTMLAnchorElement>('.new-company')!;
+    expect(create.tagName).toBe('A');
+    expect(create.querySelector('span')?.textContent).toBe('Nouvelle entreprise');
+    expect(create.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(create.querySelector('svg')?.getAttribute('focusable')).toBe('false');
+    expect(create.getAttribute('role')).toBeNull();
+    create.focus();
+    expect(document.activeElement).toBe(create);
     expect(root().textContent).toContain('Entreprise test');
     expect(root().textContent).toContain('TEST-7');
     expect(root().textContent).toContain('Non renseignée');

@@ -1,8 +1,10 @@
 @use '../../../../../styles/tokens' as tokens;
+@use '../../styles/company-actions' as actions;
 
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
 a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+.company-back { @include actions.navigation-action(); }
 .company-detail {
   margin-top: tokens.$space-lg;
   padding: tokens.$space-md;

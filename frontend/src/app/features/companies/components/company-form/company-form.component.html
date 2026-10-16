@@ -1,0 +1,27 @@
+<form #formElement [formGroup]="form" (ngSubmit)="submit()" aria-label="Création d’une entreprise" [attr.aria-busy]="saving()" novalidate>
+  <p>Les champs marqués « obligatoire » doivent être renseignés.</p>
+  <fieldset [disabled]="saving()">
+    <legend>Informations de l’entreprise</legend>
+    <div class="field">
+      <label for="company-name">Nom (obligatoire)</label>
+      <input id="company-name" formControlName="name" required aria-describedby="name-help name-error" [attr.aria-invalid]="error('name') ? 'true' : null" />
+      <p id="name-help" class="help">150 caractères maximum. Les espaces au début et à la fin seront retirés.</p>
+      <p id="name-error" class="field-error">{{ error('name') }}</p>
+    </div>
+    <div class="field">
+      <label for="company-code">Code (obligatoire)</label>
+      <input id="company-code" formControlName="code" required aria-describedby="code-help code-error" [attr.aria-invalid]="error('code') ? 'true' : null" />
+      <p id="code-help" class="help">50 caractères maximum. La casse est conservée ; le serveur vérifie l’unicité.</p>
+      <p id="code-error" class="field-error">{{ error('code') }}</p>
+    </div>
+    <div class="field">
+      <label for="company-description">Description (facultative)</label>
+      <textarea id="company-description" formControlName="description" rows="5" aria-describedby="description-error" [attr.aria-invalid]="error('description') ? 'true' : null"></textarea>
+      <p id="description-error" class="field-error">{{ error('description') }}</p>
+    </div>
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours...' : 'Créer l’entreprise' }}</button>
+    <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

@@ -1,0 +1,14 @@
+<app-page-header title="Nouvelle entreprise" description="Créer une entreprise avec son nom, son code et une description facultative." />
+<section class="creation" aria-label="Nouvelle entreprise">
+  @if (state() === 'saving') { <app-loading-state message="Enregistrement de l’entreprise en cours..." /> }
+  @if (state() === 'error') {
+    <app-error-state title="Création non confirmée" [message]="message()" />
+    @if (uncertain()) {
+      <p><a routerLink="/companies" [queryParams]="listQuery" target="_blank" rel="noopener">Vérifier la liste dans un nouvel onglet</a></p>
+      <button type="button" (click)="acknowledgeVerification()">J’ai vérifié la liste, autoriser une nouvelle soumission</button>
+    }
+  }
+  @if (state() === 'success') { <p role="status">Entreprise créée. <a routerLink="/companies" [queryParams]="listQuery">Retour à la liste</a></p> }
+  <app-company-form [saving]="state() === 'saving'" [blocked]="uncertain() || state() === 'success'" [fieldErrors]="fieldErrors()"
+    (submitted)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()" />
+</section>

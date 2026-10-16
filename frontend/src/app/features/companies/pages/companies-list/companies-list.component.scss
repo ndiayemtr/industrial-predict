@@ -1,4 +1,5 @@
 @use '../../../../../styles/tokens' as tokens;
+@use '../../styles/company-actions' as actions;
 
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 .search-form, .results {
@@ -26,6 +27,7 @@ button.primary { background: tokens.$navigation-active; color: tokens.$sidebar-t
 button:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 tbody a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
+.new-company { @include actions.navigation-action($primary: true); }
 p { line-height: tokens.$line-height-body; }
 .search-form p, .availability { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 #search-error:empty { display: none; }

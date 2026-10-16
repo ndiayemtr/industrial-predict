@@ -153,6 +153,13 @@ describe('Company detail page', () => {
     const link = root().querySelector<HTMLAnchorElement>('a')!;
     expect(link.getAttribute('href')).toBe('/companies?page=3&page_size=50&search=%C3%89nergie%20%26%20ports');
     expect(link.tabIndex).toBe(0);
+    expect(link.classList.contains('company-back')).toBe(true);
+    expect(link.querySelector('span')?.textContent).toBe('Retour à la liste des entreprises');
+    expect(link.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(link.querySelector('svg')?.getAttribute('focusable')).toBe('false');
+    expect(link.getAttribute('role')).toBeNull();
+    link.focus();
+    expect(document.activeElement).toBe(link);
     await harness.navigateByUrl('/companies/7?page=3&page_size=50&search=Test', CompanyDetailComponent);
     await settle();
     http.expectNone(() => true);

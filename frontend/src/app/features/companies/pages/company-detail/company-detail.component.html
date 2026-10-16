@@ -1,5 +1,10 @@
 <app-page-header title="Détail entreprise" description="Informations de l’entreprise en lecture seule.">
-  <a routerLink="/companies" [queryParams]="listQuery()">Retour à la liste des entreprises</a>
+  <a class="company-back" routerLink="/companies" [queryParams]="listQuery()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5 M12 5l-7 7 7 7" />
+    </svg>
+    <span>Retour à la liste des entreprises</span>
+  </a>
 </app-page-header>
 
 @let current = state();
@@ -10,6 +15,7 @@
   } @else if (current.status === 'error') {
     <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
   } @else {
+    @if (createdCompanyId === current.data.id) { <p role="status">Entreprise créée.</p> }
     <dl>
       <div><dt>Nom</dt><dd>{{ display(current.data.name) }}</dd></div>
       <div><dt>Code</dt><dd>{{ display(current.data.code) }}</dd></div>
