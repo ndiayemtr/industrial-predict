@@ -31,7 +31,7 @@
     </tbody>
   </table>
   <h3 class="readings-title">Derniers relevés - Au calcul</h3>
-  <p class="section-context">Derniers relevés au {{ period().calculated_at }} (UTC), indépendamment de la période sélectionnée. Leur date peut se situer hors période. L’âge est fourni par l’API au calcul et n’est pas actualisé automatiquement.</p>
+  <p class="section-context">Derniers relevés au {{ formatDateTime(period().calculated_at) }}, indépendamment de la période sélectionnée. Leur date peut se situer hors période. L’âge est fourni par l’API au calcul et n’est pas actualisé automatiquement.</p>
   <ul class="last-readings">
     @for (reading of summary().last_measurements; track $index) {
       <li>
@@ -39,7 +39,7 @@
         @if (reading.timestamp === null) { <p>Aucun relevé disponible au calcul pour ce capteur.</p> }
         <dl>
           <div><dt>Équipement - identifiant</dt><dd>{{ reading.equipment_id }}</dd></div>
-          <div><dt>Date du relevé (UTC)</dt><dd>{{ reading.timestamp ?? 'Non renseignée' }}</dd></div>
+          <div><dt>Date du relevé (UTC)</dt><dd>{{ formatDateTime(reading.timestamp) }}</dd></div>
           <div><dt>Valeur</dt><dd>{{ reading.value ?? 'Non renseignée' }}</dd></div>
           <div><dt>Unité déclarée</dt><dd>{{ reading.unit ?? 'Non renseignée' }}</dd></div>
           <div><dt>Qualité déclarée</dt><dd>{{ reading.quality === null ? 'Non renseignée' : qualityLabel(reading.quality) }}</dd></div>

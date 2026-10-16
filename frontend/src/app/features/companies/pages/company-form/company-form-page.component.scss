@@ -8,4 +8,15 @@ button { min-height: 2.75rem; max-width: 100%; padding: tokens.$space-sm tokens.
   overflow-wrap: anywhere; cursor: pointer; color: tokens.$text-primary; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius; }
 a:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+.tracking-information {
+  margin: tokens.$space-lg 0;
+  padding-top: tokens.$space-md;
+  border-top: tokens.$border-width solid tokens.$border-color;
+  color: tokens.$text-secondary;
+  font-size: tokens.$font-size-small;
+  h2 { font-size: 1rem; margin-top: 0; }
+  dl { display: flex; flex-wrap: wrap; gap: tokens.$space-md tokens.$space-xl; }
+  dt { font-weight: 600; }
+  dd { margin: tokens.$space-xs 0 0; }
+}
 @media (max-width: 30rem) { .creation { padding: tokens.$space-sm; } }

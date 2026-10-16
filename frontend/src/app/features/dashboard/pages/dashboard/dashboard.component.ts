@@ -10,6 +10,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { formatUtcDateTime } from '../../../../shared/utils/datetime-display';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,5 +23,6 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
+  readonly formatDateTime = formatUtcDateTime;
   readonly facade = inject(DashboardFacade);
 }

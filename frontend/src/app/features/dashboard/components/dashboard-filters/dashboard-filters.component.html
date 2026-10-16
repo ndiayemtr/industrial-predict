@@ -47,13 +47,31 @@
         <button type="button" (click)="loadEquipments(equipments().page + 1)">Charger davantage d’équipements</button>
       }
     </div>
+    <div class="precision-options">
+      <label class="precision-toggle" for="dashboard-precision">
+        <input id="dashboard-precision" type="checkbox" [checked]="advancedPrecision()"
+          (change)="changePrecision($event)" aria-describedby="precision-help precision-notice" />
+        <span>Précision avancée</span>
+      </label>
+      <p id="precision-help" class="reference-count">Activer pour saisir les secondes et millisecondes, en UTC.</p>
+      @if (precisionConversionPending()) {
+        <div class="precision-confirmation">
+          <p role="status">Revenir au mode simple ramènera les deux bornes à la minute inférieure et pourra modifier les résultats. Aucune date n’a encore été modifiée.</p>
+          <button type="button" [disabled]="!canConvertToMinutes()" (click)="confirmMinutePrecision()">Supprimer les secondes et millisecondes</button>
+          <button type="button" (click)="keepAdvancedPrecision()">Conserver la précision avancée</button>
+        </div>
+      }
+      <p id="precision-notice" class="reference-count" role="status">{{ precisionNotice() }}</p>
+    </div>
     <div class="filter-field">
       <label for="dashboard-start">Date de début (UTC)</label>
-      <input id="dashboard-start" type="datetime-local" step="0.001" formControlName="start_time" required aria-describedby="period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+      <input id="dashboard-start" type="datetime-local" [step]="advancedPrecision() ? '0.001' : '60'" formControlName="start_time" required aria-describedby="start-help period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+      <p id="start-help" class="reference-count">Début inclus</p>
     </div>
     <div class="filter-field">
       <label for="dashboard-end">Date de fin (UTC, exclue)</label>
-      <input id="dashboard-end" type="datetime-local" step="0.001" formControlName="end_time" required aria-describedby="period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+      <input id="dashboard-end" type="datetime-local" [step]="advancedPrecision() ? '0.001' : '60'" formControlName="end_time" required aria-describedby="end-help period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+      <p id="end-help" class="reference-count">Fin exclue</p>
     </div>
   </div>
   <p id="period-help">Période en UTC : début inclus, fin exclue. La fin ne peut pas être future.</p>

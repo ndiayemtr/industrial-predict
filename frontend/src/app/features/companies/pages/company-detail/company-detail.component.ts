@@ -8,6 +8,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { CompaniesApiService } from '../../data-access/companies-api.service';
+import { formatAdministrativeDateTime } from '../../../../shared/utils/datetime-display';
 
 type DetailState =
   | { status: 'loading' }
@@ -23,6 +24,7 @@ type DetailState =
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CompanyDetailComponent {
+  readonly formatDateTime = formatAdministrativeDateTime;
   readonly createdCompanyId = inject(Router).currentNavigation()?.extras.state?.['createdCompanyId'];
   readonly updatedCompanyId = inject(Router).currentNavigation()?.extras.state?.['updatedCompanyId'];
   private readonly route = inject(ActivatedRoute);

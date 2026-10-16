@@ -47,6 +47,13 @@ describe('DashboardFiltersComponent', () => {
     fixture.detectChanges();
   }
 
+  function precision(checked: boolean): void {
+    const checkbox = fixture.nativeElement.querySelector('#dashboard-precision') as HTMLInputElement;
+    checkbox.checked = checked;
+    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    fixture.detectChanges();
+  }
+
   it('loads only companies initially, without a default selection, output or Dashboard call', () => {
     const emitted = vi.fn(); component.filtersApplied.subscribe(emitted);
     expect(component.form.controls.company_id.value).toBeNull();
@@ -60,14 +67,21 @@ describe('DashboardFiltersComponent', () => {
   });
 
   it('initializes precisely seven UTC days and finalizes the untouched preset at application', () => {
-    expect(component.form.controls.start_time.value).toBe('2026-10-07T12:34:56.789');
-    expect(component.form.controls.end_time.value).toBe('2026-10-14T12:34:56.789');
+    expect(component.form.controls.start_time.value).toBe('2026-10-07T12:34');
+    expect(component.form.controls.end_time.value).toBe('2026-10-14T12:34');
+    expect(component.advancedPrecision()).toBe(false);
+    for (const input of fixture.nativeElement.querySelectorAll('input[type="datetime-local"]') as NodeListOf<HTMLInputElement>) {
+      expect(input.step).toBe('60');
+      expect(input.value).toHaveLength(16);
+    }
+    expect(fixture.nativeElement.querySelector('.datetime-preview')).toBeNull();
     companiesReady(); selectCompany();
-    vi.mocked(Date.now).mockReturnValue(NOW + 1000);
+    vi.mocked(Date.now).mockReturnValue(NOW + 10_000);
     const emitted = vi.fn(); component.filtersApplied.subscribe(emitted);
     component.applyFilters();
     expect(emitted).toHaveBeenCalledExactlyOnceWith({ company_id: 1,
-      start_time: '2026-10-07T12:34:57.789Z', end_time: '2026-10-14T12:34:57.789Z' });
+      start_time: '2026-10-07T12:35:00.000Z', end_time: '2026-10-14T12:35:00.000Z' });
+    expect(Date.parse(emitted.mock.calls[0][0].end_time) - Date.parse(emitted.mock.calls[0][0].start_time)).toBe(168 * 60 * 60 * 1000);
     http.expectNone(req => req.url.includes('/dashboard'));
   });
 
@@ -79,7 +93,7 @@ describe('DashboardFiltersComponent', () => {
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(emitted).toHaveBeenCalledTimes(1);
     expect(emitted.mock.calls[0][0]).toEqual({ company_id: 1,
-      start_time: '2026-10-07T12:34:56.789Z', end_time: '2026-10-14T12:34:56.789Z' });
+      start_time: '2026-10-07T12:34:00.000Z', end_time: '2026-10-14T12:34:00.000Z' });
     http.expectNone(req => req.url.includes('/dashboard'));
   });
 
@@ -174,9 +188,123 @@ describe('DashboardFiltersComponent', () => {
   it('preserves custom dates, including UTC milliseconds and an exclusive end', () => {
     companiesReady(); selectCompany();
     component.form.patchValue({ start_time: '2026-10-01T08:00', end_time: '2026-10-02T00:00:00.123' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#dashboard-end').step).toBe('0.001');
+    expect(fixture.nativeElement.querySelector('#dashboard-end').value).toBe('2026-10-02T00:00:00.123');
+    expect(component.advancedPrecision()).toBe(true);
+    expect(fixture.nativeElement.querySelector('#dashboard-precision').checked).toBe(true);
+    expect(fixture.nativeElement.querySelector('#end-help').textContent).toBe('Fin exclue');
+    expect(component.form.controls.end_time.value).toBe('2026-10-02T00:00:00.123');
     const emitted = vi.fn(); component.filtersApplied.subscribe(emitted);
     component.applyFilters();
     expect(emitted.mock.calls[0][0]).toMatchObject({ start_time: '2026-10-01T08:00:00.000Z', end_time: '2026-10-02T00:00:00.123Z' });
+  });
+
+  it('allows lossless mode changes for whole-minute dates and retains the precise preset behavior', () => {
+    companiesReady(); selectCompany();
+    const original = component.form.getRawValue();
+    precision(true);
+    expect(component.form.getRawValue()).toEqual(original);
+    expect(fixture.nativeElement.querySelector('#dashboard-start').step).toBe('0.001');
+    precision(false);
+    expect(component.form.getRawValue()).toEqual(original);
+    expect(component.precisionConversionPending()).toBe(false);
+    precision(true);
+    vi.mocked(Date.now).mockReturnValue(NOW + 1000);
+    const emitted = vi.fn(); component.filtersApplied.subscribe(emitted);
+    component.applyFilters();
+    expect(emitted).toHaveBeenCalledExactlyOnceWith({ company_id: 1,
+      start_time: '2026-10-07T12:34:57.789Z', end_time: '2026-10-14T12:34:57.789Z' });
+    expect(Date.parse(emitted.mock.calls[0][0].end_time) - Date.parse(emitted.mock.calls[0][0].start_time)).toBe(168 * 60 * 60 * 1000);
+  });
+
+  it.each(['2026-10-02T00:00:01', '2026-10-02T00:00:00.001', '2026-10-02T00:00:59.999'])
+    ('automatically selects and retains advanced precision for existing value %s', end => {
+      companiesReady();
+      component.form.patchValue({ start_time: '2026-10-01T00:00', end_time: end });
+      fixture.detectChanges();
+      expect(component.advancedPrecision()).toBe(true);
+      expect(fixture.nativeElement.querySelector('#dashboard-precision').checked).toBe(true);
+      expect(fixture.nativeElement.querySelector('#dashboard-end').step).toBe('0.001');
+      expect(component.form.controls.end_time.value).toBe(end);
+      component.form.controls.end_time.setValue('2026-10-02T00:00');
+      expect(component.advancedPrecision()).toBe(true);
+    });
+
+  it('does not request advanced precision for zero seconds/fractions and normalizes them losslessly on mode change', () => {
+    companiesReady();
+    component.form.patchValue({ start_time: '2026-10-01T08:00:00.000', end_time: '2026-10-02T00:00:00' });
+    fixture.detectChanges();
+    expect(component.advancedPrecision()).toBe(false);
+    precision(true); precision(false);
+    expect(component.form.controls.start_time.value).toBe('2026-10-01T08:00');
+    expect(component.form.controls.end_time.value).toBe('2026-10-02T00:00');
+    expect(component.precisionConversionPending()).toBe(false);
+  });
+
+  it('requires explicit conversion, preserves precise dates on cancellation and emits only the confirmed minute bounds', () => {
+    companiesReady(); selectCompany();
+    const dates = { start_time: '2026-10-01T08:00:12.987', end_time: '2026-10-02T00:00:59.123' };
+    component.form.patchValue(dates); fixture.detectChanges();
+    const emitted = vi.fn(); component.filtersApplied.subscribe(emitted);
+    precision(false);
+    expect(component.advancedPrecision()).toBe(true);
+    expect(fixture.nativeElement.querySelector('#dashboard-precision').checked).toBe(true);
+    expect(component.precisionConversionPending()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.precision-confirmation [role="status"]').textContent).toContain('Aucune date n’a encore été modifiée');
+    expect(component.form.getRawValue()).toMatchObject(dates);
+    component.applyFilters(); expect(emitted).not.toHaveBeenCalled();
+    component.keepAdvancedPrecision(); fixture.detectChanges();
+    expect(component.form.getRawValue()).toMatchObject(dates);
+    expect(component.precisionConversionPending()).toBe(false);
+    precision(false);
+    fixture.nativeElement.querySelector('.precision-confirmation button').click(); fixture.detectChanges();
+    expect(component.form.getRawValue()).toMatchObject({ start_time: '2026-10-01T08:00', end_time: '2026-10-02T00:00' });
+    expect(component.form.controls.start_time.dirty).toBe(true);
+    expect(component.form.controls.end_time.dirty).toBe(true);
+    expect(component.advancedPrecision()).toBe(false);
+    expect(fixture.nativeElement.querySelector('#precision-notice').textContent).toContain('minute inférieure');
+    component.applyFilters();
+    expect(emitted).toHaveBeenCalledExactlyOnceWith({ company_id: 1,
+      start_time: '2026-10-01T08:00:00.000Z', end_time: '2026-10-02T00:00:00.000Z' });
+  });
+
+  it('does not expand the exclusive end if a confirmed conversion collapses the interval', () => {
+    companiesReady(); selectCompany();
+    component.form.patchValue({ start_time: '2026-10-01T08:00:00.100', end_time: '2026-10-01T08:00:00.200' });
+    fixture.detectChanges(); precision(false); component.confirmMinutePrecision(); fixture.detectChanges();
+    expect(component.form.hasError('invalidPeriod')).toBe(true);
+    expect(component.canApply()).toBe(false);
+    const emitted = vi.fn(); component.filtersApplied.subscribe(emitted); component.applyFilters();
+    expect(emitted).not.toHaveBeenCalled();
+  });
+
+  it('keeps invalid precise values intact and prevents their conversion', () => {
+    companiesReady();
+    const invalid = '2026-02-30T12:00:01.123';
+    component.form.patchValue({ start_time: invalid, end_time: '2026-10-01T08:00' });
+    fixture.detectChanges(); precision(false);
+    expect(fixture.nativeElement.querySelector('.precision-confirmation button').disabled).toBe(true);
+    component.confirmMinutePrecision();
+    expect(component.form.controls.start_time.value).toBe(invalid);
+    expect(component.advancedPrecision()).toBe(true);
+    expect(component.form.hasError('invalidDate')).toBe(true);
+  });
+
+  it('keeps future/invalid-period validation in advanced mode and exposes a keyboard-operable checkbox', () => {
+    companiesReady(); selectCompany();
+    const checkbox = fixture.nativeElement.querySelector('#dashboard-precision') as HTMLInputElement;
+    checkbox.focus(); expect(document.activeElement).toBe(checkbox);
+    expect(checkbox.tabIndex).toBe(0);
+    precision(true);
+    component.form.patchValue({ start_time: '2026-10-13T12:00:00.001', end_time: '2026-10-15T12:00:00.001' });
+    expect(component.form.hasError('futureEnd')).toBe(true);
+    component.form.controls.end_time.setValue(component.form.controls.start_time.value);
+    expect(component.form.hasError('invalidPeriod')).toBe(true);
+    component.form.controls.end_time.setValue('2026-10-12T12:00:00.001');
+    expect(component.form.hasError('invalidPeriod')).toBe(true);
+    const emitted = vi.fn(); component.filtersApplied.subscribe(emitted); component.applyFilters();
+    expect(emitted).not.toHaveBeenCalled();
   });
 
   it.each(['companies', 'sites', 'equipments'] as const)('blocks application on %s errors and allows explicit retry', kind => {

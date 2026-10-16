@@ -17,6 +17,16 @@
   @if (notice()) { <p role="status">{{ notice() }}</p> }
   @if (state() !== 'loading' && state() !== 'load-error') {
   <app-company-form [editMode]="editMode" [initialCompany]="original()" [saving]="state() === 'saving'" [blocked]="uncertain() || state() === 'success'" [fieldErrors]="fieldErrors()"
-    (submitted)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()" />
+    (submitted)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()">
+    @if (editMode && original(); as company) {
+      <section companyTracking class="tracking-information" aria-labelledby="company-tracking-title">
+        <h2 id="company-tracking-title">Informations de suivi</h2>
+        <dl>
+          <div><dt>Créée le</dt><dd>{{ formatDateTime(company.created_at) }}</dd></div>
+          <div><dt>Modifiée le</dt><dd>{{ formatDateTime(company.updated_at) }}</dd></div>
+        </dl>
+      </section>
+    }
+  </app-company-form>
   }
 </section>
