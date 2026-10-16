@@ -60,13 +60,18 @@ UI 2.1 à UI 2.8 sont terminées. Dashboard V1 est fusionné dans `main`
 Dashboard V1 consomme FastAPI via `/api/v1/dashboard` :
 filtres UTC, références paginées, façade locale et cinq sections de présentation.
 UI 2.8 est enregistrée dans `9ce0cac` ; la publication du code ne constitue
-pas un déploiement de production. La phase UI 3 - Gestion des entreprises
-(Companies) est au stade de l’analyse fonctionnelle et technique UI 3.1,
-sur `feature/frontend-companies`, HEAD de départ `b7aac19`.
-Le contrat vérifié, le MVP et le plan proposés figurent dans
-`docs/etape-ui-3.1-companies.md` ; validation attendue avant UI 3.2.
-Aucun code Companies n’est encore implémenté. La suppression en cascade est
-proposée hors MVP et l’autorisation backend reste à renforcer.
+pas un déploiement de production. Companies MVP est implémenté sur
+`feature/frontend-companies` : liste, recherche serveur nom/code, pagination,
+détail, création, modification et notifications `NbToastrService`.
+UI 3.1 à UI 3.7.1 sont terminées et validées ; UI 3.8 est en finalisation
+documentaire, avant validation de livraison dans `main`. Au début d'UI 3.8,
+le 16 octobre 2026, HEAD `ac2dc3a`, rapport de stabilité commité et dépôt propre.
+Le module Companies n'est pas encore déclaré fusionné ou déployé.
+Le contrat initial reste dans `docs/etape-ui-3.1-companies.md` ; l'architecture
+réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
+`docs/project-status.md`. DELETE est exclu du MVP en raison de la cascade.
+Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
+mais validés par simulation, sans écriture réelle dans PostgreSQL.
 Les autres pages métier restent des placeholders. Aucun identifiant d'entreprise
 par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
@@ -75,11 +80,21 @@ dans `docs/frontend-architecture.md`. Ne pas étendre le Dashboard V1 aux
 indicateurs ML : les fonctions backend correspondantes ne sont pas intégrées
 à cette page. L'autorisation multi-entreprises n'est pas démontrée sur la route
 Dashboard ; ne pas déclarer une préparation à la production SaaS multi-tenant.
-La validation finale comprend 220 tests Angular et un build production réussis ;
+La validation historique Dashboard comprend 220 tests Angular et un build production réussis ;
 zoom réel Dashboard 100 %, 200 % et 400 % validé manuellement par l’utilisateur.
 Lecteur d’écran réel non testé. Le nettoyage typographique `23e28e5` remplace
 90 tirets cadratins par des tirets simples dans 24 fichiers ; conserver cette convention.
-Le bundle initial de 565,38 ko dépasse le warning de 500 ko, sans relèvement.
+La référence Companies UI 3.7.1 comprend trois suites complètes à 348/348 tests
+(31 fichiers), build production et contrôles Sass réussis. Le défaut 404
+« neuf liens attendus, zéro reçu » n'est pas reproduit ; les timeouts sous
+concurrence justifient des validations séquentielles, sans correctif spéculatif.
+Voir `docs/ui-3.7.1-test-stability.md`. Ces tests ne sont pas relancés en UI 3.8.
+Bundle initial actuel : 600,89 ko pour un budget de 500 ko, dont +32,48 ko après
+intégration de NbToastrService ; aucun budget relevé. Zoom Companies 200/400 %
+non validé, lecteur d'écran réel non testé et autorisation multi-entreprises non
+démontrée. Companies n'est pas prêt pour une production SaaS multi-tenant.
+La validation documentaire puis la livraison Git restent à autoriser ; aucun
+commit, push, merge ou début d'UI 4 dans UI 3.8.
 
 ### Machine Learning
 

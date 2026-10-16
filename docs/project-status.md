@@ -6,7 +6,8 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-companies` (UI 3.1, HEAD initial `b7aac19`)
+`feature/frontend-companies` (UI 3.8 en finalisation documentaire,
+HEAD initial `ac2dc3a`, le 16 octobre 2026, dépôt propre).
 
 À mettre à jour à chaque changement de branche.
 
@@ -299,8 +300,18 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 2.7 | Validation intégrée terminée ; observations réelles et cas simulés distingués |
 | UI 2.7.1 | Formulation neutre de couverture corrigée et commitée (`956a0b4`) |
 | UI 2.8 | Documentation et validation finale terminées (`9ce0cac`) ; Dashboard fusionné dans `main` (`f3f6f2c`) et publié sur GitHub |
+| UI 3.1 | Conception Companies validée (`d6d31ec`) |
+| UI 3.2 | DTO et service API Companies livrés sur la branche (`07d2bc3`) |
+| UI 3.3 | Liste, recherche serveur et pagination (`84f7f18`) |
+| UI 3.4 | Détail entreprise (`a1e332e`) |
+| UI 3.5 | Création et formulaire partagé (`d8e6c48`) |
+| UI 3.6 / UI 3.6.1 | Modification et notifications CRUD Nebular (`ab99551`) |
+| UI 3.7 | Validation intégrée terminée ; lectures réelles et écritures simulées distinguées |
+| UI 3.7.1 | Diagnostic de stabilité validé et commité (`ac2dc3a`), sans correctif spéculatif |
+| UI 3.8 | Documentation finale en finalisation ; livraison dans `main` à valider |
 
-Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Les huit autres destinations
+Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Companies MVP est implémenté
+sur la branche courante, avant livraison dans `main`. Les sept autres destinations
 de navigation et le détail équipement restent des placeholders. Rapports et
 Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
@@ -340,16 +351,118 @@ Ces résultats sont l'historique de validation UI 1.8, pas une nouvelle exécuti
 en UI 2.1.1. Cette étape documentaire contrôle le contrat dans le code et les
 tests existants, la cohérence des documents et le diff Git.
 
-## Travail actuel - UI 3.1 Companies
+## Travail actuel - UI 3.8 Companies MVP
 
-Analyse fonctionnelle et technique documentée dans
-[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), sur
-`feature/frontend-companies`, HEAD initial `b7aac19`, dépôt propre avant analyse.
-La conception est soumise à validation ; UI 3.2 n’est pas commencée et la page
-Companies reste un placeholder. Le MVP proposé couvre liste paginée, recherche
-nom/code, détail, création et modification. DELETE est proposé hors MVP :
-suppression définitive en cascade, sans autorisation multi-entreprises démontrée.
-Aucun code ni donnée modifié et aucune suite applicative relancée dans UI 3.1.
+UI 3.1 à UI 3.7.1 sont terminées et validées. Prérequis UI 3.8 vérifiés : rapport
+[ui-3.7.1-test-stability.md](ui-3.7.1-test-stability.md) suivi et commité dans
+`ac2dc3a`, branche correcte, dépôt propre au départ. UI 3.8 synchronise uniquement
+les documents et prépare la livraison, avant validation. Companies n'est pas
+encore déclaré fusionné dans `main`, publié ou déployé.
+
+Le MVP comprend liste, recherche serveur sur nom/code, pagination, détail,
+création et modification. La liste conserve `page`, `page_size` et `search` dans
+l'URL et les liens internes ; la modification part du détail. Le formulaire
+partagé applique les validations locales nom/code, conserve Unicode et la casse,
+ne soumet aucun PATCH inchangé et transmet seulement les champs modifiés.
+Les confirmations de succès associent un toast Nebular et un texte persistant
+sur le détail. Aucun DELETE dans l'UI ou le service Angular.
+Voir [frontend-architecture.md](frontend-architecture.md#companies-mvp---architecture-implémentée-ui-3)
+et [ui-design.md](ui-design.md#companies-mvp---présentation-et-parcours-livrés).
+
+### Companies MVP - validation historique UI 3.7
+
+Les résultats ci-dessous proviennent du rapport de validation intégrée UI 3.7
+du 16 octobre 2026, sur `ab99551`, consulté dans le chat « Auditer le frontend
+Angular » (identifiant `01a135fd-814d-7e51-89e3-249e2f655afb`). Le code et les tests
+sont réexaminés en UI 3.8 ; ces observations ne sont pas de nouvelles exécutions.
+
+| Périmètre | Nature et résultat de la validation UI 3.7 |
+| --- | --- |
+| Liste et détail | Navigateur et FastAPI réels, PETROSEN, champs et horodatages conformes ; aucune conversion UTC implicite. |
+| Recherche | Backend réel : `petro`, recherche Unicode sans résultat, contexte conservé au retour. |
+| Pagination | Réel sur une page ; pages 2/3 et 45 entreprises par simulation. Aucun grand volume réel démontré. |
+| Création | POST simulé : accents, emoji, caractères japonais ; description intacte omise, description vide volontaire nullable. Aucune création PostgreSQL réelle. |
+| Modification | PATCH simulé : code seul modifié, effacement `description: null`, aucun PATCH sans changement. Aucune modification PostgreSQL réelle. |
+| Erreurs | 404 réelle sur le détail ; 422 réelle par GET direct invalide. 409/422/500 d'écriture et réseau validés par simulations, sans toast de succès. |
+| Concurrence et soumissions | Réponses obsolètes écartées ; doubles clics POST/PATCH sans doublon dans les simulations et tests automatisés. |
+| Notifications | Toast unique après succès simulé POST/PATCH, conservé après navigation puis fermeture automatique ; confirmation persistante indépendante. |
+| Abandon | Guard local et refus/acceptation couverts par les tests ; dialogue natif non validé manuellement en navigateur. |
+| Non-régression | Dashboard réel avec ses cinq sections, placeholder Sites, 404 globale, Shell et sélection Sidebar contrôlés. |
+
+Responsive historique : quatre parcours (liste, détail, création, modification)
+à 1440/1024/1023/768/390/320 px CSS, hauteur 900 px, soit 24 contrôles au zoom
+nominal 100 %. Aucun débordement horizontal global observé, un h1 par page,
+tableau avec caption/en-têtes, clavier/focus, skip link et menu mobile contrôlés.
+Les zooms Companies réels 200 % et 400 % n'ont pas pu être validés ; les preuves
+de zoom du socle/Dashboard ne s'étendent pas à Companies. Lecteur d'écran réel
+non testé. Aucun test de charge à grande échelle ni certification d'accessibilité.
+
+UI 3.7 : dernière suite complète 348 tests réussis dans 31 fichiers, build
+production réussi, cinq tests du correctif Sass réussis, contrôles Sass conformes,
+`npm ls --all` code 0 et `npm audit` sans vulnérabilité à cette date. Ces résultats
+ne sont pas attribués à UI 3.8 et ne valent pas audit actuel des dépendances.
+
+### Stabilité - bilan UI 3.7.1 validé
+
+Sur `ab99551`, trois suites complètes sans build concurrent réussissent chacune
+à 348/348. Les six tests 404 passent dans neuf lancements exploitables (54/54).
+Le défaut initial « neuf liens attendus, zéro reçu » rapporté en UI 3.7 n'est pas
+reproduit ; aucune cause de synchronisation Angular n'est établie et aucun test,
+helper ou composant n'est corrigé. Les neuf liens attendus sont conservés.
+
+Les scénarios concurrents produisent respectivement 346/348 puis 347/348 avec
+timeouts de 5 secondes dans Sidebar et Shell responsive, tandis que les six tests
+404 passent. L'essai 404 seul avec build passe également. Le troisième scénario
+fait réellement chevaucher l'exécution Vitest et le build. La contention explique
+les timeouts observés et reste une piste pour le défaut initial, sans prouver sa
+cause. Recommandation validée : tests et build séquentiels, sans délai, retry
+automatique ni assouplissement des assertions. Détails et limites dans le
+[rapport UI 3.7.1](ui-3.7.1-test-stability.md), conservé comme historique de séance.
+
+UI 3.7.1 a aussi validé le build production, les cinq tests Sass, les quatre
+expressions corrigées, huit breakpoints et thème unique. Les 26 artefacts des
+builds de référence/final sont identiques par SHA-256 ; aucune hausse liée au
+diagnostic. Les limites EPERM du bac à sable sont documentées dans ce rapport.
+
+### Bundle et limites de livraison Companies
+
+| Élément, mesure historique UI 3.7 / UI 3.7.1 | Taille brute |
+| --- | ---: |
+| Initial | 600,89 ko |
+| Budget initial d'avertissement | 500 ko |
+| Dépassement | 100,89 ko |
+| Surcoût après intégration NbToastrService | +32,48 ko |
+| Liste Companies différée | 12,57 ko |
+| Détail différé | 7,77 ko |
+| Formulaire création/modification différé | 15,97 ko |
+| Dashboard différé | 45,38 ko |
+
+Le surcoût Toastr est inclus dans les 600,89 ko ; il ne s'ajoute pas à ce total.
+Budgets et dépendances restent inchangés. Le chargement différé des pages reste
+effectif ; aucun travail de réduction du bundle n'est réalisé dans UI 3.8.
+
+DELETE est exclu du MVP à cause de la suppression définitive en cascade. L'API
+backend existante conserve cette capacité ; masquer l'action ne la sécurise pas.
+L'autorisation multi-entreprises n'est pas démontrée, ni sur Companies ni sur le
+Dashboard ; aucun périmètre utilisateur/RBAC n'est prouvé. Les écritures réelles
+POST/PATCH ne sont pas validées de bout en bout, les horodatages Company restent
+sans garantie de fuseau et aucun verrou de version serveur n'est fourni.
+**Le module n'est pas prêt pour une production SaaS multi-tenant.**
+
+### Contrôles de la présente étape UI 3.8
+
+Relecture du code et des tests, cohérence des documents, liens internes, tirets
+simples, périmètre documentaire, `git diff --check` et état Git. Aucune suite
+Angular/backend, aucun build, contrôle Sass, audit npm ou requête FastAPI relancé.
+Si les validations applicatives sont relancées ultérieurement, les exécuter
+séquentiellement et consigner séparément leur date, leur HEAD et leurs résultats.
+Les résultats UI 3.7 / UI 3.7.1 ci-dessus restent historiques.
+
+Contrôles documentaires UI 3.8 réussis : 39 liens internes, dont huit liens
+avec ancre, `git diff --check`, absence de tiret cadratin dans les huit documents
+modifiés et absence de changement hors documentation. Le contenu D001 à D014
+est conservé intégralement ; le rapport UI 3.7.1 reste inchangé. Branche et HEAD
+inchangés, huit fichiers documentaires modifiés et non commités.
 
 ## Livraison Dashboard V1 - historique
 
@@ -433,7 +546,8 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Faire valider la conception UI 3.1 et les décisions proposées, notamment le
-report de la suppression, les validations du formulaire et les limites de sécurité.
-UI 3.2 ne commencera qu’après autorisation. Aucun développement Angular ou
-FastAPI, commit, push ou merge n’est réalisé dans cette étape documentaire.
+Faire valider le diff documentaire UI 3.8 et le bilan Companies, puis autoriser
+séparément le commit documentaire et la livraison de `feature/frontend-companies`
+dans `main`. Proposition de commit : `docs(frontend): finalize Companies MVP delivery documentation`.
+Aucun développement Angular/FastAPI/PostgreSQL, changement de dépendance ou de
+budget, commit, push ou merge réalisé dans UI 3.8. UI 4 n'est pas commencée.

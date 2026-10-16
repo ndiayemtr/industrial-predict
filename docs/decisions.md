@@ -192,3 +192,51 @@ bundle (565,38 ko / 500 ko), sans changement de seuil, de dépendance, de thème
 ou de mécanisme Sass. Le lazy loading reste effectif. Les validations réelles,
 simulées et les limites zoom/lecteur d'écran figurent dans project-status.md
 et ui-design.md ; aucune garantie de sécurité ou d'accessibilité n'est ajoutée.
+
+## Suivi Companies MVP - UI 3.8
+
+Suivi du 16 octobre 2026, sur `feature/frontend-companies`, HEAD initial
+`ac2dc3a`, dépôt propre et rapport UI 3.7.1 commité. Les décisions D001 à D014
+sont conservées. Ce suivi décrit les choix réellement implémentés dans UI 3.2
+à UI 3.6.1 et validés dans le périmètre UI 3.7 / UI 3.7.1 ; il ne crée pas de
+nouvelle décision d'industrialisation ou d'autorisation de production.
+
+- MVP : liste, recherche serveur nom/code, pagination, détail, création et
+  modification. DELETE absent de l'UI/service Angular à cause de la cascade
+  backend ; cette exclusion ne protège pas l'endpoint backend existant.
+- Réutiliser CompanyRead/Page/ReferencePageQuery et le GET liste de
+  ReferenceDataApiService. CompaniesApiService porte GET détail/POST/PATCH,
+  avec DTO CompanyCreate/CompanyUpdate fidèles au transport ; pas de store global.
+- Façade locale pour la liste, URL appliquée comme contexte, annulation des
+  lectures obsolètes ; états locaux du détail et de la page de formulaire.
+  Routes `loadChildren` puis pages `loadComponent`, sous le Shell existant.
+- Formulaire partagé création/modification, nom/code non blancs trimés, limites
+  150/50 en points de code Unicode, casse conservée. Description intacte omise
+  en création et null explicite pour effacement volontaire. PATCH différentiel,
+  aucune requête sans changement, verrou de soumission et protection d'abandon
+  locale avec confirmation native. Ces règles UX ne durcissent pas le backend.
+- Succès : un toast NbToastrService et une confirmation textuelle sur le détail.
+  NbToastrModule.forRoot et overlay au niveau application, styles toast ciblés
+  dans le thème unique existant, sans package nouveau. L'emplacement de Header
+  Notifications reste « À venir » ; aucun centre de notifications décidé.
+- Une écriture réseau/5xx est d'issue incertaine : vérification utilisateur avant
+  nouvelle soumission explicite, sans retry automatique ni mutation optimiste.
+  Ni idempotence serveur ni verrou de version prétendu.
+
+Validation : lectures FastAPI réelles, écritures POST/PATCH et erreurs d'écriture
+simulées, sans mutation PostgreSQL réelle. Les 348 tests Angular, le build et
+les contrôles Sass sont des résultats historiques. UI 3.7.1 valide trois suites
+complètes séquentielles ; le défaut initial 404 n'est pas reproduit et aucune
+correction spéculative n'est appliquée. Les timeouts sous concurrence motivent
+la recommandation de validations séquentielles, détaillée dans le
+[rapport UI 3.7.1](ui-3.7.1-test-stability.md).
+
+Dette de bundle actuelle : 600,89 ko / 500 ko, dont +32,48 ko après intégration
+de NbToastrService, sans relèvement de seuil. Aucun remplacement de Nebular ni
+chantier d'optimisation décidé dans UI 3.8. Zoom Companies 200/400 % non validé,
+lecteur d'écran réel non testé, autorisation multi-entreprises non démontrée.
+D005 reste une exigence cible ; Companies n'est pas prêt pour une production
+SaaS multi-tenant. Voir le [bilan actuel](project-status.md) et
+l'[architecture implémentée](frontend-architecture.md#companies-mvp---architecture-implémentée-ui-3).
+UI 3.8 finalise les documents avant validation et livraison Git ; aucun commit,
+push ou merge ici et aucun début d'UI 4.

@@ -14,13 +14,15 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé après livraison, le 15 octobre 2026, sur `main`
-au HEAD `23e28e5`, identique à `origin/main` au contrôle initial. Le socle UI 1.1
+État documentaire synchronisé le 16 octobre 2026 pour UI 3.8 sur
+`feature/frontend-companies`, HEAD initial `ac2dc3a`, dépôt propre avant édition.
+Le rapport UI 3.7.1 est commité ; Companies MVP est implémenté sur cette branche
+et sa livraison dans `main` reste à valider. Le socle UI 1.1
 à UI 1.8 et Dashboard V1 (UI 2.1 à UI 2.8) sont livrés et fusionnés dans `main` ;
 le code Dashboard est publié sur GitHub (fusion `f3f6f2c`).
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle et Dashboard V1
+## Structure réellement présente - socle, Dashboard V1 et Companies MVP
 
 ```text
 frontend/
@@ -33,6 +35,7 @@ frontend/
 │   │   └── navigation/ (modèle et configuration)
 │   ├── core/ (http/, api/reference-data-api.service.*, models/)
 │   ├── features/dashboard/ (models/, data-access/, dashboard.facade.*, pages/, components/)
+│   ├── features/companies/ (models/, data-access/, companies-list.facade.*, pages/, components/, styles/)
 │   └── shared/
 │       ├── components/page-header/
 │       ├── components/loading-state/
@@ -130,7 +133,10 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | --- | --- | --- | --- |
 | `/` | - | Redirection vers `/dashboard`, `pathMatch: 'full'` | Dashboard après redirection |
 | `/dashboard` | Dashboard | DashboardComponent standalone, connecté à FastAPI | Dashboard, correspondance exacte |
-| `/companies` | Entreprises | FeaturePlaceholderComponent | Entreprises |
+| `/companies` | Entreprises | CompaniesListComponent | Entreprises |
+| `/companies/new` | Nouvelle entreprise | CompanyFormPageComponent, création | Entreprises |
+| `/companies/:companyId/edit` | Modifier l’entreprise | CompanyFormPageComponent, modification | Entreprises |
+| `/companies/:companyId` | Détail entreprise | CompanyDetailComponent | Entreprises |
 | `/sites` | Sites | FeaturePlaceholderComponent | Sites |
 | `/equipments` | Équipements | FeaturePlaceholderComponent | Équipements |
 | `/sensors` | Capteurs | FeaturePlaceholderComponent | Capteurs |
@@ -154,9 +160,11 @@ exacte des liens et évite une sélection Équipements incorrecte ; le détail
 valide `/equipments/42` conserve la sélection de section.
 
 Le Shell, DashboardComponent, le placeholder commun et la 404 utilisent
-`loadComponent` avec import dynamique. Il n'y a pas de module métier chargé
-par `loadChildren` ni de préchargement configuré. Les huit destinations métier
-et le détail partagent le même placeholder, sans créer neuf pages définitives.
+`loadComponent` avec import dynamique. Companies utilise `loadChildren` vers
+`COMPANY_ROUTES`, puis `loadComponent` pour ses pages, sans préchargement
+configuré. La route `new` précède l'identifiant dynamique ; `:companyId/edit`
+précède `:companyId`. Les sept autres destinations métier disponibles et le
+détail équipement partagent le même placeholder, sans créer huit pages définitives.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -164,8 +172,8 @@ routés ; la route Dashboard charge uniquement DashboardComponent.
 
 ## Structure générale cible
 
-Les dossiers métier autres que `dashboard` constituent la cible et ne sont pas
-encore implémentés. `core`, `layout`, `shared` et la feature Dashboard existent.
+Les dossiers métier autres que `dashboard` et `companies` constituent la cible.
+`core`, `layout`, `shared` et ces deux features existent.
 
 ```text
 src/app/
@@ -201,7 +209,7 @@ src/app/
 
 ## Pages prioritaires à implémenter
 
-Dashboard V1 est livré. Les autres fonctionnalités ci-dessous restent des
+Dashboard V1 et Companies MVP sont implémentés. Les autres fonctionnalités ci-dessous restent des
 objectifs métier futurs ; leurs routes actuelles rendent des placeholders.
 
 ### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
@@ -267,7 +275,8 @@ Page
 
 Les composants visuels ne doivent pas contenir de logique métier complexe.
 Ce flux est implémenté pour Dashboard V1, avec façade locale à la page et
-services HTTP. Les services des autres domaines métier restent à développer.
+services HTTP ; Companies utilise également une façade locale pour sa liste
+et un service dédié. Les services des autres domaines restent à développer.
 
 ## Gestion API
 
@@ -277,6 +286,7 @@ Exemples :
 
 - EquipmentApiService
 - DashboardApiService
+- CompaniesApiService (implémenté)
 - PredictionApiService
 - RecommendationApiService
 - MaintenanceApiService
@@ -682,7 +692,7 @@ la publication du code ne vaut pas validation de production SaaS multi-tenant.
   ne pas convertir en zéro ni présenter une précision comptable garantie.
 - Responsive, longs noms et tables jusqu'à 320 px ; lecteur d'écran réel non testé,
   à vérifier si disponible sans prétendre à une certification.
-- Bundle initial actuel **565,38 ko** contre **500 ko** de warning (1 Mo d'erreur) :
+- Bundle initial à la clôture Dashboard UI 2.8 : **565,38 ko** contre **500 ko** de warning (1 Mo d'erreur) :
   dépassement 65,38 ko. Référence Dashboard différé UI 2.6 : 52,00 ko ; après
   UI 2.7.1 : 51,98 ko. UI 2.4.1 a attribué 35,09 ko de la hausse initiale
   523,08 → 565,34 ko à Angular Forms : Nebular importe déjà FormsModule via
@@ -696,6 +706,128 @@ la publication du code ne vaut pas validation de production SaaS multi-tenant.
 L'absence d'autorisation multi-entreprises démontrée interdit de présenter cette
 livraison comme prête pour une production SaaS multi-tenant. Le proxy local
 fonctionnel ne constitue pas un déploiement de production.
+
+## Companies MVP - architecture implémentée UI 3
+
+UI 3.1 à UI 3.7.1 sont terminées. Le contrat backend détaillé et la conception
+initiale sont conservés dans [etape-ui-3.1-companies.md](etape-ui-3.1-companies.md).
+Les chemins ci-dessous sont relatifs à `frontend/src/app/` et existent au HEAD
+`ac2dc3a` ; aucun fichier applicatif n'est modifié dans UI 3.8.
+
+### DTO, services et structure
+
+| Élément | Responsabilité réelle |
+| --- | --- |
+| `core/models/reference-data.model.ts` | CompanyRead : id, name, code, description nullable, created_at et updated_at conservés comme chaînes. |
+| `core/models/page.model.ts` | Page et ReferencePageQuery réutilisés ; page/page_size/search. |
+| `features/companies/models/company-write.model.ts` | CompanyCreate : name/code obligatoires, description optionnelle nullable ; CompanyUpdate : champs optionnels nullables fidèles au transport PATCH. Le formulaire ne transmet pas name/code null. |
+| `features/companies/models/companies-state.model.ts` | CompaniesQuery et union discriminée CompaniesState pour la liste. |
+| `features/companies/data-access/companies-api.service.ts` | list délègue au GET paginé ReferenceDataApiService ; getById, create et update utilisent HttpClient pour GET détail, POST et PATCH. Aucun DELETE, cache, souscription interne ou retry automatique. |
+| `features/companies/companies-list.facade.ts` | Provider local à CompaniesListComponent, signals en lecture seule, snapshot figé de la requête appliquée, switchMap et nettoyage takeUntilDestroyed. |
+| `features/companies/pages/` | Liste, détail et page de formulaire commune aux modes création/modification. Détail et formulaire portent leurs états locaux. |
+| `features/companies/components/company-form/` | FormGroup de présentation réutilisé ; entrées signal et événements submitted/cancelled/edited ; aucune requête HTTP. |
+| `features/companies/styles/_company-actions.scss` | Mixin locale pour les liens d'action du PageHeader, sans système de composants partagé supplémentaire. |
+
+Base HTTP relative `/api/v1` et proxy développement existants, sans changement
+FastAPI. Le service transmet les payloads sans normalisation silencieuse.
+Nom/code sont trimés par le formulaire, obligatoires et limités à 150/50 points
+de code Unicode (`Array.from`), sans regex ASCII ni changement de casse.
+Description facultative sans maximum inventé : intacte en création, elle est
+omise ; modifiée, son texte est conservé et une chaîne vide devient null.
+Le DTO PATCH conserve la possibilité transport de name/code null ; les contraintes
+SQL NOT NULL et les limites de validation backend ne sont pas corrigées par l'UI.
+
+### Liste, détail et états
+
+La liste charge à l'entrée, avec page 1 et 20 lignes par défaut. L'URL appliquée
+est la source de page/page_size/search ; les paramètres invalides sont normalisés
+avant GET (page_size entre 1 et 100). La recherche explicite nom/code ne lance
+pas de requête à chaque frappe, revient à la page 1 et omet search vide. Elle
+couvre le serveur entier ; `%` et `_` sont signalés comme jokers, sans promesse
+de recherche littérale ou insensible aux accents. Aucun tri supplémentaire.
+
+La façade expose idle/loading/success/empty/error, annule les lectures obsolètes
+et relance manuellement les paramètres appliqués sur erreur réseau/5xx. Empty
+est fondé sur total=0, avec ou sans recherche ; items vide avec total positif
+reste success, accompagné d'une action manuelle vers une page disponible.
+Il n'y a ni boucle de rattrapage automatique ni filtrage local de la page.
+
+Le détail valide l'identifiant comme entier positif sûr avant HTTP et suit ses
+changements avec paramMap/switchMap/toSignal. Il distingue loading/success/error,
+404 métier et identifiant invalide. Les lectures réseau/5xx sont relançables
+manuellement. Nom, code, id, description intégrale et horodatages sont affichés
+comme texte ; aucun KPI ou chargement des actifs. Sans fuseau explicite, les dates
+ne sont pas converties ni déclarées UTC. Le contexte liste est typé et conservé
+par les RouterLink, sans redirection arbitraire ou store global.
+
+### Formulaire et écritures
+
+CompanyFormPageComponent choisit le mode avec `data.mode === 'edit'`. En création,
+aucun GET détail initial. En modification, un GET précède le formulaire et les
+changements d'id annulent les GET obsolètes. Les états locaux sont loading,
+load-error, idle, saving, success et error. PageHeader/LoadingState/ErrorState
+existants sont réutilisés ; les erreurs ne sont pas présentées comme des vides.
+
+Le PATCH compare les valeurs au DTO d'origine : seuls les champs réellement
+changés sont envoyés ; name/code trimés, description vide volontaire → null.
+Une soumission inchangée ou revenue à l'origine affiche une notice sans PATCH.
+Un verrou saving empêche les doubles soumissions et la sortie par navigation.
+CanDeactivate utilise `canLeave()` et la confirmation native pour les saisies
+modifiées ; beforeunload protège fermeture/rechargement. Aucune protection ne
+constitue une annulation garantie d'une transaction déjà traitée par le serveur.
+
+409 est associé au champ Code, 422 aux champs connus et à un résumé. Le texte
+serveur n'est pas interprété comme HTML. Une erreur PATCH 404 conserve la saisie
+et ne recrée rien. Réseau/5xx après écriture = issue incertaine : pas de retry
+automatique, saisie conservée, lien de vérification liste/détail dans un nouvel
+onglet puis confirmation utilisateur avant nouvelle soumission explicite.
+Ni mise à jour optimiste, ni idempotency-key, ni verrou de version serveur.
+
+Un succès utilise l'id renvoyé, navigue vers le détail et transmet dans l'état
+de navigation createdCompanyId ou updatedCompanyId pour la confirmation textuelle.
+Le détail effectue son GET ; les lectures ultérieures retrouvent le serveur.
+Aucun bus global, polling ou sélection automatique de société dans Dashboard.
+
+### Notifications Nebular
+
+`app.config.ts` configure NbToastrModule.forRoot au niveau application : position
+TOP_RIGHT, durée 5 000 ms, pas de fermeture au clic ni icône (configuration
+`hasIcon: false` et `icon: { icon: '' }`). Le service NbToastrService émet une
+notification de succès unique après POST/PATCH réussi ; l'overlay survit à la
+destruction de la page lors de la navigation. Aucun toast de succès sur échec,
+absence de changement ou requête annulée. Une confirmation textuelle persistante
+dans le détail reste indépendante du toast éphémère. Le thème existant ajoute
+uniquement le mixin toast et des styles ciblés ; aucun nouveau package.
+
+### Validation, dette et limites
+
+Les suites existantes couvrent le service HTTP, la façade, les pages, le
+formulaire et le routing différé dans le Shell : chargeurs, titres, sélection,
+focus, contextes URL, erreurs, annulations, null/omission, Unicode, soumissions
+et notifications. Ces tests utilisent HttpTestingController et des doubles
+de service Toastr ; ils ne prouvent pas des écritures réelles dans PostgreSQL.
+UI 3.7 a complété par lectures FastAPI réelles et simulations navigateur des
+écritures/toasts ; le [bilan de validation](project-status.md#companies-mvp---validation-historique-ui-37)
+précise les preuves responsive et leurs limites.
+
+UI 3.7.1 : trois suites complètes séquentielles à 348/348, build production,
+cinq tests du correctif Sass et contrôles des quatre expressions/huit breakpoints/
+thème unique réussis. Le défaut initial 404 « zéro lien » reste non reproduit ;
+les timeouts sous concurrence n'établissent pas une synchronisation manquante.
+Le [rapport validé](ui-3.7.1-test-stability.md) recommande des validations
+séquentielles ; aucune correction spéculative ni assertion réduite. Aucun test
+ou build n'est relancé dans UI 3.8 documentaire.
+
+Mesure historique UI 3.7 / UI 3.7.1 : initial **600,89 ko** pour **500 ko** de
+warning, dépassement **100,89 ko**, dont **+32,48 ko après intégration de
+NbToastrService**, inclus dans le total. Liste 12,57 ko, détail 7,77 ko, formulaire
+commun 15,97 ko et Dashboard 45,38 ko restent différés. Budgets inchangés.
+Les 26 artefacts comparés en UI 3.7.1 sont identiques par SHA-256.
+
+DELETE est exclu à cause de la cascade ; l'endpoint backend n'est pas supprimé.
+Les écritures POST/PATCH réelles, le zoom Companies 200/400 % et le lecteur
+d'écran réel restent non validés. L'autorisation multi-entreprises n'est pas
+démontrée. **Le module n'est pas prêt pour une production SaaS multi-tenant.**
 
 ## Autres composants partagés envisagés
 
@@ -724,11 +856,11 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout et Dashboard V1 sont livrés. L’étape actuelle est la
-conception UI 3.1 de Companies, documentée dans
-[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), en attente de validation
-avant UI 3.2. Aucun service, formulaire ou route Companies proposé dans ce
-document n’est encore implémenté.
+Le layout et Dashboard V1 sont livrés dans `main`. Companies MVP est implémenté
+sur `feature/frontend-companies` ; UI 3.1 à UI 3.7.1 sont terminées et UI 3.8
+finalise les documents avant validation de livraison. Aucun commit, push ou
+merge dans cette étape ; UI 4 ne commence pas. La conception initiale reste dans
+[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), distincte de l'état réalisé.
 
 L’ordre antérieur des autres intentions frontend reste indicatif :
 

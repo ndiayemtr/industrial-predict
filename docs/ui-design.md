@@ -328,5 +328,89 @@ Il s'agit d'un contrôle manuel utilisateur, pas d'un test automatisé.
 **Lecteur d'écran réel non testé** : les contrôles DOM/ARIA/clavier ne valent
 ni validation vocale ni certification d'accessibilité.
 
-Le warning actuel est **565,38 ko initial pour 500 ko** ; références Dashboard
+Le warning à la clôture Dashboard UI 2.8 est **565,38 ko initial pour 500 ko** ; références Dashboard
 différé 52,00 ko en UI 2.6, 51,98 ko après UI 2.7.1. Les budgets restent inchangés.
+
+## Companies MVP - présentation et parcours livrés
+
+UI 3.1 à UI 3.7.1 sont terminées sur `feature/frontend-companies`. UI 3.8 est
+en finalisation documentaire, avant validation de livraison dans `main`.
+Les pages réutilisent le thème clair, les tokens et les quatre composants shared ;
+aucun indicateur métier ou donnée fictive n'est ajouté aux lectures réelles.
+Le Header global et la Sidebar sont conservés. Un seul h1 par page vient du
+PageHeader ; Entreprises reste sélectionné sur les quatre routes Companies.
+
+| Parcours | Présentation et interactions implémentées |
+| --- | --- |
+| Liste `/companies` | PageHeader « Entreprises », lien « Nouvelle entreprise », recherche explicite nom/code, tableau Nom/Code/Description avec caption et en-têtes ; le nom est un lien vers le détail. Description non renseignée signalée. Pagination serveur Précédent/Suivant et totaux réels ; pas d'action Modifier directe dans la liste. |
+| Recherche et vides | Maximum 100 caractères, bouton Rechercher/Entrée, Effacer revient page 1. Recherche globale serveur, jokers %/_ signalés. « Aucune entreprise » et « Aucun résultat » distincts ; page vide avec total positif accompagnée d'une action manuelle de retour vers une page disponible. |
+| Détail `/companies/:companyId` | Nom, code, id, description intégrale avec sauts de ligne et horodatages bruts ; retour liste et lien Modifier après chargement. Mention explicite sur l'absence de fuseau, sans conversion UTC supposée. |
+| Création `/companies/new` | Titre « Nouvelle entreprise », nom/code obligatoires, description facultative ; Créer et Annuler. Formulaire partagé, sans préchargement d'entreprise. |
+| Modification `/companies/:companyId/edit` | Titre « Modifier l’entreprise », chargement préalable du détail puis formulaire prérempli ; Enregistrer les modifications et Annuler. Aucun PATCH sans changement. |
+
+Le contexte appliqué page/page_size/search accompagne les navigations internes.
+Les paramètres invalides sont normalisés ; aucune URL de redirection externe
+n'est réutilisée. Les routes profondes inconnues restent sur la 404 globale,
+tandis qu'une entreprise absente a une erreur métier locale. DELETE n'est pas
+exposé, ni comme action désactivée, ni comme promesse de disponibilité.
+
+Les liens Nouvelle entreprise, Retour à la liste et Modifier restent de vrais
+RouterLink, avec un traitement visuel de bouton via une mixin locale Companies.
+Les boutons de recherche, pagination et soumission déclenchent les actions.
+Les champs ont des labels, aides, erreurs associées et aria-invalid ; nom/code
+sont trimés, non blancs et limités à 150/50 points de code Unicode, casse
+conservée. Aucun alphabet ASCII, format de code ou maximum de description inventé.
+
+LoadingState, EmptyState et ErrorState distinguent les états de lecture ;
+aria-busy marque les résultats/enregistrements. Une erreur 409 cible Code,
+une 422 signale les champs connus et résume les autres contraintes. La saisie
+reste disponible après échec ; le focus vise le premier champ invalide ou refusé.
+Après une erreur réseau/5xx d'écriture, une vérification de la liste/fiche est
+demandée avant d'autoriser une nouvelle soumission ; pas de relance automatique.
+Enregistrement en cours : champs/actions désactivés, sortie par navigation
+bloquée. Une saisie modifiée demande confirmation native avant abandon, avec
+protection beforeunload ; cela ne garantit pas l'annulation d'une transaction.
+
+### Notifications et confirmations
+
+Après succès POST/PATCH, un toast NbToastrService affiche « Entreprise créée
+avec succès. » ou « Entreprise modifiée avec succès. ». L'overlay global reste
+visible après navigation vers le détail puis se ferme après cinq secondes.
+Il est en haut à droite, sans icône ni fermeture au clic ; le CSS limite sa
+largeur au viewport et permet la coupure des textes longs. Les erreurs et
+soumissions sans changement ne produisent aucun toast de succès.
+Le détail conserve en plus une confirmation textuelle role=status, issue de
+l'état de navigation. Cette confirmation accompagne l'arrivée après succès ;
+elle n'est ni un historique d'audit ni une preuve de persistance après rechargement.
+Le Header conserve ses emplacements Notifications/Profil « À venir » : les
+toasts CRUD ne constituent pas un centre de notifications.
+
+### Responsive, validation historique et limites
+
+Les surfaces, liens, tableaux et formulaires permettent le repli des actions
+et des chaînes longues. Le détail passe de deux colonnes à une ; la recherche
+et les actions s'empilent sur petit écran. Le seuil global Shell reste 1024 px,
+inclus en desktop ; les seuils locaux des pages ne redéfinissent pas ce mode.
+
+UI 3.7 a contrôlé les quatre parcours à 1440/1024/1023/768/390/320 px CSS,
+hauteur 900 px : 24 contrôles, sans débordement horizontal global observé et
+avec un h1 par page. Clavier, focus visible, premier champ invalide, skip link,
+menu mobile, Tab/Shift+Tab, Échap et restauration du focus ont été vérifiés.
+Le dialogue natif d'abandon est couvert par les tests automatisés, sans validation
+manuelle navigateur. **Zoom Companies 200/400 % non validé ; lecteur d'écran réel
+non testé.** Les contrôles au zoom nominal 100 % et les validations anciennes
+du Dashboard/socle ne constituent pas une preuve des zooms Companies manquants.
+
+Les lectures UI 3.7 utilisent FastAPI réel ; les écritures POST/PATCH, leurs
+erreurs et les notifications après succès sont simulées. Les résultats de
+348 tests Angular, du build et des contrôles Sass sont historiques, détaillés
+dans [project-status.md](project-status.md#companies-mvp---validation-historique-ui-37).
+[UI 3.7.1](ui-3.7.1-test-stability.md) a validé trois suites complètes
+séquentielles sans reproduire le défaut 404 initial ; les timeouts sous concurrence
+motivent les validations séquentielles. Aucun test ou build relancé dans UI 3.8.
+
+Bundle actuel mesuré en UI 3.7 / UI 3.7.1 : **600,89 ko initial / 500 ko**,
+dont **+32,48 ko après intégration NbToastrService**, sans relèvement de budget.
+Suppression exclue pour cascade, autorisation multi-entreprises non démontrée,
+écritures réelles non validées de bout en bout. Companies n'est pas prêt pour
+une production SaaS multi-tenant ; la livraison Git reste à valider.

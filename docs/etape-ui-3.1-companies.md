@@ -1,13 +1,28 @@
 # UI 3.1 - Analyse fonctionnelle et technique Companies
 
-## Statut, périmètre et méthode
+## État actuel - suivi documentaire UI 3.8
+
+Mise à jour du 16 octobre 2026 : UI 3.1 à UI 3.7.1 sont terminées et validées,
+Companies MVP est implémenté sur `feature/frontend-companies`. UI 3.8 est en
+finalisation documentaire avant validation de livraison dans `main`, au HEAD
+initial `ac2dc3a` (rapport UI 3.7.1 commité, dépôt propre avant édition).
+
+Les sections 1 à 9 et le contexte d'analyse ci-dessous conservent la conception
+historique UI 3.1, validée dans `d6d31ec`. Leurs mentions « proposé »,
+« non créé », « à valider » et « UI 3.2 non commencée » décrivent l'état du
+15 octobre 2026, pas l'état courant. La section 10 distingue ce qui est réellement
+livré des intentions initiales ; le [statut actuel](project-status.md) et
+l'[architecture réalisée](frontend-architecture.md#companies-mvp---architecture-implémentée-ui-3)
+font référence pour la livraison.
+
+## Statut, périmètre et méthode de l'analyse historique UI 3.1
 
 Analyse du 15 octobre 2026, sur `feature/frontend-companies`, HEAD initial
 `b7aac19` (`docs: synchronize Dashboard V1 delivery status and UI 3 roadmap`).
 Le répertoire de travail est propre avant intervention. UI 2 est livrée ;
 `/companies` affiche encore le placeholder partagé.
 
-Ce document est une proposition soumise à validation. Aucun composant, service,
+Lors de l'analyse UI 3.1, ce document est une proposition soumise à validation. Aucun composant, service,
 formulaire ou parcours Companies décrit comme cible ci-dessous n'est implémenté
 par UI 3.1. UI 3.2 n'est pas commencée.
 
@@ -552,4 +567,45 @@ Les 220 tests Angular et le build réussis sont les références historiques de 
 livraison Dashboard ; ils ne sont pas relancés en UI 3.1 documentaire. Contrôles
 de cette étape : cohérence avec les sources, périmètre documentaire, tirets
 simples, `git diff --check` et état Git. Aucun code, dépendance, donnée PostgreSQL,
-budget, Shell ou Dashboard modifié. Attendre validation avant UI 3.2.
+budget, Shell ou Dashboard modifié pendant UI 3.1. La validation avant UI 3.2
+était l'action attendue à cette date ; elle a depuis permis l'implémentation.
+
+## 10. Réalisation Companies MVP et écarts au plan initial
+
+Liste/recherche serveur/pagination, détail, création et modification sont
+implémentés (`07d2bc3`, `84f7f18`, `a1e332e`, `d8e6c48`, `ab99551`). Les DTO,
+service API, façade locale et formulaire partagé existent ; routes différées
+sous le Shell, contexte page/page_size/search conservé, aucune nouvelle entrée
+Sidebar. Le Dashboard garde son contrat et aucun backend n'est modifié.
+
+| Intention UI 3.1 | Réalisation observée et limite |
+| --- | --- |
+| Actions Consulter/Modifier dans la liste | Le nom est un lien de consultation ; Modifier se trouve dans le détail chargé. Aucun bouton d'édition directe par ligne. |
+| Route création « Créer une entreprise » | Route `/companies/new`, titre réel « Nouvelle entreprise » ; édition : « Modifier l’entreprise ». |
+| Page hors limites : récupération éventuelle | Action manuelle vers une page disponible, sans relance automatique ni boucle de rattrapage. |
+| Description facultative | Création : intacte omise, vide volontaire null, autre texte conservé ; édition : PATCH des seuls changements, vide volontaire null. |
+| Longueurs Unicode à vérifier | Validateur sur nom/code trimés, 150/50 points de code Unicode ; pas de restriction ASCII. |
+| Protection d'abandon à choisir | CanDeactivate local, confirmation native de saisie modifiée, beforeunload ; navigation bloquée pendant saving. Couvert par tests, dialogue natif non validé manuellement. |
+| Annonce de succès | Toast NbToastrService global après succès et texte persistant sur le détail ; NbToastrModule.forRoot configuré dans app.config.ts et mixin toast ajouté au thème. La proposition initiale sans changement d'app.config.ts a donc évolué. |
+| Validation intégrée et zoom | UI 3.7 : lectures FastAPI réelles, POST/PATCH simulés, 24 contrôles responsive au zoom nominal 100 % ; zoom réel Companies 200/400 % et lecteur d'écran réel non validés. |
+
+Les lectures réelles concernent PETROSEN, la recherche et le détail ; la
+pagination multipage et les écritures sont simulées. Aucun POST/PATCH réel
+PostgreSQL réalisé dans la validation. DELETE reste exclu à cause de la cascade,
+les autorisations multi-entreprises ne sont pas démontrées et les horodatages
+Company ne sont pas déclarés UTC sans fuseau explicite. Le module n'est pas prêt
+pour une production SaaS multi-tenant.
+
+Le [rapport UI 3.7.1](ui-3.7.1-test-stability.md), commité dans `ac2dc3a`,
+consigne trois suites complètes séquentielles à 348/348, build production et
+contrôles Sass réussis. Le défaut initial 404 n'est pas reproduit ; les timeouts
+sous concurrence conduisent à recommander des validations séquentielles, sans
+correctif spéculatif des tests. Ces résultats restent historiques en UI 3.8.
+
+Bundle actuel mesuré : 600,89 ko pour un budget d'avertissement de 500 ko,
+dont +32,48 ko après intégration de NbToastrService, inclus dans le total.
+Le lazy loading reste effectif ; aucun budget relevé. Les observations, tests
+simulés et limites sont détaillés dans le
+[bilan Companies](project-status.md#companies-mvp---validation-historique-ui-37).
+UI 3.8 finalise uniquement les documents avant validation de livraison ; aucun
+commit, push, merge ou début d'UI 4 effectué dans cette étape.
