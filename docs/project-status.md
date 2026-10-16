@@ -6,9 +6,10 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`main`, commit publié `2c49c4f`, synchronisé avec `origin/main` après
-`git fetch origin` le 16 octobre 2026 (0 commit d'écart). Dépôt propre avant
-la présente synchronisation documentaire.
+`feature/frontend-sites`, créée depuis `main` propre au commit `54dd128`,
+synchronisé avec `origin/main` après `git fetch origin` le 16 octobre 2026
+(0 commit d'écart). UI 4.1 : conception fonctionnelle validée, documentation
+uniquement ; commit en attente d'autorisation.
 
 À mettre à jour à chaque changement de branche.
 
@@ -563,7 +564,11 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Faire valider cette synchronisation documentaire post-livraison avant tout
-commit. La prochaine phase est UI 4 - Sites industriels ; UI 4.1 n'est pas
-commencée. Aucun développement applicatif, changement de dépendance ou de budget,
-commit, push ou merge n'est réalisé dans cette synchronisation.
+Obtenir l'autorisation du commit documentaire de la
+[conception UI 4.1 Sites industriels](etape-ui-4.1-sites.md), validée
+fonctionnellement : sélection explicite d'entreprise, code unique globalement,
+suppression et transfert exclus, entreprise en lecture seule dans l'édition
+sans company_id dans PATCH, gestion prudente des 409 et limite de sécurité
+multi-entreprises explicite. Aucun développement UI 4.2 n'est commencé.
+Cette étape modifie uniquement la documentation, sans changement applicatif,
+de dépendance ou de budget ; aucun commit, push ou merge effectué.

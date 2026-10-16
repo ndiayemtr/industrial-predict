@@ -165,9 +165,10 @@ cause de la cascade. L'autorisation multi-entreprises reste non démontrée ;
 le module n'est pas prêt pour une production SaaS multi-tenant. Les écritures
 réelles POST/PATCH restent non testées de bout en bout.
 
-### UI 4 - Sites industriels, prochaine phase
+### UI 4 - Sites industriels, conception fonctionnelle validée
 
-- [ ] UI 4.1 - Non commencée ; attendre une demande dédiée avant tout développement
+- [x] UI 4.1 - Analyse et conception fonctionnelle validées, [rapport](etape-ui-4.1-sites.md) ; commit documentaire en attente d'autorisation
+- [ ] UI 4.2 et suivantes - Découpage proposé dans le rapport ; aucune implémentation commencée
 
 ### Écrans métier restant à implémenter
 

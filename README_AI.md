@@ -99,7 +99,10 @@ Validation finale de livraison : 386 tests Angular réussis, build production
 réussi et `npm audit` sans vulnérabilité signalée. Ces résultats historiques
 ne sont pas de nouvelles exécutions lors de la synchronisation documentaire.
 Voir `docs/frontend-datetime-display.md` et `docs/dashboard-date-precision.md`.
-Prochaine phase : UI 4 - Sites industriels ; UI 4.1 n'est pas commencée.
+UI 4 - Sites industriels : [conception UI 4.1](docs/etape-ui-4.1-sites.md)
+validée fonctionnellement sur `feature/frontend-sites`, commit documentaire
+en attente d'autorisation. UI 4.2 n'est pas
+commencée ; aucune fonctionnalité Sites frontend n'est encore implémentée.
 
 ### Machine Learning
 
