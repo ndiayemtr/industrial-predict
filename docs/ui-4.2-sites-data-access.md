@@ -1,5 +1,8 @@
 # UI 4.2 - Modèles et intégration HTTP Sites
 
+Suivi de livraison : UI 4.2 validée et commitée dans `cd2389d`.
+Les résultats et états Git ci-dessous décrivent la séance historique UI 4.2.
+
 Date : 16 octobre 2026. Branche `feature/frontend-sites`, HEAD de référence
 `1630ebc`, dépôt propre avant intervention. Statut : implémenté, en attente de
 validation. Aucun commit, push ou merge ; UI 4.3 non commencée.

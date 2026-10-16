@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from '../../app.routes';
+import { provideDashboardTesting } from '../../features/dashboard/testing/dashboard-testing';
 
 describe('Sidebar navigation', () => {
   beforeEach(() => {
@@ -14,6 +15,7 @@ describe('Sidebar navigation', () => {
       providers: [
         provideRouter(routes),
         provideNoopAnimations(),
+        ...provideDashboardTesting(),
         importProvidersFrom(
           NbThemeModule.forRoot(
             { name: 'industrial-predict' },
@@ -63,7 +65,7 @@ describe('Sidebar navigation', () => {
     harness.detectChanges();
 
     expect(activeLinks(harness).map((link) => link.textContent!.trim())).toEqual(['Sites']);
-    expect(harness.routeNativeElement!.querySelector('main h1')?.textContent).toBe('Sites');
+    expect(harness.routeNativeElement!.querySelector('main h1')?.textContent).toBe('Sites industriels');
   });
 
   it('should provide eleven distinct decorative icons while retaining text labels and link focusability', async () => {
@@ -112,7 +114,7 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/sites', 'Sites'], ['/equipments', 'Équipements'],
+    ['/equipments', 'Équipements'],
     ['/sensors', 'Capteurs'], ['/measurements', 'Mesures'], ['/maintenance', 'Maintenance'],
     ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {
@@ -122,5 +124,14 @@ describe('Sidebar navigation', () => {
     expect(main.querySelector('h1')?.textContent).toBe(title);
     expect(main.textContent).toContain('Écran en préparation');
     expect(main.textContent).toContain('Aucune donnée métier');
+  });
+
+  it('shows the real Sites page in the Shell while waiting for explicit company selection', async () => {
+    const harness = await open('/sites');
+    const main = harness.routeNativeElement!.querySelector('main')!;
+    expect(main.querySelector('h1')?.textContent).toBe('Sites industriels');
+    expect(main.querySelector('app-feature-placeholder')).toBeNull();
+    expect(main.textContent).toContain('Sélectionnez une entreprise pour consulter ses sites');
+    expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Sites']);
   });
 });

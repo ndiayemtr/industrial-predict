@@ -24,6 +24,8 @@ export const routes: Routes = [
         data: { pageTitle: item.label },
         ...(item.id === 'companies'
           ? { loadChildren: () => import('./features/companies/companies.routes').then(m => m.COMPANY_ROUTES) }
+          : item.id === 'sites'
+          ? { loadChildren: () => import('./features/sites/sites.routes').then(m => m.SITE_ROUTES) }
           : { loadComponent: item.id === 'dashboard'
           ? () => import('./features/dashboard/pages/dashboard/dashboard.component').then(
               (m) => m.DashboardComponent

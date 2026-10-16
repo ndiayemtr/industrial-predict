@@ -11,7 +11,7 @@ import { provideDashboardTesting } from './features/dashboard/testing/dashboard-
 import { NAVIGATION_ITEMS } from './layout/navigation/navigation.config';
 
 const expectedPages = [
-  ['/dashboard', 'Dashboard'], ['/companies', 'Entreprises'], ['/sites', 'Sites'],
+  ['/dashboard', 'Dashboard'], ['/companies', 'Entreprises'], ['/sites', 'Sites industriels'],
   ['/equipments', 'Équipements'], ['/sensors', 'Capteurs'], ['/measurements', 'Mesures'],
   ['/maintenance', 'Maintenance'], ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
 ] as const;
@@ -75,7 +75,7 @@ describe('Routing configuration invariants', () => {
     const componentRoutes = [routes[0], ...children.filter((route) => route.redirectTo === undefined)];
     for (const route of componentRoutes) {
       expect(route.component).toBeUndefined();
-      if (route.path === 'companies') {
+      if (route.path === 'companies' || route.path === 'sites') {
         expect(typeof route.loadChildren).toBe('function');
         expect(route.loadComponent).toBeUndefined();
       } else {
@@ -144,12 +144,16 @@ describe('Routing integration gaps', () => {
     const shellLoader = vi.fn(routes[0].loadComponent!);
     const trackedChildren = children.map((route) => ({
       ...route,
-      ...(route.loadComponent ? { loadComponent: vi.fn(route.loadComponent) } : {})
+      ...(route.loadComponent ? { loadComponent: vi.fn(route.loadComponent) } : {}),
+      ...(route.loadChildren ? { loadChildren: vi.fn(route.loadChildren) } : {})
     }));
     TestBed.inject(Router).resetConfig([{ ...routes[0], loadComponent: shellLoader, children: trackedChildren }]);
     const harness = await RouterTestingHarness.create('/dashboard');
     await settle(harness);
-    const loader = (path: string) => trackedChildren.find((route) => route.path === path)!.loadComponent!;
+    const loader = (path: string) => {
+      const route = trackedChildren.find(route => route.path === path)!;
+      return route.loadComponent ?? route.loadChildren!;
+    };
     expect(shellLoader).toHaveBeenCalledTimes(1);
     expect(loader('dashboard')).toHaveBeenCalledTimes(1);
     for (const route of trackedChildren) {

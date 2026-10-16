@@ -168,8 +168,9 @@ réelles POST/PATCH restent non testées de bout en bout.
 ### UI 4 - Sites industriels, conception fonctionnelle validée
 
 - [x] UI 4.1 - Analyse et conception fonctionnelle validées, [rapport](etape-ui-4.1-sites.md), commit `1630ebc`
-- [ ] UI 4.2 - DTO et intégration HTTP implémentés, [bilan en attente de validation](ui-4.2-sites-data-access.md)
-- [ ] UI 4.3 et suivantes - Découpage prévu dans la conception ; aucune implémentation commencée
+- [x] UI 4.2 - DTO et intégration HTTP validés, [bilan](ui-4.2-sites-data-access.md), commit `cd2389d`
+- [ ] UI 4.3 - Liste, recherche et pagination implémentées, [bilan à valider](ui-4.3-sites-list.md)
+- [ ] UI 4.4 et suivantes - Découpage prévu dans la conception ; aucune implémentation commencée
 
 ### Écrans métier restant à implémenter
 

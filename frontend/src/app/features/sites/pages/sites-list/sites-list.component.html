@@ -1,0 +1,84 @@
+<app-page-header title="Sites industriels" description="Consultez les sites d’une entreprise et recherchez par nom ou code." />
+
+<section class="filters" aria-label="Filtres des sites">
+  <label for="sites-company">Entreprise (obligatoire)</label>
+  <select id="sites-company" [formControl]="company" [attr.aria-describedby]="company.value === null ? 'companies-help companies-count' : 'companies-count'">
+    <option [ngValue]="null">Sélectionnez une entreprise</option>
+    @for (item of options(); track item.id) { <option [ngValue]="item.id">{{ item.name }} - {{ item.code }} (identifiant {{ item.id }})</option> }
+  </select>
+  @if (company.value === null) { <p id="companies-help">Sélectionnez une entreprise pour afficher ses sites.</p> }
+  <p id="companies-count">{{ catalog().items.length }} / {{ catalog().total }} entreprises chargées</p>
+  @if (catalog().status === 'loading') { <app-loading-state message="Chargement des entreprises..." /> }
+  @if (catalog().status === 'error') {
+    <app-error-state title="Entreprises indisponibles" message="Le catalogue d’entreprises ne peut pas être chargé. La sélection déjà chargée reste disponible."
+      [retryable]="catalog().retryable" (retry)="retryCompanies()" />
+  }
+  @if (catalog().status === 'ready' && catalog().page < catalog().pages) {
+    <button type="button" (click)="loadMoreCompanies()">Charger davantage d’entreprises</button>
+  }
+  @if (catalog().status === 'ready' && catalog().total === 0) { <p>Aucune entreprise n’est actuellement enregistrée.</p> }
+
+  <form (submit)="applySearch($event)" aria-label="Recherche de sites">
+    <label for="sites-search">Rechercher par nom ou code</label>
+    <div class="search-controls">
+      <input id="sites-search" type="search" [formControl]="search" maxlength="100"
+        aria-describedby="sites-search-help sites-search-error" [attr.aria-invalid]="search.touched && search.invalid ? 'true' : null" />
+      <button type="submit" class="primary" [disabled]="!canSearch()">Rechercher</button>
+      <button type="button" (click)="clearSearch()" [disabled]="!canSearch()">Effacer la recherche</button>
+    </div>
+    <p id="sites-search-help">Recherche sur tous les sites de l’entreprise sélectionnée, pas seulement sur cette page.</p>
+    <p id="sites-search-error" aria-live="polite">@if (search.touched && search.invalid) { La recherche est limitée à 100 caractères. }</p>
+  </form>
+  <label for="sites-page-size">Sites par page</label>
+  <select id="sites-page-size" [formControl]="size">
+    @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+  </select>
+</section>
+@if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
+@if (wildcardSearch()) { <p>Les caractères % et _ sont interprétés comme des jokers par la recherche serveur.</p> }
+
+@let state = facade.state();
+<section class="results" aria-labelledby="sites-results-title" [attr.aria-busy]="busy()">
+  <h2 id="sites-results-title">Liste des sites</h2>
+  @if (facade.company(); as selected) {
+    <p class="selected-company">Entreprise : {{ selected.name }} - {{ selected.code }} (identifiant {{ selected.id }})</p>
+  }
+  @if (state.status === 'idle') {
+    <p role="status">Sélectionnez une entreprise pour consulter ses sites.</p>
+  } @else if (state.status === 'loading') {
+    <app-loading-state message="Vérification de l’entreprise et chargement des sites..." />
+  } @else if (state.status === 'error') {
+    <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" />
+  } @else if (state.status === 'empty') {
+    <app-empty-state [title]="state.query.search ? 'Aucun résultat' : 'Aucun site pour cette entreprise'"
+      [message]="state.query.search ? 'Aucun site ne correspond à cette recherche.' : 'Aucun site n’est actuellement enregistré pour cette entreprise.'">
+      @if (state.query.search) { <button type="button" (click)="clearSearch()">Effacer la recherche</button> }
+    </app-empty-state>
+  } @else if (state.status === 'success') {
+    @if (state.data.items.length === 0) {
+      <p>Cette page ne contient plus de site, mais la liste n’est pas vide.</p>
+      <button type="button" (click)="recoverPage()">Revenir à une page disponible</button>
+    } @else {
+      <table>
+        <caption>Sites - page {{ state.data.page }} - {{ state.data.total }} au total - identifiants croissants</caption>
+        <thead><tr><th scope="col">Nom</th><th scope="col">Code</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (site of state.data.items; track site.id) {
+            <tr><th scope="row">{{ site.name }}</th><td>{{ site.code }}</td>
+              <td class="description">{{ site.description?.trim() ? site.description : 'Non renseignée' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+  @if (facade.query() && state.status !== 'empty') {
+    <nav class="pagination" aria-label="Pagination des sites">
+      <button type="button" (click)="changePage(page() - 1)" [disabled]="busy() || page() === 1">Précédent</button>
+      <p>Page {{ page() }} - {{ pageSize() }} sites par page</p>
+      <button type="button" (click)="changePage(page() + 1)" [disabled]="!canNext()">Suivant</button>
+    </nav>
+  }
+  @if (state.status === 'success' || state.status === 'empty') {
+    <p role="status" aria-atomic="true">{{ state.data.total }} site(s)@if (state.status === 'success') { - {{ state.data.pages }} page(s)}</p>
+  }
+</section>
