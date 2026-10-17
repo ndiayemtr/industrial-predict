@@ -1,0 +1,57 @@
+{
+  "version": "industrial-predict-demo-v1",
+  "timestamps": {
+    "administrative_created_at": "2026-10-01T08:00:00",
+    "administrative_updated_at": "2026-10-16T12:00:00",
+    "audit_created_at": "2026-10-01T08:00:00Z",
+    "audit_updated_at": "2026-10-16T12:00:00Z"
+  },
+  "companies": [
+    {"code": "UI47-COMP-A", "name": "INDUSTRIE DEMO A", "description": "Entreprise industrielle fictive A - développement uniquement."},
+    {"code": "UI47-COMP-B", "name": "INDUSTRIE DEMO B", "description": "Entreprise industrielle fictive B - développement uniquement."}
+  ],
+  "sites": [
+    {"code": "UI47-SITE-A-PROD", "name": "Site de production", "company_code": "UI47-COMP-A", "description": "Atelier fictif de production."},
+    {"code": "UI47-SITE-A-LOG", "name": "Site logistique", "company_code": "UI47-COMP-A", "description": "Plateforme logistique fictive."},
+    {"code": "UI47-SITE-B-ENER", "name": "Site énergétique", "company_code": "UI47-COMP-B", "description": "Unité énergétique fictive."}
+  ],
+  "equipments": [
+    {"code": "UI47-EQ-A-PUMP", "name": "Pompe de circulation P101", "site_code": "UI47-SITE-A-PROD", "equipment_type": "pump", "status": "operational", "criticality": "high", "description": "Pompe fictive du circuit de refroidissement."},
+    {"code": "UI47-EQ-A-COMP", "name": "Compresseur C101", "site_code": "UI47-SITE-A-PROD", "equipment_type": "compressor", "status": "maintenance", "criticality": "critical", "description": "Compresseur fictif en intervention."},
+    {"code": "UI47-EQ-A-CONV", "name": "Convoyeur C201", "site_code": "UI47-SITE-A-LOG", "equipment_type": "conveyor", "status": "out_of_service", "criticality": "medium", "description": "Convoyeur fictif arrêté."},
+    {"code": "UI47-EQ-B-GEN", "name": "Groupe électrogène G301", "site_code": "UI47-SITE-B-ENER", "equipment_type": "generator", "status": "operational", "criticality": "low", "description": "Groupe fictif de secours."}
+  ],
+  "sensors": [
+    {"code": "UI47-SEN-PUMP-TEMP", "name": "Température pompe", "equipment_code": "UI47-EQ-A-PUMP", "sensor_type": "temperature", "unit": "°C", "status": "active", "description": "Capteur fictif."},
+    {"code": "UI47-SEN-PUMP-VIB", "name": "Vibration pompe", "equipment_code": "UI47-EQ-A-PUMP", "sensor_type": "vibration", "unit": "mm/s", "status": "active", "description": "Capteur fictif."},
+    {"code": "UI47-SEN-COMP-TEMP", "name": "Température compresseur", "equipment_code": "UI47-EQ-A-COMP", "sensor_type": "temperature", "unit": "°C", "status": "active", "description": "Capteur fictif."},
+    {"code": "UI47-SEN-CONV-VIB", "name": "Vibration convoyeur", "equipment_code": "UI47-EQ-A-CONV", "sensor_type": "vibration", "unit": "mm/s", "status": "inactive", "description": "Capteur fictif, relevés antérieurs à sa désactivation."},
+    {"code": "UI47-SEN-GEN-TEMP", "name": "Température groupe", "equipment_code": "UI47-EQ-B-GEN", "sensor_type": "temperature", "unit": "°C", "status": "active", "description": "Capteur fictif."},
+    {"code": "UI47-SEN-GEN-PRESS", "name": "Pression huile groupe", "equipment_code": "UI47-EQ-B-GEN", "sensor_type": "pressure", "unit": "bar", "status": "active", "description": "Capteur fictif."}
+  ],
+  "measurements": [
+    {"sensor_code": "UI47-SEN-PUMP-TEMP", "timestamp": "2026-10-14T08:00:00Z", "value": 64.2, "quality": "good"},
+    {"sensor_code": "UI47-SEN-PUMP-TEMP", "timestamp": "2026-10-15T08:00:00Z", "value": 65.1, "quality": "good"},
+    {"sensor_code": "UI47-SEN-PUMP-TEMP", "timestamp": "2026-10-16T08:00:00.123456Z", "value": 65.4, "quality": "good"},
+    {"sensor_code": "UI47-SEN-PUMP-VIB", "timestamp": "2026-10-14T08:00:00Z", "value": 1.8, "quality": "good"},
+    {"sensor_code": "UI47-SEN-PUMP-VIB", "timestamp": "2026-10-15T08:00:00Z", "value": 2.1, "quality": "good"},
+    {"sensor_code": "UI47-SEN-PUMP-VIB", "timestamp": "2026-10-16T08:00:00.123456Z", "value": 2.0, "quality": "good"},
+    {"sensor_code": "UI47-SEN-COMP-TEMP", "timestamp": "2026-10-14T08:00:00Z", "value": 83.0, "quality": "good"},
+    {"sensor_code": "UI47-SEN-COMP-TEMP", "timestamp": "2026-10-15T08:00:00Z", "value": 86.5, "quality": "suspect"},
+    {"sensor_code": "UI47-SEN-COMP-TEMP", "timestamp": "2026-10-16T08:00:00.123456Z", "value": 85.8, "quality": "good"},
+    {"sensor_code": "UI47-SEN-CONV-VIB", "timestamp": "2026-10-14T08:00:00Z", "value": 4.0, "quality": "good"},
+    {"sensor_code": "UI47-SEN-CONV-VIB", "timestamp": "2026-10-15T08:00:00Z", "value": 4.2, "quality": "good"},
+    {"sensor_code": "UI47-SEN-CONV-VIB", "timestamp": "2026-10-16T08:00:00.123456Z", "value": 4.1, "quality": "bad"},
+    {"sensor_code": "UI47-SEN-GEN-TEMP", "timestamp": "2026-10-14T08:00:00Z", "value": 71.2, "quality": "good"},
+    {"sensor_code": "UI47-SEN-GEN-TEMP", "timestamp": "2026-10-15T08:00:00Z", "value": 71.6, "quality": "estimated"},
+    {"sensor_code": "UI47-SEN-GEN-TEMP", "timestamp": "2026-10-16T08:00:00.123456Z", "value": 72.0, "quality": "good"},
+    {"sensor_code": "UI47-SEN-GEN-PRESS", "timestamp": "2026-10-14T08:00:00Z", "value": 4.1, "quality": "good"},
+    {"sensor_code": "UI47-SEN-GEN-PRESS", "timestamp": "2026-10-15T08:00:00Z", "value": 4.2, "quality": "good"},
+    {"sensor_code": "UI47-SEN-GEN-PRESS", "timestamp": "2026-10-16T08:00:00.123456Z", "value": 4.1, "quality": "good"}
+  ],
+  "maintenance_records": [
+    {"equipment_code": "UI47-EQ-A-PUMP", "title": "UI47-MAINT-PUMP-01 - Contrôle préventif", "maintenance_type": "preventive", "status": "completed", "priority": "medium", "description": "Intervention fictive terminée.", "technician": "Équipe fictive A", "planned_at": "2026-10-15T09:00:00Z", "started_at": "2026-10-15T09:00:00Z", "completed_at": "2026-10-15T09:45:00Z", "downtime_minutes": 45, "cost": 125.0, "action_taken": "Contrôle et lubrification simulés."},
+    {"equipment_code": "UI47-EQ-A-COMP", "title": "UI47-MAINT-COMP-01 - Inspection corrective", "maintenance_type": "corrective", "status": "in_progress", "priority": "critical", "description": "Intervention fictive en cours.", "technician": "Équipe fictive A", "planned_at": "2026-10-16T09:00:00Z", "started_at": "2026-10-16T09:00:00Z", "failure_code": "UI47-TEMP", "root_cause": "Cause fictive en cours d'analyse."},
+    {"equipment_code": "UI47-EQ-A-CONV", "title": "UI47-MAINT-CONV-01 - Révision planifiée", "maintenance_type": "corrective", "status": "planned", "priority": "high", "description": "Intervention fictive planifiée, volontairement échue au 17 octobre 2026.", "technician": "Équipe fictive logistique", "planned_at": "2026-10-16T10:00:00Z"}
+  ]
+}

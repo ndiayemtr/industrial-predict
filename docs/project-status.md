@@ -15,6 +15,9 @@ un simulateur local en mémoire sans connexion FastAPI/PostgreSQL.
 L'[environnement permanent DEV](ui-4.7.2.1-development-environment.md) est validé :
 `industrial_predict_dev` sur 5434, FastAPI 8001, Angular 4201, rôles séparés
 et aucune cible de repli sur l'API historique. Les deux bases historiques sont préservées.
+Le [seed UI 4.7.3](ui-4.7.3-development-data.md) est validé : 36 lignes fictives
+créées exclusivement dans DEV, deuxième application sans écriture. Ces insertions
+SQL réelles ne valident pas le parcours POST/PATCH du navigateur.
 
 À mettre à jour à chaque changement de branche.
 
@@ -569,10 +572,9 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-La modification Sites UI 4.6 est validée. Enregistrer les travaux approuvés
-par étapes cohérentes avant de poursuivre. La sécurisation UI 4.6.2 est également validée.
-L'environnement permanent DEV est disponible ; aucune opération de données
-n'est nécessaire pour enregistrer les travaux.
+Les travaux UI 4.6, UI 4.6.2, UI 4.7.2/UI 4.7.2.1 et UI 4.7.3 sont enregistrés
+en quatre commits locaux. Voir le [bilan de préparation](pre-ui-4.7.4-commits.md).
+Attendre validation avant UI 4.7.4, qui n'est pas commencée. Aucun push ni merge.
 La conception UI 4.1 reste applicable : entreprise explicite, code unique
 globalement, suppression et transfert exclus, aucun company_id dans PATCH
 et aucune interprétation arbitraire des 409. L'absence d'autorisation

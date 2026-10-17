@@ -64,3 +64,20 @@ git diff --check
 ```
 
 Ces tests utilisent des fixtures et des requêtes simulées, sans écriture HTTP métier. Les tests d'identité effectifs passent par `check-db`, `check` et les GET de diagnostic.
+
+## Jeu fictif reproductible
+
+Le [jeu de données versionné](../../docs/ui-4.7.3-development-data.md) couvre Companies, Sites, équipements, capteurs, mesures et maintenances. Il est réservé à `industrial_predict_dev`, avec contrôle des identités PostgreSQL, FastAPI et Angular avant toute insertion.
+
+```powershell
+& backend/.venv/Scripts/python.exe -B infra/development/seed.py check --config D:/integration/industrial-predict/development/config.json
+& backend/.venv/Scripts/python.exe -B infra/development/seed.py apply --config D:/integration/industrial-predict/development/config.json
+```
+
+La première application exige huit tables vides. Une application sur le jeu complet inchangé ne crée aucun doublon et n'écrit aucune ligne. Les conflits, modifications du jeu ou chargements partiels sont refusés. Aucun reset, écrasement ou suppression automatique. Les nouvelles suppressions nécessitent une autorisation distincte.
+
+Tests du seed exclusivement en mémoire :
+
+```powershell
+& backend/.venv/Scripts/python.exe -B -m unittest discover -s infra/development -p test_seed.py -v
+```

@@ -176,7 +176,8 @@ réelles POST/PATCH restent non testées de bout en bout.
 - [x] UI 4.6.2 - Code métier et simulateur HTTP isolé validés, [bilan](ui-4.6.2-site-code-simulation.md)
 - [x] UI 4.7.2 - Environnement isolé validé, [bilan historique](ui-4.7.2-integration-environment.md)
 - [x] UI 4.7.2.1 - Environnement permanent `industrial_predict_dev` validé, [bilan](ui-4.7.2.1-development-environment.md)
-- [ ] Étapes suivantes - Suivre le découpage de la conception et les validations correspondantes
+- [x] UI 4.7.3 - Jeu industriel fictif et seed idempotent validés, [bilan](ui-4.7.3-development-data.md)
+- [ ] UI 4.7.4 - Non commencée ; attendre validation après les commits locaux
 
 ### Écrans métier restant à implémenter
 

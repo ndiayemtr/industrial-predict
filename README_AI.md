@@ -124,6 +124,11 @@ La [sécurisation UI 4.6.2](docs/ui-4.6.2-site-code-simulation.md) est validée 
 non-régression du code métier et simulateur HTTP isolé en mémoire, sans upstream.
 UI 4.7.2 et UI 4.7.2.1 sont validées : environnement permanent local
 [DEV](infra/development/README.md), distinct de la base historique, sans repli sur 8000.
+Le [jeu de développement UI 4.7.3](docs/ui-4.7.3-development-data.md) est validé :
+2 entreprises, 3 sites, 4 équipements, 6 capteurs, 18 mesures et 3 maintenances
+fictifs, chargés par SQL exclusivement dans `industrial_predict_dev`.
+Ce seed ne constitue pas une validation navigateur des écritures POST/PATCH.
+UI 4.7.4 n'est pas commencée et nécessite une nouvelle validation.
 
 ### Machine Learning
 
