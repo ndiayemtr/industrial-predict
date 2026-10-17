@@ -12,6 +12,12 @@ export const SITE_ROUTES: Routes = [{
   canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
   loadComponent: () => import('./pages/site-create/site-create.component').then(m => m.SiteCreateComponent)
 }, {
+  path: ':siteId/edit',
+  title: 'Modifier le site | Industrial Predict AI',
+  data: { pageTitle: 'Modifier le site' },
+  canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
+  loadComponent: () => import('./pages/site-edit/site-edit.component').then(m => m.SiteEditComponent)
+}, {
   path: ':siteId',
   title: 'Détail du site | Industrial Predict AI',
   data: { pageTitle: 'Détail du site' },

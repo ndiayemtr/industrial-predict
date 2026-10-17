@@ -14,6 +14,10 @@
 }
 .site-detail { margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius; }
+.site-edit { background: tokens.$navigation-active; border-color: tokens.$navigation-active; color: tokens.$sidebar-text;
+  &:focus { color: tokens.$sidebar-text; }
+  &:hover { background: tokens.$sidebar-background; border-color: tokens.$sidebar-background; color: tokens.$sidebar-text; }
+}
 h2 { margin-top: 0; font-size: 1.25rem; }
 dl { display: grid; gap: tokens.$space-lg; margin: 0; }
 dl > div { min-width: 0; }

@@ -1,5 +1,9 @@
 # UI 4.5 - Création d'un site industriel
 
+Suivi : UI 4.5 et ses finitions sont commitées dans `e8702b0`. Les états et
+résultats ci-dessous sont historiques. La modification fait l'objet du
+[rapport UI 4.6](ui-4.6-site-edit.md).
+
 Date : 17 octobre 2026. Branche `feature/frontend-sites`, HEAD `491cb24`.
 Dépôt propre au départ. Implémentation terminée, en attente de validation.
 Aucun commit, push ou merge. UI 4.6 non commencée.

@@ -158,8 +158,8 @@ de livraison ne sont pas de nouvelles exécutions documentaires. Voir les rappor
 minutes ; le mode avancé conserve secondes et millisecondes, avec confirmation
 explicite en cas de conversion vers la minute. Les bornes UTC sont préservées.
 
-Dette actuelle : 601,28 ko initial pour un budget de 500 ko, dont +32,48 ko après
-intégration de NbToastrService ; dépassement 101,28 ko, seuils inchangés.
+Dette actuelle : 601,51 ko initial pour un budget de 500 ko, dont +32,48 ko après
+intégration de NbToastrService ; dépassement 101,51 ko, seuils inchangés.
 Liste/détail/formulaire Companies restent différés. DELETE est exclu du MVP à
 cause de la cascade. L'autorisation multi-entreprises reste non démontrée ;
 le module n'est pas prêt pour une production SaaS multi-tenant. Les écritures
@@ -171,8 +171,9 @@ réelles POST/PATCH restent non testées de bout en bout.
 - [x] UI 4.2 - DTO et intégration HTTP validés, [bilan](ui-4.2-sites-data-access.md), commit `cd2389d`
 - [x] UI 4.3 / UI 4.3.1 - Liste, recherche, pagination et finitions UX livrées, [bilan](ui-4.3-sites-list.md), commit `43f72f8`
 - [x] UI 4.4 et finitions UI 4.4.1 à UI 4.4.3 - Détail et libellés métier, [bilan](ui-4.4-site-detail.md), commit `491cb24`
-- [ ] UI 4.5 - Création Site implémentée, [bilan à valider](ui-4.5-site-create.md), écritures simulées uniquement
-- [ ] UI 4.6 et suivantes - Découpage prévu dans la conception ; aucune implémentation commencée
+- [x] UI 4.5 et finitions - Création Site commitée dans `e8702b0`, [bilan](ui-4.5-site-create.md), écritures simulées uniquement
+- [x] UI 4.6 - Modification Site validée, [bilan](ui-4.6-site-edit.md), sans transfert d'entreprise
+- [ ] Étapes suivantes - Suivre le découpage de la conception et les validations correspondantes
 
 ### Écrans métier restant à implémenter
 

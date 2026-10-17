@@ -27,11 +27,12 @@ describe('Sites deferred list in the Shell', () => {
   async function settle(harness: RouterTestingHarness) {
     harness.fixture.detectChanges(); TestBed.tick(); await harness.fixture.whenStable(); harness.fixture.detectChanges();
   }
-  it('defers the list and guarded creation before the dynamic detail without editing or deletion routes', () => {
+  it('defers list, guarded creation and editing before the dynamic detail without deletion routes', () => {
     expect(typeof routes[0].children!.find(route => route.path === 'sites')?.loadChildren).toBe('function');
-    expect(SITE_ROUTES).toHaveLength(3); expect(SITE_ROUTES[0].path).toBe(''); expect(SITE_ROUTES[0].pathMatch).toBe('full');
+    expect(SITE_ROUTES).toHaveLength(4); expect(SITE_ROUTES[0].path).toBe(''); expect(SITE_ROUTES[0].pathMatch).toBe('full');
     expect(SITE_ROUTES[1].path).toBe('new'); expect(SITE_ROUTES[1].canDeactivate).toHaveLength(1);
-    expect(SITE_ROUTES[2].path).toBe(':siteId'); expect(typeof SITE_ROUTES[2].loadComponent).toBe('function');
+    expect(SITE_ROUTES[2].path).toBe(':siteId/edit'); expect(SITE_ROUTES[2].canDeactivate).toHaveLength(1);
+    expect(SITE_ROUTES[3].path).toBe(':siteId'); expect(typeof SITE_ROUTES[3].loadComponent).toBe('function');
     expect(typeof SITE_ROUTES[0].loadComponent).toBe('function');
   });
 
@@ -44,6 +45,20 @@ describe('Sites deferred list in the Shell', () => {
     expect(root.querySelectorAll('app-sidebar a[href]')).toHaveLength(9);
     expect(TestBed.inject(Title).getTitle()).toBe('Nouveau site industriel | Industrial Predict AI');
     expect(document.activeElement).toBe(root.querySelector('main')); TestBed.inject(HttpTestingController).expectNone(() => true);
+  });
+  it('opens guarded editing in the Shell with active Sites, one heading, nine links, title and main focus', async () => {
+    const harness = await RouterTestingHarness.create('/sites'); await settle(harness);
+    await harness.navigateByUrl('/sites/3/edit');
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/sites/3').flush({ id: 3, company_id: 7,
+      name: 'Site test', code: 'S3', description: null, created_at: '', updated_at: '' });
+    await settle(harness);
+    const root = harness.routeNativeElement!;
+    expect(root.querySelector('app-site-edit')).not.toBeNull(); expect(root.querySelectorAll('h1')).toHaveLength(1);
+    expect(root.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/sites');
+    expect(root.querySelectorAll('app-sidebar a[href]')).toHaveLength(9);
+    expect(root.querySelector('app-header .header-title')?.textContent).toBe('Modifier le site');
+    expect(TestBed.inject(Title).getTitle()).toBe('Modifier le site | Industrial Predict AI');
+    expect(document.activeElement).toBe(root.querySelector('main')); TestBed.inject(HttpTestingController).verify();
   });
   it('retains Sidebar selection, nine links, titles and accessible main focus', async () => {
     const harness = await RouterTestingHarness.create('/dashboard'); await settle(harness);

@@ -106,10 +106,13 @@ La couche de données UI 4.2 est validée et commitée dans `cd2389d` ;
 finitions UI 4.3.1 sont livrées dans `43f72f8` ; [bilan UI 4.3](docs/ui-4.3-sites-list.md).
 La [fiche détail Sites UI 4.4 et ses finitions](docs/ui-4.4-site-detail.md) sont
 commitées dans `491cb24`, avec retour au contexte de liste et libellés métier.
-La [création Sites UI 4.5](docs/ui-4.5-site-create.md) est implémentée, en attente
-de validation : entreprise vérifiée explicitement, formulaire accessible, POST
-simulé en validation et confirmation après navigation. Aucun bouton Modifier ou
-Supprimer ; UI 4.6 non commencée. Aucune écriture réelle PostgreSQL validée.
+La [création Sites UI 4.5 et ses finitions](docs/ui-4.5-site-create.md) sont
+commitées dans `e8702b0` : entreprise vérifiée explicitement, formulaire accessible,
+POST simulé en validation et confirmation après navigation.
+La [modification Sites UI 4.6](docs/ui-4.6-site-edit.md) est validée :
+entreprise en lecture seule, PATCH différentiel sans company_id, dates de suivi
+hors FormGroup et confirmation après navigation. Suppression et transfert exclus.
+Les parcours HTTP de création/modification sont validés par simulation.
 
 ### Machine Learning
 

@@ -1,0 +1,40 @@
+<app-page-header title="Modifier le site" description="Modifier le nom, le code ou la description du site industriel." />
+<section class="edition" aria-label="Modification du site industriel" [attr.aria-busy]="state() === 'loading' || state() === 'saving'">
+  @if (state() === 'loading') { <app-loading-state message="Chargement du site..." /> }
+  @if (state() === 'load-error') {
+    <app-error-state [title]="loadError().title" [message]="loadError().message" [retryable]="loadError().retryable" (retry)="retryLoad()" />
+    <a routerLink="/sites" [queryParams]="listQuery()">Retour à la liste des sites</a>
+  }
+  @if (state() === 'saving') { <app-loading-state message="Enregistrement du site en cours..." /> }
+  @if (state() === 'error') {
+    <app-error-state title="Modification non confirmée" [message]="message()" />
+    @if (uncertain()) {
+      <p><a [routerLink]="['/sites', original()!.id]" [queryParams]="listQuery()" target="_blank" rel="noopener">Vérifier la fiche dans un nouvel onglet</a></p>
+      <button type="button" (click)="acknowledgeVerification()">J’ai vérifié la fiche, autoriser une nouvelle soumission</button>
+    }
+  }
+  @if (state() === 'success') {
+    <p role="status">Site modifié avec succès.</p>
+    @if (message()) { <p>{{ message() }}</p> }
+    <a [routerLink]="['/sites', original()!.id]" [queryParams]="listQuery()" [state]="{ updatedSiteId: original()!.id }">Ouvrir la fiche du site modifié</a>
+  }
+  @if (notice()) { <p role="status">{{ notice() }}</p> }
+  @if (state() !== 'loading' && state() !== 'load-error') {
+    <app-site-form [editMode]="true" [initialSite]="original()" [companyLabel]="companyLabel()" [saving]="state() === 'saving'"
+      [blocked]="uncertain() || state() === 'success' || referenceState() !== 'ready'" [fieldErrors]="fieldErrors()"
+      (updated)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()">
+      <div readonlyCompany>
+        @if (referenceState() === 'loading') { <app-loading-state message="Chargement de la référence entreprise..." /> }
+        @if (referenceState() === 'error') { <app-error-state [title]="referenceError().title" [message]="referenceError().message"
+          [retryable]="referenceError().retryable" (retry)="retryCompany()" /> }
+      </div>
+      <section siteTracking class="tracking-information" aria-labelledby="site-tracking-title">
+        <h2 id="site-tracking-title">Informations de suivi</h2>
+        <dl>
+          <div><dt>Créé le</dt><dd>{{ formatDateTime(original()!.created_at) }}</dd></div>
+          <div><dt>Modifié le</dt><dd>{{ formatDateTime(original()!.updated_at) }}</dd></div>
+        </dl>
+      </section>
+    </app-site-form>
+  }
+</section>

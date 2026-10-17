@@ -27,6 +27,7 @@ const positive = (raw: string | null, fallback: number | null, maximum = Number.
 })
 export class SiteDetailComponent {
   private readonly createdSiteId = inject(Router).currentNavigation()?.extras.state?.['createdSiteId'];
+  private readonly updatedSiteId = inject(Router).currentNavigation()?.extras.state?.['updatedSiteId'];
   private readonly api = inject(SitesApiService);
   private readonly references = inject(ReferenceDataApiService);
   private readonly route = inject(ActivatedRoute);
@@ -35,6 +36,8 @@ export class SiteDetailComponent {
   private readonly params = toSignal(this.route.queryParamMap, { requireSync: true });
   readonly creationConfirmed = toSignal(this.route.paramMap.pipe(map(params => this.createdSiteId != null
     && params.get('siteId') === String(this.createdSiteId))), { requireSync: true });
+  readonly updateConfirmed = toSignal(this.route.paramMap.pipe(map(params => this.updatedSiteId != null
+    && params.get('siteId') === String(this.updatedSiteId))), { requireSync: true });
   readonly formatDateTime = formatAdministrativeDateTime;
   readonly referenceLabel = businessReferenceLabel;
   readonly state = toSignal(this.route.paramMap.pipe(

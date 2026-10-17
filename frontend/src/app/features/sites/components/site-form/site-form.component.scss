@@ -11,6 +11,9 @@ input, select, textarea, button { box-sizing: border-box; min-height: 2.75rem; p
 input, select, textarea { display: block; width: 100%; min-width: 0; }
 textarea { resize: vertical; }
 .remove-description { margin-top: 12px; }
+.company-reference { margin: 0; }
+.company-reference dt { font-weight: 600; }
+.company-reference dd { margin: tokens.$space-sm 0 0; }
 .help { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 p { line-height: tokens.$line-height-body; }
 .field-error { font-weight: 600; }

@@ -50,7 +50,8 @@ describe('Site read-only detail', () => {
     expect(root().textContent).not.toContain('Identifiant');
     expect(root().textContent).toContain('une autre entreprise que celle du contexte de retour');
     expect(root().querySelectorAll('h1')).toHaveLength(1); expect(root().querySelectorAll('form,input')).toHaveLength(0);
-    expect(root().textContent).not.toContain('Modifier'); expect(root().textContent).not.toContain('Supprimer');
+    expect(root().querySelector('.site-edit')?.getAttribute('href')).toBe('/sites/3/edit?company_id=99&page=2&page_size=50&search=Usine');
+    expect(root().textContent).not.toContain('Supprimer');
     const current = component.state(); if (current.status !== 'success') throw Error('Missing site');
     expect(current.data).toEqual(site);
   });
