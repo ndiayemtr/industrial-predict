@@ -1,0 +1,29 @@
+name: industrial-predict-ui47
+services:
+  postgres-ui47:
+    image: ${DEV_POSTGRES_IMAGE:?Explicit verified PostgreSQL 17.10 image required}
+    container_name: industrial-predict-postgres-ui47
+    restart: "no"
+    environment:
+      POSTGRES_DB: industrial_predict_dev
+      POSTGRES_USER: ui47_admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/ui47_admin_password
+    command: ["postgres", "-c", "cluster_name=industrial-predict-development"]
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - ui47_data:/var/lib/postgresql/data
+    secrets:
+      - ui47_admin_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ui47_admin -d industrial_predict_dev"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  ui47_data:
+    name: industrial-predict-postgres-ui47-data
+    external: true
+secrets:
+  ui47_admin_password:
+    file: ${DEV_PRIVATE_DIR:?Private directory outside Git required}/admin-password.txt

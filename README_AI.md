@@ -33,6 +33,12 @@ Construire une plateforme professionnelle permettant notamment :
 
 ## Stack principale
 
+L'environnement permanent de développement utilise `industrial_predict_dev` sur
+`127.0.0.1:5434`, FastAPI sur `8001` et Angular sur `4201`.
+Utiliser les [lanceurs dédiés et leurs contrôles de cible](infra/development/README.md).
+Les services historiques et leurs données sont conservés ; aucun repli vers
+l'API historique sur `8000` n'est permis par ce lancement.
+
 ### Backend
 
 - Python 3.12
@@ -116,6 +122,8 @@ Les parcours HTTP de création/modification sont validés par simulation.
 
 La [sécurisation UI 4.6.2](docs/ui-4.6.2-site-code-simulation.md) est validée :
 non-régression du code métier et simulateur HTTP isolé en mémoire, sans upstream.
+UI 4.7.2 et UI 4.7.2.1 sont validées : environnement permanent local
+[DEV](infra/development/README.md), distinct de la base historique, sans repli sur 8000.
 
 ### Machine Learning
 
