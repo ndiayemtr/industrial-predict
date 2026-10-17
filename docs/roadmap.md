@@ -170,8 +170,9 @@ réelles POST/PATCH restent non testées de bout en bout.
 - [x] UI 4.1 - Analyse et conception fonctionnelle validées, [rapport](etape-ui-4.1-sites.md), commit `1630ebc`
 - [x] UI 4.2 - DTO et intégration HTTP validés, [bilan](ui-4.2-sites-data-access.md), commit `cd2389d`
 - [x] UI 4.3 / UI 4.3.1 - Liste, recherche, pagination et finitions UX livrées, [bilan](ui-4.3-sites-list.md), commit `43f72f8`
-- [ ] UI 4.4 - Fiche détail Site implémentée, [bilan à valider](ui-4.4-site-detail.md)
-- [ ] UI 4.5 et suivantes - Découpage prévu dans la conception ; aucune implémentation commencée
+- [x] UI 4.4 et finitions UI 4.4.1 à UI 4.4.3 - Détail et libellés métier, [bilan](ui-4.4-site-detail.md), commit `491cb24`
+- [ ] UI 4.5 - Création Site implémentée, [bilan à valider](ui-4.5-site-create.md), écritures simulées uniquement
+- [ ] UI 4.6 et suivantes - Découpage prévu dans la conception ; aucune implémentation commencée
 
 ### Écrans métier restant à implémenter
 

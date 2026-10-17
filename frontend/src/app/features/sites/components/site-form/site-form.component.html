@@ -1,0 +1,39 @@
+<form #formElement [formGroup]="form" (ngSubmit)="submit()" aria-label="Création d’un site industriel" [attr.aria-busy]="saving()" novalidate>
+  <p>Les champs marqués « obligatoire » doivent être renseignés.</p>
+  <fieldset [disabled]="saving() || blocked()">
+    <legend>Informations du site</legend>
+    @let showCompanyHelp = form.controls.company_id.value === null || form.controls.company_id.value !== verifiedCompanyId();
+    <div class="field">
+      <label for="site-company_id">Entreprise de rattachement (obligatoire)</label>
+      <select id="site-company_id" formControlName="company_id" required [attr.aria-describedby]="showCompanyHelp ? 'site-company-help site-company_id-error' : 'site-company_id-error'" [attr.aria-invalid]="error('company_id') ? 'true' : null">
+        <option [ngValue]="null">Sélectionnez une entreprise</option>
+        @for (company of companies(); track company.id) { <option [ngValue]="company.id">{{ company.label }}</option> }
+      </select>
+      @if (showCompanyHelp) { <p id="site-company-help" class="help">Choisissez une entreprise pour rattacher le site.</p> }
+      <p id="site-company_id-error" class="field-error">{{ error('company_id') }}</p>
+      <ng-content select="[companyReferences]" />
+    </div>
+    <div class="field">
+      <label for="site-name">Nom (obligatoire)</label>
+      <input id="site-name" formControlName="name" required aria-describedby="site-name-help site-name-error" [attr.aria-invalid]="error('name') ? 'true' : null" />
+      <p id="site-name-help" class="help">150 caractères maximum. Les espaces au début et à la fin seront retirés.</p>
+      <p id="site-name-error" class="field-error">{{ error('name') }}</p>
+    </div>
+    <div class="field">
+      <label for="site-code">Code métier (obligatoire)</label>
+      <input id="site-code" formControlName="code" required aria-describedby="site-code-help site-code-error" [attr.aria-invalid]="error('code') ? 'true' : null" />
+      <p id="site-code-help" class="help">50 caractères maximum. Code unique pour tous les sites, toutes entreprises confondues. La casse est conservée ; les espaces périphériques sont retirés.</p>
+      <p id="site-code-error" class="field-error">{{ error('code') }}</p>
+    </div>
+    <div class="field">
+      <label for="site-description">Description (facultative)</label>
+      <textarea id="site-description" formControlName="description" rows="5" aria-describedby="site-description-error" [attr.aria-invalid]="error('description') ? 'true' : null"></textarea>
+      @if (form.controls.description.value) { <button class="remove-description" type="button" (click)="removeDescription()">Retirer la description</button> }
+      <p id="site-description-error" class="field-error">{{ error('description') }}</p>
+    </div>
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours...' : 'Créer le site' }}</button>
+    <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

@@ -1,4 +1,11 @@
-<app-page-header title="Sites industriels" description="Consultez les sites d’une entreprise et recherchez par nom ou code." />
+<app-page-header title="Sites industriels" description="Consultez les sites d’une entreprise et recherchez par nom ou code.">
+  <a class="new-site" routerLink="/sites/new" [queryParams]="facade.query()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <path d="M12 5v14 M5 12h14" />
+    </svg>
+    <span>Nouveau site</span>
+  </a>
+</app-page-header>
 
 <section class="filters" aria-label="Filtres des sites">
   <label for="sites-company">Entreprise (obligatoire)</label>

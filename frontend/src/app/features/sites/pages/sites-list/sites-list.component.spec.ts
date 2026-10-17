@@ -48,7 +48,13 @@ describe('Sites list page and URL', () => {
     expect(root().querySelector('#companies-help')?.textContent).toBe('Sélectionnez une entreprise pour afficher ses sites.');
     expect(root().querySelector('#sites-company')?.getAttribute('aria-describedby')).toBe('companies-help companies-count');
     expect(root().textContent).toContain('Sélectionnez une entreprise pour consulter ses sites');
-    expect(root().querySelector('table')).toBeNull(); expect(root().querySelectorAll('a')).toHaveLength(0);
+    expect(root().querySelector('table')).toBeNull(); expect(root().querySelectorAll('a')).toHaveLength(1);
+    expect(root().querySelector('.new-site')?.getAttribute('href')).toBe('/sites/new');
+    const create = root().querySelector<HTMLAnchorElement>('.new-site')!;
+    expect(create.querySelector('span')?.textContent).toBe('Nouveau site');
+    expect(create.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(create.querySelector('svg')?.getAttribute('focusable')).toBe('false');
+    expect(create.querySelector('path')?.getAttribute('d')).toBe('M12 5v14 M5 12h14');
     expect(button('Rechercher').disabled).toBe(true); http.expectNone(() => true);
   });
 
@@ -60,11 +66,11 @@ describe('Sites list page and URL', () => {
     expect(root().querySelector('caption')?.textContent?.trim()).toBe('21 sites trouvés');
     expect(root().textContent).not.toContain('identifiant');
     expect(root().querySelector('.selected-company')?.textContent).toContain('Entreprise test - C7');
-    expect(root().textContent).toContain('Non renseignée'); expect(root().querySelectorAll('a')).toHaveLength(1);
+    expect(root().textContent).toContain('Non renseignée'); expect(root().querySelectorAll('a')).toHaveLength(2);
     const detail = root().querySelector<HTMLAnchorElement>('tbody a')!;
     expect(detail.getAttribute('href')).toBe('/sites/3?company_id=7&page=1&page_size=20');
     detail.focus(); expect(document.activeElement).toBe(detail);
-    expect(root().textContent).not.toContain('Nouveau site');
+    expect(root().querySelector('.new-site')?.getAttribute('href')).toBe('/sites/new?company_id=7&page=1&page_size=20');
     expect(root().querySelector('#companies-help')).toBeNull();
     expect(root().querySelector('#sites-company')?.getAttribute('aria-describedby')).toBe('companies-count');
     expect(root().querySelector('nav.pagination')).not.toBeNull();

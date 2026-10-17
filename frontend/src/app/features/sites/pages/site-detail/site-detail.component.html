@@ -5,6 +5,7 @@
   </a>
 </app-page-header>
 @let current = state();
+@if (creationConfirmed()) { <p role="status">Site créé avec succès.</p> }
 <section class="site-detail" aria-labelledby="site-information-title" [attr.aria-busy]="current.status === 'loading'">
   <h2 id="site-information-title">Informations du site</h2>
   @if (current.status === 'loading') {

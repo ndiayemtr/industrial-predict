@@ -6,9 +6,10 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-sites`, HEAD de référence `43f72f8`, dépôt propre au départ
-d'UI 4.4. Liste UI 4.3 et finitions UI 4.3.1 commitées ; détail Site UI 4.4
-implémenté, en attente de validation. Aucune création ou modification Sites.
+`feature/frontend-sites`, HEAD de référence `491cb24`, dépôt propre au départ
+d'UI 4.5. Détail Site et finitions UI 4.4.1 à UI 4.4.3 commitées.
+La [création Site UI 4.5](ui-4.5-site-create.md) est implémentée, en attente
+de validation. POST validé uniquement par simulation ; aucune édition de Site.
 
 À mettre à jour à chaque changement de branche.
 
@@ -563,8 +564,8 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Faire valider la [fiche détail Site UI 4.4](ui-4.4-site-detail.md)
-avant tout commit et avant UI 4.5. La conception UI 4.1 reste applicable :
+Faire valider la [création Site UI 4.5](ui-4.5-site-create.md)
+avant tout commit. UI 4.6 non commencée. La conception UI 4.1 reste applicable :
 entreprise explicite, code unique globalement, suppression et transfert exclus,
 aucun company_id dans PATCH et aucune interprétation arbitraire des 409.
 L'absence d'autorisation multi-entreprises reste une limite de sécurité.

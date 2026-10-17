@@ -1,5 +1,9 @@
 # UI 4.4 - Fiche détail d'un site industriel
 
+Suivi : UI 4.4 et ses finitions UI 4.4.1 à UI 4.4.3 sont commitées dans
+`491cb24`. Les résultats et états Git ci-dessous décrivent les séances historiques.
+La création fait l'objet du [rapport UI 4.5](ui-4.5-site-create.md).
+
 Date : 16 octobre 2026. Branche `feature/frontend-sites`, HEAD de référence
 `43f72f8`, dépôt propre avant intervention. Statut : implémenté, en attente de
 validation. Aucun commit, push ou merge. UI 4.5 non commencée.

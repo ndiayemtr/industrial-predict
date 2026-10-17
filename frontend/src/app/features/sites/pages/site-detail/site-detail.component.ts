@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, Subject, catchError, distinctUntilChanged, map, of, startWith, switchMap } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { CompanyRead, SiteRead } from '../../../../core/models/reference-data.model';
@@ -26,12 +26,15 @@ const positive = (raw: string | null, fallback: number | null, maximum = Number.
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SiteDetailComponent {
+  private readonly createdSiteId = inject(Router).currentNavigation()?.extras.state?.['createdSiteId'];
   private readonly api = inject(SitesApiService);
   private readonly references = inject(ReferenceDataApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new Subject<void>();
   private readonly companyRefresh = new Subject<void>();
   private readonly params = toSignal(this.route.queryParamMap, { requireSync: true });
+  readonly creationConfirmed = toSignal(this.route.paramMap.pipe(map(params => this.createdSiteId != null
+    && params.get('siteId') === String(this.createdSiteId))), { requireSync: true });
   readonly formatDateTime = formatAdministrativeDateTime;
   readonly referenceLabel = businessReferenceLabel;
   readonly state = toSignal(this.route.paramMap.pipe(
