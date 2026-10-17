@@ -10,6 +10,8 @@ Projet en développement actif.
 La création Site UI 4.5 et ses finitions sont commitées. La
 [modification UI 4.6](ui-4.6-site-edit.md) est validée, sans transfert
 d'entreprise ni suppression. Les parcours HTTP restent testés par simulation.
+La [sécurisation UI 4.6.2](ui-4.6.2-site-code-simulation.md) est validée, avec
+un simulateur local en mémoire sans connexion FastAPI/PostgreSQL.
 
 À mettre à jour à chaque changement de branche.
 
@@ -565,7 +567,7 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 ## Prochaine action
 
 La modification Sites UI 4.6 est validée. Enregistrer les travaux approuvés
-par étapes cohérentes avant de poursuivre.
+par étapes cohérentes avant de poursuivre. La sécurisation UI 4.6.2 est également validée.
 La conception UI 4.1 reste applicable : entreprise explicite, code unique
 globalement, suppression et transfert exclus, aucun company_id dans PATCH
 et aucune interprétation arbitraire des 409. L'absence d'autorisation

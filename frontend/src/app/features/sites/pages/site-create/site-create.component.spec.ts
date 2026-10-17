@@ -104,6 +104,17 @@ describe('Site creation page', () => {
     http.expectOne('/api/v1/sites/87').flush(site); reference().flush(company); await settle();
     expect(confirm).not.toHaveBeenCalled(); expect(toastr.success).toHaveBeenCalledTimes(1);
   });
+  it('serializes the entered business code without appending help or display text', async () => {
+    await ready();
+    const input = root().querySelector<HTMLInputElement>('#site-code')!;
+    input.value = 'DEMO-SITE-001'; input.dispatchEvent(new Event('input', { bubbles: true }));
+    component.editor()!.form.controls.name.setValue('Site de démonstration'); await submit();
+    const req = post();
+    expect(input.value).toBe('DEMO-SITE-001');
+    expect(req.request.body).toEqual({ company_id: 7, name: 'Site de démonstration', code: 'DEMO-SITE-001' });
+    expect(req.request.serializeBody()).toBe('{"company_id":7,"name":"Site de démonstration","code":"DEMO-SITE-001"}');
+    expect(req.request.serializeBody()).not.toContain('(inchangé)');
+  });
   it('retains a created-site link and prevents another POST when navigation is cancelled, without a toast', async () => {
     await ready(); fill(); vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(false);
     await submit(); post().flush(site); await settle();

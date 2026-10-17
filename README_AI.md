@@ -114,6 +114,9 @@ entreprise en lecture seule, PATCH différentiel sans company_id, dates de suivi
 hors FormGroup et confirmation après navigation. Suppression et transfert exclus.
 Les parcours HTTP de création/modification sont validés par simulation.
 
+La [sécurisation UI 4.6.2](docs/ui-4.6.2-site-code-simulation.md) est validée :
+non-régression du code métier et simulateur HTTP isolé en mémoire, sans upstream.
+
 ### Machine Learning
 
 - Python

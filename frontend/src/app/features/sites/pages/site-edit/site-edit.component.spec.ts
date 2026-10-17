@@ -72,6 +72,28 @@ describe('Site editing page', () => {
     expect(req.request.body).toEqual({ name: '  Nouveau 日本  ' });
     expect(component.original()).toEqual(site);
   });
+  it.each(['DEMO-SITE-001', 'DEMO-SITE-001 (inchangé)'])('excludes untouched code %s when only name and description change', async code => {
+    await ready({ ...site, code });
+    const input = root().querySelector<HTMLInputElement>('#site-code')!;
+    // A touched/dirty control is not a difference if its value is unchanged.
+    component.editor()!.form.controls.code.markAsDirty();
+    const name = root().querySelector<HTMLInputElement>('#site-name')!;
+    name.value = 'Site de démonstration - Modifié'; name.dispatchEvent(new Event('input', { bubbles: true }));
+    const description = root().querySelector<HTMLTextAreaElement>('#site-description')!;
+    description.value = 'Description mise à jour pour valider le formulaire de modification.';
+    description.dispatchEvent(new Event('input', { bubbles: true })); await submit();
+    const expected = { name: name.value, description: description.value };
+    const req = patch();
+    expect(input.value).toBe(code); expect(component.original()?.code).toBe(code);
+    expect(req.request.body).toEqual(expected); expect(req.request.serializeBody()).toBe(JSON.stringify(expected));
+    expect(Object.keys(req.request.body)).toEqual(['name', 'description']);
+  });
+  it('transmits a suffix only when it is explicitly entered in the code field, without silently correcting it', async () => {
+    await ready({ ...site, code: 'DEMO-SITE-001' });
+    const input = root().querySelector<HTMLInputElement>('#site-code')!;
+    input.value = 'DEMO-SITE-001 (inchangé)'; input.dispatchEvent(new Event('input', { bubbles: true })); await submit();
+    expect(patch().request.body).toEqual({ code: 'DEMO-SITE-001 (inchangé)' });
+  });
   it.each([undefined, null, ''])('omits unchanged description %s from PATCH', async description => {
     await ready({ ...site, description } as SiteRead); change(); await submit();
     expect(patch().request.body).toEqual({ name: 'Nom modifié' });

@@ -173,6 +173,7 @@ réelles POST/PATCH restent non testées de bout en bout.
 - [x] UI 4.4 et finitions UI 4.4.1 à UI 4.4.3 - Détail et libellés métier, [bilan](ui-4.4-site-detail.md), commit `491cb24`
 - [x] UI 4.5 et finitions - Création Site commitée dans `e8702b0`, [bilan](ui-4.5-site-create.md), écritures simulées uniquement
 - [x] UI 4.6 - Modification Site validée, [bilan](ui-4.6-site-edit.md), sans transfert d'entreprise
+- [x] UI 4.6.2 - Code métier et simulateur HTTP isolé validés, [bilan](ui-4.6.2-site-code-simulation.md)
 - [ ] Étapes suivantes - Suivre le découpage de la conception et les validations correspondantes
 
 ### Écrans métier restant à implémenter
