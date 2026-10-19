@@ -1,0 +1,51 @@
+<app-page-header title="Nouvel équipement industriel" description="Créer un équipement et vérifier son rattachement à un site." />
+<section class="creation" aria-label="Nouvel équipement industriel" [attr.aria-busy]="state() === 'saving'">
+  @if (contextNotice) { <p role="status">{{ contextNotice }}</p> }
+  @if (state() === 'saving') { <app-loading-state message="Enregistrement de l’équipement en cours…" /> }
+  @if (state() === 'error') {
+    <app-error-state title="Création non confirmée" [message]="message()" />
+    @if (!uncertain()) { <button type="button" (click)="verifyReferences()">Vérifier à nouveau le rattachement</button> }
+    @if (uncertain()) {
+      <p><a routerLink="/equipments" [queryParams]="listQuery()" target="_blank" rel="noopener">Vérifier la liste dans un nouvel onglet</a></p>
+      <button type="button" (click)="acknowledgeVerification()">J’ai vérifié la liste, autoriser une nouvelle soumission</button>
+    }
+  }
+  @if (created()) {
+    <p role="status">Équipement créé avec succès.</p>
+    @if (message()) { <p>{{ message() }}</p> }
+    <a class="created-link" [href]="recoveryUrl()" (click)="recover($event)">Ouvrir la fiche de l’équipement créé</a>
+  }
+  <app-equipment-form [initialParents]="references.initialParents()" [companies]="references.companyOptions()" [sites]="references.siteOptions()"
+    [verifiedCompanyId]="references.company()?.id ?? null" [verifiedSiteId]="references.site()?.id ?? null"
+    [saving]="state() === 'saving'" [blocked]="uncertain() || state() === 'success'" [fieldErrors]="fieldErrors()"
+    (companyChanged)="selectCompany($event)" (siteChanged)="selectSite($event)" (submitted)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()">
+    <div companyReferences>
+      @if (references.companies().status === 'loading') { <app-loading-state message="Chargement des entreprises…" /> }
+      @if (references.companies().status === 'ready' && references.companies().total === 0) { <p role="status">Aucune entreprise disponible.</p> }
+      @if (references.companies().status === 'error') {
+        <app-error-state title="Catalogue entreprises indisponible" message="Les entreprises déjà chargées restent disponibles."
+          [retryable]="references.companies().retryable" (retry)="references.retryCompanies()" />
+      }
+      @if (references.companies().status === 'ready' && references.companies().page < references.companies().pages) {
+        <button type="button" (click)="references.moreCompanies()">Charger davantage d’entreprises</button>
+      }
+    </div>
+    <div siteReferences>
+      @if (references.state() === 'loading') { <app-loading-state message="Vérification du rattachement entreprise/site…" /> }
+      @if (references.state() === 'error') { <app-error-state title="Rattachement indisponible" [message]="references.message()"
+        [retryable]="references.canRetry()" (retry)="verifyReferences()" /> }
+      @if (references.sites().status === 'loading') { <app-loading-state message="Chargement des sites…" /> }
+      @if (references.sites().status === 'ready' && references.sites().total === 0) {
+        <p role="status">Aucun site disponible pour cette entreprise.</p>
+        @if (references.company(); as company) {
+          <a routerLink="/sites/new" [queryParams]="{ company_id: company.id }" target="_blank" rel="noopener">Créer un site dans un nouvel onglet</a>
+        }
+      }
+      @if (references.sites().status === 'error') { <app-error-state title="Catalogue sites indisponible" message="Les sites déjà chargés restent disponibles."
+        [retryable]="references.sites().retryable" (retry)="references.retrySites()" /> }
+      @if (references.sites().status === 'ready' && references.sites().page < references.sites().pages) {
+        <button type="button" (click)="references.moreSites()">Charger davantage de sites</button>
+      }
+    </div>
+  </app-equipment-form>
+</section>

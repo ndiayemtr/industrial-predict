@@ -1,4 +1,6 @@
-<app-page-header title="Équipements industriels" description="Consultez les équipements d’un site et affinez votre recherche." />
+<app-page-header title="Équipements industriels" description="Consultez les équipements d’un site et affinez votre recherche.">
+  <a class="new-equipment" routerLink="/equipments/new" [queryParams]="facade.query()">Nouvel équipement</a>
+</app-page-header>
 @if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
 <section class="filters" aria-labelledby="equipment-context-title">
   @let validCompany = facade.company() !== null && facade.company()?.id === company.value;

@@ -1,0 +1,64 @@
+<form #formElement [formGroup]="form" (ngSubmit)="submit()" aria-label="Création d’un équipement industriel" [attr.aria-busy]="saving()" novalidate>
+  <p>Les champs marqués « obligatoire » doivent être renseignés.</p>
+  <fieldset [disabled]="saving() || blocked()">
+    <legend>Rattachement et informations de l’équipement</legend>
+    @let companyHelp = form.controls.company_id.value === null || form.controls.company_id.value !== verifiedCompanyId();
+    @let siteHelp = companyHelp || form.controls.site_id.value === null || form.controls.site_id.value !== verifiedSiteId();
+    <div class="field">
+      <label for="equipment-company_id">Entreprise de rattachement (obligatoire)</label>
+      <select id="equipment-company_id" formControlName="company_id" required [attr.aria-describedby]="companyHelp ? 'equipment-company-help equipment-company_id-error' : 'equipment-company_id-error'" [attr.aria-invalid]="error('company_id') ? 'true' : null">
+        <option [ngValue]="null">Sélectionnez une entreprise</option>
+        @for (item of companies(); track item.id) { <option [ngValue]="item.id">{{ item.label }}</option> }
+      </select>
+      @if (companyHelp) { <p id="equipment-company-help" class="help">Choisissez une entreprise pour charger ses sites.</p> }
+      <p id="equipment-company_id-error" class="field-error">{{ error('company_id') }}</p>
+      <ng-content select="[companyReferences]" />
+    </div>
+    <div class="field">
+      <label for="equipment-site_id">Site industriel (obligatoire)</label>
+      <select id="equipment-site_id" formControlName="site_id" required [attr.aria-describedby]="siteHelp ? 'equipment-site-help equipment-site_id-error' : 'equipment-site_id-error'" [attr.aria-invalid]="error('site_id') ? 'true' : null">
+        <option [ngValue]="null">Sélectionnez un site</option>
+        @for (item of sites(); track item.id) { <option [ngValue]="item.id">{{ item.label }}</option> }
+      </select>
+      @if (siteHelp) { <p id="equipment-site-help" class="help">Le site doit appartenir à l’entreprise choisie et être vérifié avant création.</p> }
+      <p id="equipment-site_id-error" class="field-error">{{ error('site_id') }}</p>
+      <ng-content select="[siteReferences]" />
+    </div>
+    @for (field of textFields; track field.key) {
+      <div class="field">
+        <label [for]="'equipment-' + field.key">{{ field.label }} (obligatoire)</label>
+        <input [id]="'equipment-' + field.key" [formControlName]="field.key" required [attr.aria-describedby]="'equipment-' + field.key + '-help equipment-' + field.key + '-error'" [attr.aria-invalid]="error(field.key) ? 'true' : null" />
+        <p class="help" [id]="'equipment-' + field.key + '-help'">{{ field.limit }} caractères Unicode maximum. La casse est conservée ; les espaces périphériques sont retirés.
+          @if (field.key === 'code') { Code unique pour tous les équipements, tous sites et entreprises confondus. }
+          @if (field.key === 'equipment_type') { Type libre, sans catalogue imposé. }
+        </p>
+        <p class="field-error" [id]="'equipment-' + field.key + '-error'">{{ error(field.key) }}</p>
+      </div>
+    }
+    <div class="field">
+      <label for="equipment-status">Statut (obligatoire)</label>
+      <select id="equipment-status" formControlName="status" required aria-describedby="equipment-status-error" [attr.aria-invalid]="error('status') ? 'true' : null">
+        @for (value of statuses; track value) { <option [value]="value">{{ statusLabels[value] }}</option> }
+      </select>
+      <p id="equipment-status-error" class="field-error">{{ error('status') }}</p>
+    </div>
+    <div class="field">
+      <label for="equipment-criticality">Criticité (obligatoire)</label>
+      <select id="equipment-criticality" formControlName="criticality" required aria-describedby="equipment-criticality-error" [attr.aria-invalid]="error('criticality') ? 'true' : null">
+        @for (value of criticalities; track value) { <option [value]="value">{{ criticalityLabels[value] }}</option> }
+      </select>
+      <p id="equipment-criticality-error" class="field-error">{{ error('criticality') }}</p>
+    </div>
+    <div class="field">
+      <label for="equipment-description">Description (facultative)</label>
+      <textarea id="equipment-description" formControlName="description" rows="5" aria-describedby="equipment-description-help equipment-description-error" [attr.aria-invalid]="error('description') ? 'true' : null"></textarea>
+      <p id="equipment-description-help" class="help">La description est facultative. Les espaces et sauts de ligne sont conservés.</p>
+      @if (form.controls.description.value !== null) { <button type="button" class="remove-description" (click)="removeDescription()">Retirer la description</button> }
+      <p id="equipment-description-error" class="field-error">{{ error('description') }}</p>
+    </div>
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours…' : 'Créer l’équipement' }}</button>
+    <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

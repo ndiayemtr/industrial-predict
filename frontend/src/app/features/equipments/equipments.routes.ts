@@ -5,10 +5,14 @@ export const EQUIPMENT_ROUTES: Routes = [{
   data: { pageTitle: 'Équipements' },
   loadComponent: () => import('./pages/equipments-list/equipments-list.component').then(m => m.EquipmentsListComponent)
 }, {
-  // Add future 'new' and ':equipmentId/edit' pages before this detail route.
-  // Until then, 'new' and nested paths belong to the global 404.
+  path: 'new', pathMatch: 'full',
+  title: 'Nouvel équipement industriel | Industrial Predict AI',
+  data: { pageTitle: 'Nouvel équipement industriel' },
+  canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
+  loadComponent: () => import('./pages/equipment-create/equipment-create.component').then(m => m.EquipmentCreateComponent)
+}, {
+  // Add the future ':equipmentId/edit' page before this detail route.
   path: ':equipmentId', pathMatch: 'full',
-  canMatch: [(_route, segments) => segments[0]?.path !== 'new'],
   title: 'Détail équipement | Industrial Predict AI',
   data: { pageTitle: 'Détail équipement' },
   loadComponent: () => import('./pages/equipment-detail/equipment-detail.component').then(m => m.EquipmentDetailComponent)

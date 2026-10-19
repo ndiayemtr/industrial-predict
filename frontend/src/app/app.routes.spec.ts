@@ -4,7 +4,7 @@ import { By, Title } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router, RouterOutlet, Routes } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { NbSidebarModule, NbThemeModule } from '@nebular/theme';
+import { NbSidebarModule, NbThemeModule, NbToastrService } from '@nebular/theme';
 import { vi } from 'vitest';
 import { routes } from './app.routes';
 import { provideDashboardTesting } from './features/dashboard/testing/dashboard-testing';
@@ -87,11 +87,11 @@ describe('Routing configuration invariants', () => {
   });
 
   it('declares one lazy Equipment detail after the full-match list, reserving future static/edit pages', () => {
-    expect(EQUIPMENT_ROUTES.map(route => route.path)).toEqual(['', ':equipmentId']);
+    expect(EQUIPMENT_ROUTES.map(route => route.path)).toEqual(['', 'new', ':equipmentId']);
     expect(EQUIPMENT_ROUTES.every(route => route.pathMatch === 'full')).toBe(true);
-    expect(typeof EQUIPMENT_ROUTES[1].loadComponent).toBe('function');
-    expect(EQUIPMENT_ROUTES[1].component).toBeUndefined();
-    expect(EQUIPMENT_ROUTES[1].canMatch).toHaveLength(1);
+    expect(typeof EQUIPMENT_ROUTES[2].loadComponent).toBe('function');
+    expect(EQUIPMENT_ROUTES[2].component).toBeUndefined();
+    expect(EQUIPMENT_ROUTES[1].canDeactivate).toHaveLength(1);
   });
 });
 
@@ -100,6 +100,7 @@ describe('Routing integration gaps', () => {
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes), provideNoopAnimations(),
+      { provide: NbToastrService, useValue: { success: vi.fn() } },
       ...provideDashboardTesting(),
       importProvidersFrom(
         NbThemeModule.forRoot({ name: 'industrial-predict' },
@@ -151,7 +152,14 @@ describe('Routing integration gaps', () => {
     }
   });
 
-  it.each(['/equipments/new', '/equipments/12/edit', '/equipments/12/extra'])(
+  it('loads the creation page before the generic Equipment detail with Shell and Sidebar intact', async () => {
+    const harness = await RouterTestingHarness.create('/equipments/new'); await settle(harness);
+    expect(TestBed.inject(Title).getTitle()).toBe('Nouvel équipement industriel | Industrial Predict AI');
+    expect(harness.routeNativeElement!.querySelector('app-equipment-create')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('app-equipment-detail')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/equipments');
+  });
+  it.each(['/equipments/12/edit', '/equipments/12/extra'])(
     'keeps future or unknown Equipment path %s on the global 404', async path => {
       const harness = await RouterTestingHarness.create(path); await settle(harness);
       expect(TestBed.inject(Title).getTitle()).toBe('Page introuvable | Industrial Predict AI');

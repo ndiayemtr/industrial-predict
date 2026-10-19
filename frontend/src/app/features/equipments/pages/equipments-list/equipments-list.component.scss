@@ -1,6 +1,9 @@
 @use '../../../../../styles/tokens' as tokens;
 
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
+.new-equipment { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; min-width: 0; max-width: 100%; box-sizing: border-box;
+  padding: tokens.$space-sm tokens.$space-md; background: tokens.$navigation-active; color: tokens.$sidebar-text;
+  border-radius: tokens.$border-radius; text-decoration: none; text-align: center; }
 .filters, .results {
   margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius;

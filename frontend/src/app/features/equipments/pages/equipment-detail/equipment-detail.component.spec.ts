@@ -67,6 +67,10 @@ describe('Equipment read-only detail and real parent chain', () => {
     expect(root().querySelector('.context-notice')).toBeNull();
     expect(root().querySelector('.equipment-back')?.getAttribute('href')).toBe('/equipments?page=1&page_size=20');
   });
+  it('does not accept URL query parameters as creation-success evidence', async () => {
+    await loaded('/equipments/12?createdEquipmentId=12'); expect(component.creationConfirmed()).toBe(false);
+    expect(root().querySelector('.creation-confirmation')).toBeNull();
+  });
   it.each(['0', '-1', 'abc', '1.5', '1e2', '9007199254740992'])('rejects identifier %s locally without any HTTP', async id => {
     await open(`/equipments/${id}`); expect(root().textContent).toContain('Identifiant invalide'); expect(root().querySelector('dl')).toBeNull(); http.expectNone(() => true);
   });

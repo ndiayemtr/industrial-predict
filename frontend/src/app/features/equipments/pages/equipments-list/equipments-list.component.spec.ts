@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { NbToastrService } from '@nebular/theme';
 import { EQUIPMENT_ROUTES } from '../../equipments.routes';
 import { EquipmentsListComponent } from './equipments-list.component';
 
@@ -23,7 +24,7 @@ describe('Equipments list, references and URL', () => {
   const button = (label: string) => [...root().querySelectorAll<HTMLButtonElement>('button')].find(el => el.textContent?.trim() === label)!;
   const url = () => TestBed.inject(Router).parseUrl(TestBed.inject(Router).url).queryParams;
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: NbToastrService, useValue: { success: vi.fn() } },
       provideRouter([{ path: 'equipments', children: EQUIPMENT_ROUTES }, { path: 'other', component: EquipmentsListComponent }])] });
     http = TestBed.inject(HttpTestingController);
   });
@@ -38,19 +39,27 @@ describe('Equipments list, references and URL', () => {
   }
   async function reload() { parents(); const req = list(); req.flush(page); await settle(); return req; }
 
-  it('requires explicit selections, without any premature create or delete action', async () => {
+  it('requires explicit selections and provides a real create link without delete actions', async () => {
     await open(); request('companies').flush(catalog); await settle();
     expect(component.company.value).toBeNull(); expect(component.site.value).toBeNull(); expect(component.site.disabled).toBe(true);
     expect(root().querySelector('#companies-help')).not.toBeNull(); expect(root().querySelector('#sites-help')).not.toBeNull();
     expect(root().querySelector('#equipments-company')?.getAttribute('aria-describedby')).toBe('companies-help');
     expect(root().querySelector('#equipments-site')?.getAttribute('aria-describedby')).toBe('sites-help');
     expect(root().textContent).toContain('Sélectionnez une entreprise puis un site');
-    expect(root().querySelector('table')).toBeNull(); expect(root().querySelectorAll('a')).toHaveLength(0);
+    expect(root().querySelector('table')).toBeNull(); expect(root().querySelector('.new-equipment')?.getAttribute('href')).toBe('/equipments/new?page=1&page_size=20');
     expect(button('Rechercher').disabled).toBe(true); http.expectNone(() => true);
     component.company.setValue(7); await settle(); request('sites').flush(siteCatalog); request('companies/7').flush(company); await settle();
     expect(component.site.enabled).toBe(true); expect(component.site.value).toBeNull(); http.expectNone(() => true);
     expect(root().querySelector('#companies-help')).toBeNull(); expect(root().querySelector('#sites-help')).not.toBeNull();
     component.site.setValue(9); await settle(); await reload(); expect(component.facade.state().status).toBe('success');
+  });
+  it('navigates to creation with the seven applied context parameters', async () => {
+    await ready('/equipments?company_id=7&site_id=9&status=maintenance&criticality=high&search=Pompe&page=2&page_size=50');
+    root().querySelector<HTMLAnchorElement>('.new-equipment')!.click(); await settle();
+    expect(root().querySelector('app-feature-placeholder')).toBeNull();
+    request('companies').flush(catalog); request('companies/7').flush(company); request('sites/9').flush(site); request('sites').flush(siteCatalog); await settle();
+    expect(TestBed.inject(Router).url).toBe('/equipments/new?company_id=7&site_id=9&page=2&page_size=50&search=Pompe&status=maintenance&criticality=high');
+    expect(root().querySelector<HTMLSelectElement>('#equipment-site_id')?.selectedOptions[0].textContent).toContain(site.name);
   });
   it('hides only verified parent guidance and restores it when selections are cleared', async () => {
     await ready();
