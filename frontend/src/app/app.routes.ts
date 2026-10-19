@@ -5,7 +5,6 @@ import { NavigableNavigationItem } from './layout/navigation/navigation-item.mod
 const availableItems = NAVIGATION_ITEMS.filter(
   (item): item is NavigableNavigationItem => item.status === 'available'
 );
-const equipmentItem = availableItems.find((item) => item.id === 'equipments')!;
 const dashboardItem = availableItems.find((item) => item.id === 'dashboard')!;
 const loadFeaturePlaceholder = () =>
   import('./shared/pages/feature-placeholder/feature-placeholder.component').then(
@@ -34,12 +33,6 @@ export const routes: Routes = [
             )
           : loadFeaturePlaceholder })
       })),
-      {
-        path: `${equipmentItem.path.slice(1)}/:equipmentId`,
-        title: 'Détail équipement | Industrial Predict AI',
-        data: { pageTitle: 'Détail équipement' },
-        loadComponent: loadFeaturePlaceholder
-      },
       {
         path: '**',
         title: 'Page introuvable | Industrial Predict AI',

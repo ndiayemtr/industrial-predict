@@ -1,0 +1,44 @@
+<app-page-header title="Détail équipement" description="Informations de l’équipement industriel en lecture seule.">
+  <a class="equipment-back" routerLink="/equipments" [queryParams]="listQuery()">Retour à la liste des équipements</a>
+</app-page-header>
+@let current = state();
+<section class="equipment-detail" aria-labelledby="equipment-information-title" [attr.aria-busy]="current.status === 'loading'">
+  <h2 id="equipment-information-title">Informations de l’équipement</h2>
+  @if (current.status === 'loading') {
+    <app-loading-state message="Chargement de l’équipement…" />
+  } @else if (current.status === 'error') {
+    <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
+  } @else {
+    @if (differentContext()) {
+      <p class="context-notice" role="status">Le rattachement réel de cet équipement diffère du contexte de retour. Celui-ci est conservé pour revenir à la liste.</p>
+    }
+    <dl>
+      <div><dt>Nom</dt><dd>{{ display(current.data.name) }}</dd></div>
+      <div><dt>Code métier</dt><dd>{{ display(current.data.code) }}</dd></div>
+      <div><dt>Type d’équipement</dt><dd>{{ display(current.data.equipment_type) }}</dd></div>
+      <div><dt>Statut</dt><dd>{{ statusLabels[current.data.status] ?? 'Non disponible' }}</dd></div>
+      <div><dt>Criticité</dt><dd>{{ criticalityLabels[current.data.criticality] ?? 'Non disponible' }}</dd></div>
+      <div class="description"><dt>Description</dt><dd>{{ current.data.description?.trim() ? current.data.description : 'Non renseignée' }}</dd></div>
+      <div class="parent"><dt>Site industriel</dt><dd [attr.aria-busy]="current.site.status === 'loading'">
+        @switch (current.site.status) {
+          @case ('loading') { <app-loading-state message="Chargement du site réel…" /> }
+          @case ('error') { <app-error-state [title]="current.site.title" [message]="current.site.message" [retryable]="current.site.retryable" (retry)="retrySite()" /> }
+          @case ('success') {
+            <a class="site-reference" [routerLink]="['/sites', current.site.data.id]" [queryParams]="siteQuery(current.site.data)">{{ referenceLabel(current.site.data) }}</a>
+          }
+        }
+      </dd></div>
+      <div class="parent"><dt>Entreprise de rattachement</dt><dd [attr.aria-busy]="current.company.status === 'loading'">
+        @switch (current.company.status) {
+          @case ('waiting') { <p>Entreprise non résolue : la référence du site est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement de l’entreprise réelle…" /> }
+          @case ('error') { <app-error-state [title]="current.company.title" [message]="current.company.message" [retryable]="current.company.retryable" (retry)="retryCompany()" /> }
+          @case ('success') { <p class="company-reference">{{ referenceLabel(current.company.data) }}</p> }
+        }
+      </dd></div>
+      <div><dt>Création</dt><dd>{{ formatDateTime(current.data.created_at) }}</dd></div>
+      <div><dt>Dernière modification</dt><dd>{{ formatDateTime(current.data.updated_at) }}</dd></div>
+    </dl>
+    <p class="timestamp-note">Dates affichées selon les informations horaires du serveur.</p>
+  }
+</section>

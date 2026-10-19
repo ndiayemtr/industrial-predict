@@ -1,6 +1,6 @@
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ReferenceDataApiService } from '../../../core/api/reference-data-api.service';
 import { DashboardRead } from '../models/dashboard.model';
 
@@ -8,7 +8,10 @@ import { DashboardRead } from '../models/dashboard.model';
 export function provideDashboardTesting() {
   return [provideHttpClient(), provideHttpClientTesting(), {
     provide: ReferenceDataApiService,
-    useValue: { getCompanies: () => of({ items: [], total: 0, page: 1, page_size: 50, pages: 0 }) }
+    useValue: {
+      getCompanies: () => of({ items: [], total: 0, page: 1, page_size: 50, pages: 0 }),
+      getEquipmentById: () => throwError(() => new HttpErrorResponse({ status: 404 }))
+    }
   }];
 }
 

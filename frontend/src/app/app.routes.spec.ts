@@ -9,6 +9,7 @@ import { vi } from 'vitest';
 import { routes } from './app.routes';
 import { provideDashboardTesting } from './features/dashboard/testing/dashboard-testing';
 import { NAVIGATION_ITEMS } from './layout/navigation/navigation.config';
+import { EQUIPMENT_ROUTES } from './features/equipments/equipments.routes';
 
 const expectedPages = [
   ['/dashboard', 'Dashboard'], ['/companies', 'Entreprises'], ['/sites', 'Sites industriels'],
@@ -68,7 +69,7 @@ describe('Routing configuration invariants', () => {
     expect(wildcard.redirectTo).toBeUndefined();
     expect(wildcard.data).toEqual({ pageTitle: 'Page introuvable', isNotFound: true });
     expect(wildcard.title).toBe('Page introuvable | Industrial Predict AI');
-    expect(children.filter((route) => route.path === 'equipments/:equipmentId')).toHaveLength(1);
+    expect(children.filter((route) => route.path === 'equipments/:equipmentId')).toHaveLength(0);
   });
 
   it('declares deferred loaders for Shell and every feature without eager components', () => {
@@ -83,6 +84,14 @@ describe('Routing configuration invariants', () => {
         expect(route.loadChildren).toBeUndefined();
       }
     }
+  });
+
+  it('declares one lazy Equipment detail after the full-match list, reserving future static/edit pages', () => {
+    expect(EQUIPMENT_ROUTES.map(route => route.path)).toEqual(['', ':equipmentId']);
+    expect(EQUIPMENT_ROUTES.every(route => route.pathMatch === 'full')).toBe(true);
+    expect(typeof EQUIPMENT_ROUTES[1].loadComponent).toBe('function');
+    expect(EQUIPMENT_ROUTES[1].component).toBeUndefined();
+    expect(EQUIPMENT_ROUTES[1].canMatch).toHaveLength(1);
   });
 });
 
@@ -120,6 +129,8 @@ describe('Routing integration gaps', () => {
     await settle(harness);
     const outlet = harness.routeDebugElement!.query(By.directive(RouterOutlet)).injector.get(RouterOutlet);
     const originalComponent = outlet.component;
+    expect(harness.routeNativeElement!.querySelector('app-equipment-detail')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('app-feature-placeholder')).toBeNull();
     const identifiers: (string | null)[] = [];
     const subscription = outlet.activatedRoute.paramMap.subscribe((params) => identifiers.push(params.get('equipmentId')));
     try {
@@ -139,6 +150,14 @@ describe('Routing integration gaps', () => {
       subscription.unsubscribe();
     }
   });
+
+  it.each(['/equipments/new', '/equipments/12/edit', '/equipments/12/extra'])(
+    'keeps future or unknown Equipment path %s on the global 404', async path => {
+      const harness = await RouterTestingHarness.create(path); await settle(harness);
+      expect(TestBed.inject(Title).getTitle()).toBe('Page introuvable | Industrial Predict AI');
+      expect(harness.routeNativeElement!.querySelector('app-equipment-detail')).toBeNull();
+      expect(harness.routeNativeElement!.querySelectorAll('nav a[href]')).toHaveLength(9);
+    });
 
   it('calls only visited component loaders and reuses them for same-page navigation', async () => {
     const shellLoader = vi.fn(routes[0].loadComponent!);

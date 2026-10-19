@@ -14,6 +14,7 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { businessReferenceLabel } from '../../../../shared/utils/business-reference-label';
 import { EquipmentsListFacade } from '../../equipments-list.facade';
 import { EquipmentsQuery } from '../../models/equipments-state.model';
+import { equipmentCriticalityLabels, equipmentStatusLabels } from '../../models/equipment-labels';
 
 type Catalog<T> = Page<T> & { scope: number | null; status: 'idle' | 'loading' | 'ready' | 'error'; requestedPage: number; retryable: boolean };
 type CatalogRequest = { scope: number | null; page: number } | null;
@@ -48,8 +49,8 @@ export class EquipmentsListComponent {
   readonly size = new FormControl(20, { nonNullable: true });
   readonly urlNotice = signal('');
   readonly referenceLabel = businessReferenceLabel;
-  readonly statusLabels: Record<EquipmentStatus, string> = { operational: 'Opérationnel', maintenance: 'En maintenance', out_of_service: 'Hors service' };
-  readonly criticalityLabels: Record<EquipmentCriticality, string> = { low: 'Faible', medium: 'Moyenne', high: 'Élevée', critical: 'Critique' };
+  readonly statusLabels = equipmentStatusLabels();
+  readonly criticalityLabels = equipmentCriticalityLabels();
   readonly statuses = Object.keys(this.statusLabels) as EquipmentStatus[];
   readonly criticalities = Object.keys(this.criticalityLabels) as EquipmentCriticality[];
   readonly companyOptions = computed(() => this.options(this.companies().items, this.facade.company()));

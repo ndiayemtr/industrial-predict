@@ -6,6 +6,7 @@
   @let loaded = state();
   @if (loaded.status === 'success') {
     <a class="site-back site-edit" [routerLink]="['/sites', loaded.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>
+    <a class="site-back site-equipments" routerLink="/equipments" [queryParams]="{ company_id: loaded.data.company_id, site_id: loaded.data.id, page: 1, page_size: 20 }">Voir les équipements</a>
   }
 </app-page-header>
 @let current = state();
