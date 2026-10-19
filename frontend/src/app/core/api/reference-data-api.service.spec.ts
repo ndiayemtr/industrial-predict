@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Observable } from 'rxjs';
 import { ReferenceDataApiService } from './reference-data-api.service';
+import { EquipmentPageQuery } from '../models/equipment-page-query.model';
 
 describe('ReferenceDataApiService', () => {
   let api: ReferenceDataApiService;
@@ -42,6 +43,31 @@ describe('ReferenceDataApiService', () => {
     const req = http.expectOne('/api/v1/companies');
     expect(req.request.params.keys()).toEqual([]);
     req.flush({ items: [], total: 0, page: 1, page_size: 20, pages: 0 });
+  });
+
+  it.each<EquipmentPageQuery>([
+    { status: 'operational' }, { status: 'maintenance' }, { status: 'out_of_service' },
+    { criticality: 'low' }, { criticality: 'medium' }, { criticality: 'high' }, { criticality: 'critical' },
+    { status: 'maintenance', criticality: 'high', page: 2, page_size: 50, search: ' Pompe & moteur ' }
+  ])('transmits Equipment filters independently and combined: %j', query => {
+    api.getEquipments(9, query).subscribe();
+    const req = http.expectOne(req => req.url === '/api/v1/equipments');
+    expect(req.request.params.keys().sort()).toEqual(['site_id', ...Object.keys(query)].sort());
+    expect(req.request.params.get('site_id')).toBe('9');
+    for (const [key, value] of Object.entries(query)) expect(req.request.params.get(key)).toBe(String(value));
+    req.flush({ items: [], total: 0, page: 1, page_size: 20, pages: 0 });
+  });
+  it('preserves legacy Dashboard calls and does not leak filters to other reference endpoints', () => {
+    api.getEquipments(9).subscribe();
+    const equipment = http.expectOne('/api/v1/equipments?site_id=9');
+    expect(equipment.request.params.keys()).toEqual(['site_id']); equipment.flush({ items: [], total: 0, page: 1, page_size: 20, pages: 0 });
+    const query = { page: 2, status: 'maintenance' as const, criticality: 'high' as const, company_id: 999 };
+    api.getCompanies(query).subscribe();
+    const company = http.expectOne('/api/v1/companies?page=2'); expect(company.request.params.keys()).toEqual(['page']);
+    company.flush({ items: [], total: 0, page: 2, page_size: 20, pages: 0 });
+    api.getSites(7, query).subscribe();
+    const site = http.expectOne('/api/v1/sites?page=2&company_id=7'); expect(site.request.params.keys().sort()).toEqual(['company_id', 'page']);
+    site.flush({ items: [], total: 0, page: 2, page_size: 20, pages: 0 });
   });
 
   it('loads an individual company reference without rewriting timestamps or requesting its list', () => {

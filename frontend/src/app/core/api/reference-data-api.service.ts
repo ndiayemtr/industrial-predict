@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { API_PREFIX } from '../http/api-config';
 import { Page, ReferencePageQuery } from '../models/page.model';
 import { CompanyRead, EquipmentRead, SiteRead } from '../models/reference-data.model';
+import { EquipmentPageQuery } from '../models/equipment-page-query.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReferenceDataApiService {
@@ -31,9 +32,12 @@ export class ReferenceDataApiService {
     return this.http.get<EquipmentRead>(`${API_PREFIX}/equipments/${id}`);
   }
 
-  getEquipments(siteId: number, query: ReferencePageQuery = {}): Observable<Page<EquipmentRead>> {
+  getEquipments(siteId: number, query: EquipmentPageQuery = {}): Observable<Page<EquipmentRead>> {
+    let params = this.params(query).set('site_id', siteId);
+    if (query.status != null) params = params.set('status', query.status);
+    if (query.criticality != null) params = params.set('criticality', query.criticality);
     return this.http.get<Page<EquipmentRead>>(`${API_PREFIX}/equipments`, {
-      params: this.params(query).set('site_id', siteId)
+      params
     });
   }
 
