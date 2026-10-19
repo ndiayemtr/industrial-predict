@@ -1,0 +1,117 @@
+<app-page-header title="Équipements industriels" description="Consultez les équipements d’un site et affinez votre recherche." />
+@if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
+<section class="filters" aria-labelledby="equipment-context-title">
+  @let validCompany = facade.company() !== null && facade.company()?.id === company.value;
+  @let validSite = facade.site() !== null && facade.site()?.id === site.value && facade.site()?.company_id === company.value;
+  <h2 id="equipment-context-title">Entreprise et site</h2>
+  <div class="parents">
+    <div>
+      <label for="equipments-company">Entreprise</label>
+      <select id="equipments-company" [formControl]="company" [attr.aria-describedby]="validCompany ? null : 'companies-help'">
+        <option [ngValue]="null">Sélectionner une entreprise</option>
+        @for (item of companyOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!validCompany) { <p id="companies-help">Choisissez explicitement une entreprise.</p> }
+      @if (companies().status === 'loading') { <p role="status">Chargement des entreprises…</p> }
+      @if (companies().status === 'error') {
+        <p role="alert">Les entreprises ne peuvent pas être chargées.</p>
+        @if (companies().retryable) { <button type="button" (click)="retryCompanies()">Réessayer les entreprises</button> }
+      }
+      @if (companies().status === 'ready' && companies().total === 0) { <p>Aucune entreprise disponible.</p> }
+      @if (companies().status === 'ready' && companies().page < companies().pages) {
+        <button type="button" (click)="moreCompanies()">Charger plus d’entreprises</button>
+      }
+    </div>
+    <div>
+      <label for="equipments-site">Site</label>
+      <select id="equipments-site" [formControl]="site" [attr.aria-describedby]="validSite ? null : 'sites-help'">
+        <option [ngValue]="null">Sélectionner un site</option>
+        @for (item of siteOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!validSite) { <p id="sites-help">Choisissez un site de l’entreprise sélectionnée.</p> }
+      @if (sites().status === 'loading') { <p role="status">Chargement des sites…</p> }
+      @if (sites().status === 'error') {
+        <p role="alert">Les sites de cette entreprise ne peuvent pas être chargés.</p>
+        @if (sites().retryable) { <button type="button" (click)="retrySites()">Réessayer les sites</button> }
+      }
+      @if (sites().status === 'ready' && sites().total === 0) { <p>Aucun site disponible pour cette entreprise.</p> }
+      @if (sites().status === 'ready' && sites().page < sites().pages) {
+        <button type="button" (click)="moreSites()">Charger plus de sites</button>
+      }
+    </div>
+  </div>
+  <form (submit)="applySearch($event)" aria-label="Recherche des équipements">
+    <label for="equipments-search">Rechercher par nom, code ou type</label>
+    <div class="search-controls">
+      <input id="equipments-search" type="search" [formControl]="search" maxlength="100"
+        aria-describedby="equipments-search-help equipments-search-error" [attr.aria-invalid]="search.touched && search.invalid" />
+      <button class="primary" type="submit" [disabled]="!canFilter() || search.invalid">Rechercher</button>
+      <button type="button" (click)="clearSearch()" [disabled]="!canFilter()">Effacer la recherche</button>
+    </div>
+    <p id="equipments-search-help">Validez avec Entrée ou le bouton Rechercher. 100 caractères maximum.</p>
+    <p id="equipments-search-error" role="alert">@if (search.touched && search.invalid) { La recherche dépasse 100 caractères. }</p>
+  </form>
+  <div class="criteria">
+    <div><label for="equipments-status">Statut</label>
+      <select id="equipments-status" [formControl]="status"><option value="">Tous</option>
+        @for (value of statuses; track value) { <option [value]="value">{{ statusLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="equipments-criticality">Criticité</label>
+      <select id="equipments-criticality" [formControl]="criticality"><option value="">Toutes</option>
+        @for (value of criticalities; track value) { <option [value]="value">{{ criticalityLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="equipments-size">Équipements par page</label>
+      <select id="equipments-size" [formControl]="size">
+        @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+      </select>
+    </div>
+  </div>
+</section>
+<section class="results" aria-labelledby="equipment-results-title" [attr.aria-busy]="busy()">
+  <h2 id="equipment-results-title">Équipements du site</h2>
+  @if (facade.site(); as selected) { <p class="context">{{ referenceLabel(facade.company()!) }} / {{ referenceLabel(selected) }}</p> }
+  @let state = facade.state();
+  @switch (state.status) {
+    @case ('idle') {
+      <app-empty-state title="Sélection attendue" message="Sélectionnez une entreprise puis un site pour consulter ses équipements." />
+    }
+    @case ('loading') { <app-loading-state message="Vérification du contexte et chargement des équipements…" /> }
+    @case ('error') {
+      <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" />
+    }
+    @case ('empty') {
+      <p role="status">{{ state.data.total }} {{ state.data.total > 1 ? 'équipements' : 'équipement' }}</p>
+      <app-empty-state [title]="filtered() ? 'Aucun résultat' : 'Aucun équipement'"
+        [message]="filtered() ? 'Aucun équipement ne correspond à ces critères sur ce site.' : 'Ce site ne comporte pas encore d’équipement.'">
+        @if (filtered()) { <button type="button" (click)="clearFilters()">Effacer les critères</button> }
+      </app-empty-state>
+    }
+    @case ('success') {
+      @if (state.data.items.length === 0) {
+        <app-empty-state title="Page hors plage" message="Cette page ne contient plus d’équipements. Revenez à une page disponible.">
+          <button type="button" (click)="recoverPage()">Revenir aux résultats</button>
+        </app-empty-state>
+      } @else {
+        <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement.</p>
+        <div class="table-scroll" role="region" aria-label="Liste des équipements" tabindex="0">
+          <table>
+            <caption>{{ state.data.total }} {{ state.data.total > 1 ? 'équipements' : 'équipement' }} - Page {{ page() }} sur {{ state.data.pages }}</caption>
+            <thead><tr><th scope="col">Nom</th><th scope="col">Code métier</th><th scope="col">Type</th><th scope="col">Statut</th><th scope="col">Criticité</th></tr></thead>
+            <tbody>@for (item of state.data.items; track item.id) {
+              <tr><td><a [routerLink]="['/equipments', item.id]" [queryParams]="facade.query()">{{ item.name }}</a></td>
+                <td>{{ item.code }}</td><td>{{ item.equipment_type }}</td>
+                <td><span class="badge">{{ statusLabels[item.status] }}</span></td><td>{{ criticalityLabels[item.criticality] }}</td></tr>
+            }</tbody>
+          </table>
+        </div>
+      }
+      <nav class="pagination" aria-label="Pagination des équipements">
+        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>
+        <p role="status">Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} {{ state.data.total > 1 ? 'équipements' : 'équipement' }}</p>
+        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">Suivant</button>
+      </nav>
+    }
+  }
+</section>

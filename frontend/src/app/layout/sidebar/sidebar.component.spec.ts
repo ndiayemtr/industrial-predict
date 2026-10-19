@@ -114,7 +114,6 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/equipments', 'Équipements'],
     ['/sensors', 'Capteurs'], ['/measurements', 'Mesures'], ['/maintenance', 'Maintenance'],
     ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {
@@ -133,5 +132,13 @@ describe('Sidebar navigation', () => {
     expect(main.querySelector('app-feature-placeholder')).toBeNull();
     expect(main.textContent).toContain('Sélectionnez une entreprise pour consulter ses sites');
     expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Sites']);
+  });
+
+  it('shows the lazy Equipments list and keeps the Sidebar destination active', async () => {
+    const harness = await open('/equipments');
+    expect(harness.routeNativeElement!.querySelector('main h1')?.textContent).toBe('Équipements industriels');
+    expect(harness.routeNativeElement!.querySelector('app-feature-placeholder')).toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('Sélectionnez une entreprise puis un site');
+    expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Équipements']);
   });
 });
