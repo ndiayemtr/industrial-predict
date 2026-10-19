@@ -22,15 +22,15 @@ PostgreSQL   Models / Scoring / Recommendation Engine
 
 Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main` : Shell Nebular,
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
-accessible du focus. Dashboard V1 est connecté à FastAPI ; Companies MVP est
-implémenté sur `feature/frontend-companies`, en préparation de livraison dans
-`main`. Les sept autres destinations disponibles et le détail équipement
+accessible du focus. Dashboard V1 et Companies MVP sont livrés dans `main`.
+Sites MVP est implémenté sur `feature/frontend-sites`, en préparation de fusion
+après validation UI 4.8. Les six autres destinations disponibles et le détail équipement
 restent des placeholders.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
-est implémenté ; `features/dashboard` et `features/companies` existent.
+est implémenté ; `features/dashboard`, `features/companies` et `features/sites` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -45,7 +45,10 @@ de `GET /api/v1/dashboard`. `ReferenceDataApiService` consomme les CRUD paginés
 existants pour entreprises, sites et équipements. Les composants de présentation
 ne calculent aucun nouveau KPI et ne font aucun appel HTTP.
 `provideHttpClient()` est configuré ; l'URL relative `/api/v1` et le proxy
-Angular de développement vers `http://127.0.0.1:8000` sont opérationnels (D014).
+Angular historique vers `http://127.0.0.1:8000` restent présents (D014).
+Le démarrage permanent [DEV](../infra/development/README.md) utilise désormais
+Angular 4201 et un proxy contrôlé vers FastAPI 8001, puis PostgreSQL 5434 /
+`industrial_predict_dev`, sans repli vers 8000.
 Le reverse proxy de production reste à configurer et n'est pas livré ici.
 La route Dashboard n'a pas d'autorisation multi-entreprises démontrée ; sélection
 et filtrage ne remplacent pas authentification/RBAC. Cette livraison ne constitue
@@ -70,14 +73,23 @@ accessible directement dans l'API existante.
 L'intégration FastAPI réelle UI 3.7 est limitée aux lectures ; les écritures
 POST/PATCH ont été simulées. Ni autorisation multi-entreprises ni sécurité de
 production SaaS multi-tenant ne sont démontrées. UI 3.1 à UI 3.7.1 sont terminées ;
-UI 3.8 finalise uniquement les documents, au HEAD initial `ac2dc3a` le 16 octobre
-2026, avant validation de livraison. Les tests historiques (348 tests Angular,
+UI 3.8 a finalisé les documents avant la fusion Companies `537822c`.
+Les tests historiques (348 tests Angular,
 trois suites séquentielles réussies en UI 3.7.1), les observations responsive et
 les limites sont détaillés dans [project-status.md](project-status.md).
 L'architecture frontend actuelle figure dans
 [frontend-architecture.md](frontend-architecture.md) ;
 [etape-ui-3.1-companies.md](etape-ui-3.1-companies.md) conserve la conception
 initiale et les écarts d'implémentation. Aucun backend ni contrat modifié ici.
+
+Sites suit la même séparation page/façade locale/service de transport, avec
+un formulaire propre à la feature, des pages création/édition distinctes et un
+PATCH différentiel limité à name/code/description. Entreprise non transférable,
+aucun DELETE frontend ; ces restrictions UI ne sécurisent pas l'API backend.
+La validation réelle Angular/FastAPI/PostgreSQL et les limites sont décrites dans
+le [statut Sites](project-status.md#sites-mvp---livraison-préparée-ui-48), sans
+réexécution en UI 4.8. Aucun contrôle d'authentification ou d'autorisation
+multi-tenant n'est actuellement livré.
 
 ## Backend
 

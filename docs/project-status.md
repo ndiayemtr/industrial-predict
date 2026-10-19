@@ -6,18 +6,12 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-sites`. Point de départ de la série : `e8702b0`.
-La création Site UI 4.5 et ses finitions sont commitées. La
-[modification UI 4.6](ui-4.6-site-edit.md) est validée, sans transfert
-d'entreprise ni suppression. Les parcours HTTP restent testés par simulation.
-La [sécurisation UI 4.6.2](ui-4.6.2-site-code-simulation.md) est validée, avec
-un simulateur local en mémoire sans connexion FastAPI/PostgreSQL.
-L'[environnement permanent DEV](ui-4.7.2.1-development-environment.md) est validé :
-`industrial_predict_dev` sur 5434, FastAPI 8001, Angular 4201, rôles séparés
-et aucune cible de repli sur l'API historique. Les deux bases historiques sont préservées.
-Le [seed UI 4.7.3](ui-4.7.3-development-data.md) est validé : 36 lignes fictives
-créées exclusivement dans DEV, deuxième application sans écriture. Ces insertions
-SQL réelles ne valident pas le parcours POST/PATCH du navigateur.
+`feature/frontend-sites`, HEAD de référence `b3d0352`, contrôlé le 19 octobre
+2026. UI 4.1 à UI 4.7.5 sont enregistrées dans dix commits locaux depuis
+`main` (`54dd128`). Sites MVP est implémenté et sa validation intégrée est
+documentée avec une réserve navigateur ouverte. UI 4.8 prépare uniquement
+la documentation et la fusion ; aucun commit documentaire, push ou merge
+n'est effectué. Voir le [bilan de livraison Sites](ui-4.8-sites-delivery.md).
 
 À mettre à jour à chaque changement de branche.
 
@@ -319,9 +313,12 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 3.7 | Validation intégrée terminée ; lectures réelles et écritures simulées distinguées |
 | UI 3.7.1 | Diagnostic de stabilité validé et commité (`ac2dc3a`), sans correctif spéculatif |
 | UI 3.8 | Documentation finale terminée (`a495f90`) ; Companies fusionné dans `main` (`537822c`) et publié |
+| UI 4.1 à UI 4.7.5 | Sites MVP implémenté et validation intégrée documentée ; dernier commit `b3d0352`, réserve sur le dialogue natif d'abandon conservée |
+| UI 4.8 | Documentation Sites préparée, validation attendue avant commit et fusion |
 
 Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Companies MVP est terminé,
-fusionné dans `main` et publié. Les sept autres destinations
+fusionné dans `main` et publié. Sites est implémenté sur sa branche dédiée.
+Les six autres destinations
 de navigation et le détail équipement restent des placeholders. Rapports et
 Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
@@ -360,6 +357,63 @@ respectives ; aucune suite backend n'est relancée dans UI 2.1.1.
 Ces résultats sont l'historique de validation UI 1.8, pas une nouvelle exécution
 en UI 2.1.1. Cette étape documentaire contrôle le contrat dans le code et les
 tests existants, la cohérence des documents et le diff Git.
+
+## Sites MVP - livraison préparée UI 4.8
+
+Liste avec sélection explicite d'entreprise, recherche serveur nom/code,
+pagination et contexte URL ; consultation du détail avec parent réel et dates ;
+création et modification de nom/code/description avec formulaire partagé.
+Le PATCH est différentiel : aucun envoi sans différence, aucun company_id,
+identifiant ou horodatage. L'entreprise reste non transférable dans le MVP.
+Le code est unique globalement ; aucun DELETE frontend, en raison de la cascade.
+
+Les retours liste/détail/formulaire préservent les paramètres validés. Un succès
+produit un toast après navigation réussie et une confirmation accessible sur la
+fiche. Les erreurs conservent la saisie ; les doubles soumissions et sorties
+pendant saving sont bloquées. CanDeactivate/beforeunload protègent les changements ;
+une écriture réseau/5xx exige une vérification avant nouvelle soumission explicite.
+Voir l'[architecture Sites](frontend-architecture.md#sites-mvp---architecture-implémentée-ui-4).
+
+### Résultats de référence Sites - UI 4.7.4 / UI 4.7.5
+
+Ces résultats sont historiques, enregistrés dans `b3d0352` et détaillés dans les
+rapports [UI 4.7.4](ui-4.7.4-real-sites-crud.md) et
+[UI 4.7.5](ui-4.7.5-sites-closure.md). Aucune suite ni requête n'est relancée en UI 4.8.
+
+- Angular **4201 -> FastAPI 8001 -> PostgreSQL 5434 / industrial_predict_dev** :
+  identités concordantes, lanceurs et proxy DEV sans repli sur 8000.
+- **POST 201 et PATCH 200** depuis Angular ; corps HTTP comparés à SQL,
+  rechargements et persistance confirmés. PATCH limité à name/description dans
+  l'essai réel, sans code ni transfert.
+- **Deux entreprises et quatre sites vérifiés dans Angular** : trois sites pour A,
+  un pour B, pagination et recherche réelles. Les **36 lignes seed sont inchangées** ;
+  seul le site dédié id=4 est ajouté et conservé.
+- **409 réel dans le formulaire** avec saisie conservée. **422 réel via le proxy**
+  par appel contrôlé séparé ; affichage frontend confirmé par les tests Angular,
+  sans prétendre avoir affiché ce 422 réel dans le navigateur.
+- **583 tests Angular réussis dans 42 fichiers**, avec deux workers, sans changer
+  délais/assertions ; premier passage à 582/583 pour un timeout shell responsive.
+- **Build production réussi** ; 31 fichiers JS/CSS identiques au build UI 4.7.4.
+
+### Réserves et dettes Sites
+
+- Dialogue natif d'abandon : parcours navigateur complet encore non validé ;
+  refus/acceptation et beforeunload couverts par tests, essai isolé partiel documenté.
+- Bundle initial **601,51 ko pour un budget de 500 ko**, dépassement 101,51 ko,
+  aucun seuil relevé. Stabilité du test shell sous concurrence à suivre.
+- Secrets historiques suivis dans `backend/alembic.ini` et `docker-compose.yml` :
+  externalisation et rotation coordonnées nécessaires, sans recopier les valeurs
+  ni modifier l'historique ici. Aucun nouveau secret ajouté par la branche Sites ;
+  voir le [constat de sécurité](pre-ui-4.7.4-commits.md#secrets-et-artefacts).
+- **Absence actuelle d'authentification et d'autorisation multi-tenant** :
+  filtrage d'entreprise et existence du parent ne contrôlent pas les droits.
+  L'absence de DELETE/transfert frontend ne sécurise pas les endpoints backend.
+  Aucune préparation à une production SaaS multi-tenant n'est revendiquée.
+- Les liens croisés Companies/Sites prévus dans la conception UI 4.1 ne sont
+  pas présents dans les templates livrés. La navigation utilise l'entrée Sites
+  et la sélection d'entreprise ; cet écart reste à arbitrer, sans ajout fonctionnel ici.
+- Lecteur d'écran réel, zoom Sites 200/400 %, charge et concurrence d'écritures
+  non validés. Aucun verrou de version ou idempotence serveur promis.
 
 ## Livraison UI 3 - Companies MVP et finition des dates
 
@@ -572,10 +626,9 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Les travaux UI 4.6, UI 4.6.2, UI 4.7.2/UI 4.7.2.1 et UI 4.7.3 sont enregistrés
-en quatre commits locaux. Voir le [bilan de préparation](pre-ui-4.7.4-commits.md).
-Attendre validation avant UI 4.7.4, qui n'est pas commencée. Aucun push ni merge.
-La conception UI 4.1 reste applicable : entreprise explicite, code unique
-globalement, suppression et transfert exclus, aucun company_id dans PATCH
-et aucune interprétation arbitraire des 409. L'absence d'autorisation
-multi-entreprises reste une limite de sécurité.
+Valider le [bilan UI 4.8 et sa checklist de fusion](ui-4.8-sites-delivery.md),
+y compris les réserves et l'écart de navigation documentés, puis autoriser
+séparément le commit documentaire et toute fusion vers `main`.
+Aucun push, merge, changement PostgreSQL ou début du module suivant ici.
+La conception UI 4.1 reste la référence métier ; les rapports datés conservent
+leurs résultats sans transformer leurs anciennes prochaines étapes en actions actuelles.

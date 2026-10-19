@@ -43,7 +43,7 @@
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
-Companies les réutilise également ; les autres pages métier restent des placeholders.
+Companies et Sites les réutilisent également ; les autres pages métier restent des placeholders.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
@@ -165,19 +165,28 @@ cause de la cascade. L'autorisation multi-entreprises reste non démontrée ;
 le module n'est pas prêt pour une production SaaS multi-tenant. Les écritures
 réelles POST/PATCH restent non testées de bout en bout.
 
-### UI 4 - Sites industriels, conception fonctionnelle validée
+### UI 4 - Sites industriels implémentés, livraison en préparation
 
 - [x] UI 4.1 - Analyse et conception fonctionnelle validées, [rapport](etape-ui-4.1-sites.md), commit `1630ebc`
 - [x] UI 4.2 - DTO et intégration HTTP validés, [bilan](ui-4.2-sites-data-access.md), commit `cd2389d`
 - [x] UI 4.3 / UI 4.3.1 - Liste, recherche, pagination et finitions UX livrées, [bilan](ui-4.3-sites-list.md), commit `43f72f8`
 - [x] UI 4.4 et finitions UI 4.4.1 à UI 4.4.3 - Détail et libellés métier, [bilan](ui-4.4-site-detail.md), commit `491cb24`
-- [x] UI 4.5 et finitions - Création Site commitée dans `e8702b0`, [bilan](ui-4.5-site-create.md), écritures simulées uniquement
-- [x] UI 4.6 - Modification Site validée, [bilan](ui-4.6-site-edit.md), sans transfert d'entreprise
-- [x] UI 4.6.2 - Code métier et simulateur HTTP isolé validés, [bilan](ui-4.6.2-site-code-simulation.md)
+- [x] UI 4.5 et finitions - Création Site commitée dans `e8702b0`, [bilan historique simulé](ui-4.5-site-create.md), complété par UI 4.7.4 réelle
+- [x] UI 4.6 - Modification Site, commit `60619a1`, [bilan](ui-4.6-site-edit.md), sans transfert d'entreprise
+- [x] UI 4.6.2 - Code métier et simulateur HTTP isolé, commit `9833d71`, [bilan](ui-4.6.2-site-code-simulation.md)
 - [x] UI 4.7.2 - Environnement isolé validé, [bilan historique](ui-4.7.2-integration-environment.md)
 - [x] UI 4.7.2.1 - Environnement permanent `industrial_predict_dev` validé, [bilan](ui-4.7.2.1-development-environment.md)
 - [x] UI 4.7.3 - Jeu industriel fictif et seed idempotent validés, [bilan](ui-4.7.3-development-data.md)
-- [ ] UI 4.7.4 - Non commencée ; attendre validation après les commits locaux
+- [x] UI 4.7.4 - POST/PATCH réels et persistance PostgreSQL, [preuves](ui-4.7.4-real-sites-crud.md), rapport enregistré dans `b3d0352`
+- [x] UI 4.7.5 - Clôture documentée avec réserve navigateur, tests complétés, [bilan](ui-4.7.5-sites-closure.md), commit `b3d0352`
+- [ ] UI 4.8 - Documentation et [préparation de livraison](ui-4.8-sites-delivery.md) réalisées dans le répertoire de travail ; validation puis commit documentaire attendus
+- [ ] Fusion de `feature/frontend-sites` vers `main`, après validation distincte
+
+Le [statut Sites](project-status.md#sites-mvp---livraison-préparée-ui-48) centralise
+les fonctionnalités, les résultats de référence et les limites : 583 tests Angular,
+build réussi, intégration DEV réelle, réserve d'abandon, budget dépassé et sécurité
+à industrialiser. Aucun test ou build relancé pour UI 4.8 documentaire.
+Le module suivant reste non commencé.
 
 ### Écrans métier restant à implémenter
 

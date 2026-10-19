@@ -14,15 +14,15 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé le 16 octobre 2026 pour UI 3.8 sur
-`feature/frontend-companies`, HEAD initial `ac2dc3a`, dépôt propre avant édition.
-Le rapport UI 3.7.1 est commité ; Companies MVP est implémenté sur cette branche
-et sa livraison dans `main` reste à valider. Le socle UI 1.1
-à UI 1.8 et Dashboard V1 (UI 2.1 à UI 2.8) sont livrés et fusionnés dans `main` ;
-le code Dashboard est publié sur GitHub (fusion `f3f6f2c`).
+État documentaire synchronisé en UI 4.8 le 19 octobre 2026 sur
+`feature/frontend-sites`, HEAD de référence `b3d0352`. Le socle, Dashboard V1
+et Companies MVP sont fusionnés dans `main`. Sites est implémenté sur sa branche,
+avec livraison Git en attente de validation. Les sections datées UI 1/UI 2/UI 3
+conservent leurs résultats historiques ; le bilan courant est dans
+[project-status.md](project-status.md#sites-mvp---livraison-préparée-ui-48).
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle, Dashboard V1 et Companies MVP
+## Structure réellement présente - socle, Dashboard V1, Companies et Sites MVP
 
 ```text
 frontend/
@@ -48,6 +48,10 @@ frontend/
 ├── src/styles/_tokens.scss / _nebular-theme.scss
 └── scripts/ (correction Sass Nebular et vérifications)
 ```
+
+`features/sites/` complète cet inventaire avec models/, data-access/,
+sites-list.facade.*, sites.routes.*, pages/ et components/site-form/.
+Le détail de cette feature figure dans la section Sites ci-dessous.
 
 `AppComponent` contient le Router Outlet racine. `ShellComponent` contient
 un seul `nb-layout`, un `nb-sidebar`, un `nb-layout-header subheader`
@@ -137,7 +141,10 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | `/companies/new` | Nouvelle entreprise | CompanyFormPageComponent, création | Entreprises |
 | `/companies/:companyId/edit` | Modifier l’entreprise | CompanyFormPageComponent, modification | Entreprises |
 | `/companies/:companyId` | Détail entreprise | CompanyDetailComponent | Entreprises |
-| `/sites` | Sites | FeaturePlaceholderComponent | Sites |
+| `/sites` | Sites industriels | SitesListComponent | Sites |
+| `/sites/new` | Nouveau site industriel | SiteCreateComponent, création | Sites |
+| `/sites/:siteId/edit` | Modifier le site | SiteEditComponent, modification | Sites |
+| `/sites/:siteId` | Détail du site | SiteDetailComponent | Sites |
 | `/equipments` | Équipements | FeaturePlaceholderComponent | Équipements |
 | `/sensors` | Capteurs | FeaturePlaceholderComponent | Capteurs |
 | `/measurements` | Mesures | FeaturePlaceholderComponent | Mesures |
@@ -160,11 +167,11 @@ exacte des liens et évite une sélection Équipements incorrecte ; le détail
 valide `/equipments/42` conserve la sélection de section.
 
 Le Shell, DashboardComponent, le placeholder commun et la 404 utilisent
-`loadComponent` avec import dynamique. Companies utilise `loadChildren` vers
-`COMPANY_ROUTES`, puis `loadComponent` pour ses pages, sans préchargement
-configuré. La route `new` précède l'identifiant dynamique ; `:companyId/edit`
-précède `:companyId`. Les sept autres destinations métier disponibles et le
-détail équipement partagent le même placeholder, sans créer huit pages définitives.
+`loadComponent` avec import dynamique. Companies et Sites utilisent `loadChildren`
+vers `COMPANY_ROUTES` et `SITE_ROUTES`, puis `loadComponent` pour leurs pages,
+sans préchargement configuré. Dans chaque feature, `new` puis la route d'édition
+précèdent l'identifiant dynamique. Les six autres destinations métier disponibles
+et le détail équipement partagent le même placeholder, sans créer sept pages définitives.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -287,6 +294,7 @@ Exemples :
 - EquipmentApiService
 - DashboardApiService
 - CompaniesApiService (implémenté)
+- SitesApiService (implémenté)
 - PredictionApiService
 - RecommendationApiService
 - MaintenanceApiService
@@ -549,7 +557,7 @@ de site efface équipement. Le sélecteur d'équipement est proposé après choi
 site (DASH-04), sans imposer cette limitation au DashboardApiService.
 
 Le préréglage initial est sept jours glissants UTC, soit 168 heures :
-à l'application, fixer une fin unique T et un début T − 168 heures (DASH-05).
+à l'application, fixer une fin unique T et un début T - 168 heures (DASH-05).
 Les bornes envoyées restent fixes après application ; une saisie de période
 explicite conserve ses valeurs validées. Les dates restent avec fuseau et la fin
 exclusive est indiquée à l'utilisateur. Aucun GET Dashboard tant qu'entreprise
@@ -609,6 +617,9 @@ src/app/
 - DASH-06 : base relative `/api/v1` centralisée dans `core/http/api-config.ts`,
   `provideHttpClient()` dans app.config.ts. `proxy.conf.json` relaie `/api/v1/**`
   vers `http://127.0.0.1:8000`, uniquement pour `serve:development` dans angular.json.
+  Ce lancement historique ne constitue plus le démarrage DEV recommandé : le
+  [lanceur permanent](../infra/development/README.md) impose Angular 4201,
+  FastAPI 8001 et `industrial_predict_dev`, avec contrôle d'identité sans repli.
   La configuration de production n'utilise pas ce proxy et n'embarque pas son URL
   localhost. Le reverse proxy de production reste à configurer séparément.
 
@@ -829,6 +840,48 @@ Les écritures POST/PATCH réelles, le zoom Companies 200/400 % et le lecteur
 d'écran réel restent non validés. L'autorisation multi-entreprises n'est pas
 démontrée. **Le module n'est pas prêt pour une production SaaS multi-tenant.**
 
+## Sites MVP - architecture implémentée UI 4
+
+Routes sous le Shell : liste, new, :siteId/edit, :siteId, dans cet ordre.
+La sélection Sidebar reste Sites. Les routes de formulaire appellent canLeave
+via CanDeactivate ; les pages écoutent aussi beforeunload.
+
+- SitesListComponent et son URL appliquée pilotent SitesListFacade locale.
+  SitesApiService.list délègue à ReferenceDataApiService.getSites ; company_id
+  est obligatoire côté UI, sans entreprise choisie automatiquement. Catalogue
+  d'entreprises paginé et référence par id vérifiée, recherche nom/code explicite,
+  pagination serveur et distinction vide/page indisponible sont conservés.
+- SiteDetailComponent lit le Site puis son parent réel avec des états distincts.
+  Création et édition ont leurs états locaux ; switchMap annule les lectures
+  obsolètes, les abonnements sont nettoyés. Aucun store global ni polling.
+- SiteRead, Page et références core sont réutilisés. SitesApiService porte
+  GET détail/POST/PATCH ; SiteCreate contient company_id, SiteUpdate uniquement
+  name/code/description. La whitelist PATCH exclut aussi les propriétés en trop
+  d'un SiteRead. Aucun DELETE dans ce service.
+- SiteFormComponent est partagé entre deux pages d'orchestration distinctes,
+  SiteCreateComponent et SiteEditComponent, plutôt que la page unique envisagée
+  en conception. En édition, comparaison des valeurs brutes initiales/courantes,
+  pas du seul dirty ; aucun PATCH sans différence. Code globalement unique,
+  entreprise en lecture seule, dates de suivi hors FormGroup et payload.
+- Description inchangée omise ; effacement manuel envoyé comme chaîne vide,
+  bouton Retirer envoyé comme null. Les champs intacts, Unicode et dates sont
+  préservés. Le formateur administratif partagé n'invente pas de fuseau.
+- Contexte company_id/search/page/page_size validé et conservé entre pages Sites,
+  sans returnUrl externe. Toast unique après navigation réussie et confirmation
+  role=status sur la fiche ; protections contre doubles soumissions et abandon.
+- 409 reste un conflit générique sans désigner arbitrairement Code. 422 mappe
+  uniquement les champs body reconnus, avec messages locaux et focus. Erreurs
+  conservant la saisie, aucun retry automatique ; issue réseau/5xx incertaine
+  nécessitant vérification explicite. Aucun verrou de version serveur promis.
+
+Les liens croisés Companies/Sites proposés en UI 4.1 ne sont pas implémentés ;
+ils restent un écart documenté, sans changement de décision métier en UI 4.8.
+La validation réelle DEV et les résultats 583 tests/build sont centralisés dans
+le [statut Sites](project-status.md#sites-mvp---livraison-préparée-ui-48), avec la
+réserve sur le dialogue natif, les dettes de bundle/secrets et l'absence
+d'authentification/autorisation multi-tenant. UI 4.8 ne relance aucune validation
+applicative. Les décisions D001 à D014 et la conception restent inchangées.
+
 ## Autres composants partagés envisagés
 
 La liste suivante décrit des besoins ultérieurs, sans engagement d'implémentation
@@ -856,11 +909,11 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout et Dashboard V1 sont livrés dans `main`. Companies MVP est implémenté
-sur `feature/frontend-companies` ; UI 3.1 à UI 3.7.1 sont terminées et UI 3.8
-finalise les documents avant validation de livraison. Aucun commit, push ou
-merge dans cette étape ; UI 4 ne commence pas. La conception initiale reste dans
-[etape-ui-3.1-companies.md](etape-ui-3.1-companies.md), distincte de l'état réalisé.
+Le layout, Dashboard V1 et Companies MVP sont livrés dans `main`. Sites MVP
+est implémenté sur `feature/frontend-sites` ; UI 4.8 prépare la documentation
+avant validation du commit documentaire et de la fusion. Les conceptions
+[Companies](etape-ui-3.1-companies.md) et [Sites](etape-ui-4.1-sites.md) sont
+conservées, distinctes de l'état réalisé. Aucun module suivant commencé.
 
 L’ordre antérieur des autres intentions frontend reste indicatif :
 

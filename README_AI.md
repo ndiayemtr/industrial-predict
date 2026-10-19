@@ -80,7 +80,8 @@ réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 `docs/project-status.md`. DELETE est exclu du MVP en raison de la cascade.
 Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
 mais validés par simulation, sans écriture réelle dans PostgreSQL.
-Les autres pages métier restent des placeholders. Aucun identifiant d'entreprise
+Sites est également implémenté sur sa branche dédiée ; les autres pages métier
+restent des placeholders. Aucun identifiant d'entreprise
 par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
 `docs/decisions.md` ; le contrat consommé et l'architecture livrée sont décrits
@@ -101,34 +102,25 @@ Bundle initial actuel : 601,51 ko pour un budget de 500 ko, dont +32,48 ko aprè
 intégration de NbToastrService ; aucun budget relevé. Zoom Companies 200/400 %
 non validé, lecteur d'écran réel non testé et autorisation multi-entreprises non
 démontrée. Companies n'est pas prêt pour une production SaaS multi-tenant.
-Validation finale de livraison : 386 tests Angular réussis, build production
+Validation finale de livraison Companies : 386 tests Angular réussis, build production
 réussi et `npm audit` sans vulnérabilité signalée. Ces résultats historiques
 ne sont pas de nouvelles exécutions lors de la synchronisation documentaire.
 Voir `docs/frontend-datetime-display.md` et `docs/dashboard-date-precision.md`.
-UI 4 - Sites industriels : [conception UI 4.1](docs/etape-ui-4.1-sites.md)
-validée fonctionnellement et commitée dans `1630ebc` sur `feature/frontend-sites`.
-La couche de données UI 4.2 est validée et commitée dans `cd2389d` ;
-[bilan UI 4.2](docs/ui-4.2-sites-data-access.md). La liste `/sites` UI 4.3 et ses
-finitions UI 4.3.1 sont livrées dans `43f72f8` ; [bilan UI 4.3](docs/ui-4.3-sites-list.md).
-La [fiche détail Sites UI 4.4 et ses finitions](docs/ui-4.4-site-detail.md) sont
-commitées dans `491cb24`, avec retour au contexte de liste et libellés métier.
-La [création Sites UI 4.5 et ses finitions](docs/ui-4.5-site-create.md) sont
-commitées dans `e8702b0` : entreprise vérifiée explicitement, formulaire accessible,
-POST simulé en validation et confirmation après navigation.
-La [modification Sites UI 4.6](docs/ui-4.6-site-edit.md) est validée :
-entreprise en lecture seule, PATCH différentiel sans company_id, dates de suivi
-hors FormGroup et confirmation après navigation. Suppression et transfert exclus.
-Les parcours HTTP de création/modification sont validés par simulation.
-
-La [sécurisation UI 4.6.2](docs/ui-4.6.2-site-code-simulation.md) est validée :
-non-régression du code métier et simulateur HTTP isolé en mémoire, sans upstream.
-UI 4.7.2 et UI 4.7.2.1 sont validées : environnement permanent local
-[DEV](infra/development/README.md), distinct de la base historique, sans repli sur 8000.
-Le [jeu de développement UI 4.7.3](docs/ui-4.7.3-development-data.md) est validé :
-2 entreprises, 3 sites, 4 équipements, 6 capteurs, 18 mesures et 3 maintenances
-fictifs, chargés par SQL exclusivement dans `industrial_predict_dev`.
-Ce seed ne constitue pas une validation navigateur des écritures POST/PATCH.
-UI 4.7.4 n'est pas commencée et nécessite une nouvelle validation.
+UI 4 - Sites MVP est implémenté sur `feature/frontend-sites`, référence `b3d0352`.
+La [conception UI 4.1](docs/etape-ui-4.1-sites.md) reste la référence métier :
+entreprise explicite, code unique globalement, PATCH différentiel sans company_id,
+entreprise non transférable et aucun DELETE frontend. Liste/recherche/pagination,
+détail, création, édition, navigation et notifications sont livrés sur cette branche.
+Les [preuves UI 4.7.4](docs/ui-4.7.4-real-sites-crud.md) complètent les simulations
+par POST 201/PATCH 200 réels via Angular 4201 et FastAPI 8001 vers DEV :
+persistance SQL, deux entreprises et quatre sites, seed de 36 lignes préservé.
+La [clôture UI 4.7.5](docs/ui-4.7.5-sites-closure.md) fixe la référence à
+583 tests Angular réussis avec deux workers et un build réussi, sans lever
+la réserve sur le dialogue natif d'abandon. Le [statut Sites](docs/project-status.md#sites-mvp---livraison-préparée-ui-48)
+centralise les limites et dettes, dont les secrets historiques suivis à externaliser
+et à renouveler et l'absence actuelle d'authentification/autorisation multi-tenant.
+UI 4.8 est documentaire : [livraison préparée](docs/ui-4.8-sites-delivery.md),
+validation requise avant commit documentaire et fusion. Aucun module suivant commencé.
 
 ### Machine Learning
 
