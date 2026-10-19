@@ -1,0 +1,37 @@
+@use './tokens' as tokens;
+
+// Shared page-header action geometry, based on Nouvelle entreprise.
+@mixin navigation-action($primary: false) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$space-sm;
+  box-sizing: border-box;
+  min-height: 2.75rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: tokens.$space-sm tokens.$space-md;
+  border: tokens.$border-width solid tokens.$text-secondary;
+  border-radius: tokens.$border-radius;
+  background: tokens.$surface-background;
+  color: tokens.$text-primary;
+  font: inherit;
+  font-weight: 600;
+  line-height: tokens.$line-height-body;
+  text-decoration: none;
+  text-align: center;
+  overflow-wrap: anywhere;
+
+  svg { display: block; flex: 0 0 auto; }
+  span { min-width: 0; }
+
+  &:hover { background: tokens.$content-background; text-decoration: none; }
+  &:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+
+  @if $primary {
+    background: tokens.$navigation-active;
+    border-color: tokens.$navigation-active;
+    color: tokens.$sidebar-text;
+    &:hover { background: tokens.$sidebar-background; border-color: tokens.$sidebar-background; }
+  }
+}

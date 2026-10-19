@@ -55,6 +55,16 @@ describe('Equipments list, references and URL', () => {
   });
   it('navigates to creation with the seven applied context parameters', async () => {
     await ready('/equipments?company_id=7&site_id=9&status=maintenance&criticality=high&search=Pompe&page=2&page_size=50');
+    const action = root().querySelector<HTMLAnchorElement>('.new-equipment')!;
+    expect(action.textContent?.trim()).toBe('Nouvel équipement');
+    expect(action.hasAttribute('title')).toBe(false);
+    const icon = action.querySelector('svg')!;
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+    expect(icon.getAttribute('focusable')).toBe('false');
+    expect(icon.getAttribute('width')).toBe('20'); expect(icon.getAttribute('height')).toBe('20');
+    expect(icon.getAttribute('stroke-width')).toBe('1.75');
+    expect(icon.querySelector('path')?.getAttribute('d')).toBe('M12 5v14 M5 12h14');
+    action.focus(); expect(document.activeElement).toBe(action);
     root().querySelector<HTMLAnchorElement>('.new-equipment')!.click(); await settle();
     expect(root().querySelector('app-feature-placeholder')).toBeNull();
     request('companies').flush(catalog); request('companies/7').flush(company); request('sites/9').flush(site); request('sites').flush(siteCatalog); await settle();
