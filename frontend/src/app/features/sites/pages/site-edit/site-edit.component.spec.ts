@@ -147,6 +147,28 @@ describe('Site editing page', () => {
     if (component.uncertain()) { await submit(); http.expectNone(() => true); component.acknowledgeVerification(); }
     http.expectNone(() => true);
   });
+  it.each([
+    { detail: [null, { loc: ['body', 'description'], msg: '<img src=x onerror=alert(1)>' },
+      { loc: ['body', 'name'], msg: '<b>Unsafe</b>' }, { loc: ['query', 'code'] },
+      { loc: ['body', 'company_id'] }, { loc: ['body', 'unknown'] }, { loc: ['body', 'code', 0] }] },
+    { detail: 'Unstructured server validation' }
+  ])('handles 422 detail safely and keeps edits without an automatic retry: %j', async body => {
+    await ready(); change(); await submit();
+    patch().flush(body, { status: 422, statusText: 'Unprocessable Entity' }); await settle();
+    expect(component.state()).toBe('error'); expect(component.uncertain()).toBe(false);
+    expect(component.editor()!.form.controls.name.value).toBe('Nom modifié');
+    expect(component.message()).toContain('Le serveur a refusé les données');
+    expect(root().querySelector('[role="alert"]')).not.toBeNull();
+    expect(root().textContent).not.toContain('Unsafe');
+    expect(root().textContent).not.toContain('Unstructured server validation');
+    expect(root().querySelector('img[src="x"]')).toBeNull();
+    expect(component.fieldErrors()).toEqual(Array.isArray(body.detail) ? {
+      name: 'Cette valeur n’est pas acceptée par le serveur.',
+      description: 'Cette valeur n’est pas acceptée par le serveur.'
+    } : {});
+    if (Array.isArray(body.detail)) expect(document.activeElement?.id).toBe('site-name');
+    expect(toastr.success).not.toHaveBeenCalled(); http.expectNone(() => true);
+  });
   it.each([404, 0, 500])('handles GET failure %s without an empty editor and retries only network/server', async status => {
     await open(); const req = read();
     if (status === 0) req.error(new ProgressEvent('error')); else req.flush(null, { status, statusText: 'Error' });
@@ -187,8 +209,13 @@ describe('Site editing page', () => {
     await ready(site, '/sites/3/edit?company_id=7&page=2&page_size=50'); change();
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     expect(await TestBed.inject(Router).navigateByUrl('/sites/4/edit')).toBe(false);
+    [...root().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === 'Annuler')!.click();
+    await settle();
+    expect(TestBed.inject(Router).url).toBe('/sites/3/edit?company_id=7&page=2&page_size=50');
+    expect(component.editor()!.form.controls.name.value).toBe('Nom modifié');
+    expect(confirm).toHaveBeenCalledTimes(2); http.expectNone(() => true);
     const event = new Event('beforeunload', { cancelable: true }); component.protectUnload(event as BeforeUnloadEvent);
-    expect(event.defaultPrevented).toBe(true); expect(confirm).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(true); expect(confirm).toHaveBeenCalledTimes(2);
     change(site.name); expect(component.canLeave()).toBe(true);
     const clean = new Event('beforeunload', { cancelable: true }); component.protectUnload(clean as BeforeUnloadEvent); expect(clean.defaultPrevented).toBe(false);
     change(); confirm.mockReturnValue(true); component.cancel(); await settle();

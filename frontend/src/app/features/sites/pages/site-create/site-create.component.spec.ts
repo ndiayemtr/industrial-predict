@@ -175,6 +175,11 @@ describe('Site creation page', () => {
     await ready(); expect(component.canLeave()).toBe(true); fill();
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     expect(await TestBed.inject(Router).navigateByUrl('/sites')).toBe(false); expect(confirm).toHaveBeenCalled();
+    [...root().querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === 'Annuler')!.click();
+    await settle();
+    expect(TestBed.inject(Router).url).toBe('/sites/new?company_id=7');
+    expect(component.editor()!.form.controls.name.value).toBe(' Usine 日本 ');
+    expect(confirm).toHaveBeenCalledTimes(2); http.expectNone(() => true);
     const event = new Event('beforeunload', { cancelable: true }); component.protectUnload(event as BeforeUnloadEvent); expect(event.defaultPrevented).toBe(true);
     confirm.mockReturnValue(true); component.cancel(); await settle();
     companies().flush(catalog); reference().flush(company);
