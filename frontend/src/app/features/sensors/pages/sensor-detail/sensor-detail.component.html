@@ -1,7 +1,12 @@
 <app-page-header title="Détail capteur" description="Informations du capteur industriel en lecture seule.">
   <a class="sensor-back" routerLink="/sensors" [queryParams]="listQuery()">Retour à la liste des capteurs</a>
+  @let loaded = state();
+  @if (loaded.status === 'success') {
+    <a class="sensor-edit" [routerLink]="['/sensors', loaded.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>
+  }
 </app-page-header>
 @if (creationConfirmed()) { <p class="creation-confirmation" role="status">Capteur créé avec succès.</p> }
+@if (updateConfirmed()) { <p class="creation-confirmation" role="status">Capteur modifié avec succès.</p> }
 @let current = state();
 <section class="sensor-detail" aria-labelledby="sensor-information-title" [attr.aria-busy]="current.status === 'loading'">
   <h2 id="sensor-information-title">Informations du capteur</h2>

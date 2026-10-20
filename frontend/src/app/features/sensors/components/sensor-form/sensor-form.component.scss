@@ -22,3 +22,7 @@ button.primary { @include actions.navigation-action($primary: true); }
 button:disabled { cursor: not-allowed; background: tokens.$content-background; color: tokens.$text-secondary; }
 input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 @media (max-width: 30rem) { .actions { flex-direction: column; } }
+
+.readonly-values { margin: 0 0 1rem; }
+.readonly-values dt { font-weight: 600; }
+.readonly-values dd { margin: .25rem 0 1rem; white-space: pre-wrap; overflow-wrap: anywhere; }

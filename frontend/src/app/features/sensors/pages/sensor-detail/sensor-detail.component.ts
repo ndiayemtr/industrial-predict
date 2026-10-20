@@ -32,6 +32,9 @@ const validId = (id: number): boolean => Number.isSafeInteger(id) && id > 0;
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SensorDetailComponent {
+  private readonly updatedSensorId = inject(Router).currentNavigation()?.extras.state?.['updatedSensorId'];
+  readonly updateConfirmed = toSignal(inject(ActivatedRoute).paramMap.pipe(map(params => this.updatedSensorId != null
+    && params.get('sensorId') === String(this.updatedSensorId))), { requireSync: true });
   private readonly createdSensorId = inject(Router).currentNavigation()?.extras.state?.['createdSensorId'];
   readonly creationConfirmed = toSignal(inject(ActivatedRoute).paramMap.pipe(map(params => this.createdSensorId != null
     && params.get('sensorId') === String(this.createdSensorId))), { requireSync: true });

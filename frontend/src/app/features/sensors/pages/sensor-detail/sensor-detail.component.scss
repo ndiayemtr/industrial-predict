@@ -1,3 +1,4 @@
+@use '../../../../../styles/actions' as actions;
 @use '../../../../../styles/tokens' as tokens;
 
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
@@ -24,3 +25,5 @@ dd p { margin: 0; }
 .timestamp-note { color: tokens.$text-secondary; font-size: tokens.$font-size-small; line-height: tokens.$line-height-body; }
 @media (min-width: 48rem) { dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } .description { grid-column: 1 / -1; } }
 @media (max-width: 30rem) { .sensor-detail { padding: tokens.$space-sm; } }
+
+.sensor-edit { @include actions.navigation-action($primary: true); }

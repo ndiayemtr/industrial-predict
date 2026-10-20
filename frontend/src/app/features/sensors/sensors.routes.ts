@@ -10,7 +10,11 @@ export const SENSOR_ROUTES: Routes = [{
   canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
   loadComponent: () => import('./pages/sensor-create/sensor-create.component').then(m => m.SensorCreateComponent)
 }, {
-  // Future ':sensorId/edit' routes must be inserted before this detail route.
+  path: ':sensorId/edit', pathMatch: 'full', title: 'Modifier le capteur | Industrial Predict AI',
+  data: { pageTitle: 'Modifier le capteur' },
+  canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
+  loadComponent: () => import('./pages/sensor-edit/sensor-edit.component').then(m => m.SensorEditComponent)
+}, {
   path: ':sensorId', pathMatch: 'full',
   canMatch: [(_route, segments) => segments[0]?.path !== 'new'],
   title: 'Détail capteur | Industrial Predict AI', data: { pageTitle: 'Détail capteur' },

@@ -66,7 +66,7 @@ describe('Sensor read-only detail and real parent chain', () => {
     expect(values()).toContainEqual(['Statut', 'Actif']); expect(values()).toContainEqual(['Description', sensor.description]);
     expect(values()).toContainEqual(['Création', '31/08/2026 à 14:58']); expect(values()).toContainEqual(['Dernière modification', '16/10/2026 à 11:51 UTC']);
     expect(root().querySelectorAll('form,input,select,button')).toHaveLength(0);
-    expect(root().textContent).not.toMatch(/Modifier|Supprimer|Mesures|Prédiction|Health Score|RUL/);
+    expect(root().textContent).not.toMatch(/Supprimer|Mesures|Prédiction|Health Score|RUL/);
     const link = root().querySelector<HTMLAnchorElement>('.equipment-reference')!; link.focus(); expect(document.activeElement).toBe(link);
     expect(root().querySelector('.context-notice')).toBeNull();
   });
@@ -169,4 +169,17 @@ describe('Sensor read-only detail and real parent chain', () => {
     expect(root().querySelector('tbody a')?.getAttribute('href')).toContain('/sensors/17?');
     expect(TestBed.inject(Router).url).toBe(`/sensors?${context}`);
   });
+  it('exposes the harmonized edit action only after a valid Sensor GET, preserving every return filter', async () => {
+    await open('/sensors/17?' + context); expect(root().querySelector('.sensor-edit')).toBeNull();
+    read('sensors/17').flush(sensor); await settle();
+    expect(root().querySelector('.sensor-edit')?.getAttribute('href')).toBe('/sensors/17/edit?' + context);
+    read('equipments/12').flush({}, { status: 404, statusText: 'Missing' }); await settle();
+    expect(root().querySelector('.sensor-edit')?.textContent).toBe('Modifier');
+    expect(root().querySelector('.sensor-edit')?.getAttribute('href')).toBe('/sensors/17/edit?' + context);
+  });
+  it('never shows edit on an invalid or missing Sensor, nor accepts a confirmation from query parameters', async () => {
+    await open('/sensors/17?updatedSensorId=17'); read('sensors/17').flush({}, { status: 404, statusText: 'Missing' }); await settle();
+    expect(root().querySelector('.sensor-edit')).toBeNull(); expect(root().textContent).not.toContain('Capteur modifié avec succès.');
+  });
+
 });
