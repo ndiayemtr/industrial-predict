@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { NbToastrService } from '@nebular/theme';
 import { SENSOR_ROUTES } from '../../sensors.routes';
 import { SensorsListComponent } from './sensors-list.component';
 
@@ -23,7 +24,7 @@ describe('Sensors list, references and URL integration', () => {
   const button = (label: string) => [...root().querySelectorAll<HTMLButtonElement>('button')].find(el => el.textContent?.trim() === label)!;
   const url = () => TestBed.inject(Router).parseUrl(TestBed.inject(Router).url).queryParams;
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
+    TestBed.configureTestingModule({ providers: [{ provide: NbToastrService, useValue: { success: vi.fn() } }, provideHttpClient(), provideHttpClientTesting(),
       provideRouter([{ path: 'sensors', children: SENSOR_ROUTES }])] });
     http = TestBed.inject(HttpTestingController);
   });
@@ -59,7 +60,7 @@ describe('Sensors list, references and URL integration', () => {
     const link = root().querySelector('.sensor-detail-link')!;
     expect(link.getAttribute('href')).toBe('/sensors/17?company_id=7&site_id=9&equipment_id=12&page=1&page_size=20');
     expect(link.hasAttribute('aria-disabled')).toBe(false);
-    expect(root().querySelector('a[href*="/new"]')).toBeNull();
+    expect(root().querySelector('a[href*="/new"]')).not.toBeNull();
     expect(root().querySelector('.table-scroll')?.getAttribute('tabindex')).toBe('0');
     expect(root().querySelectorAll('label[for]')).toHaveLength(6);
     expect(root().querySelectorAll('.results .scroll-help')).toHaveLength(1);
@@ -73,6 +74,29 @@ describe('Sensors list, references and URL integration', () => {
     expect(root().querySelector('h1')?.textContent).toBe('Détail capteur');
     expect(root().querySelector('.sensor-back')?.getAttribute('href')).toBe('/sensors?company_id=7&site_id=9&equipment_id=12&page=2&page_size=20&search=TEMP&status=active');
     http.expectNone(() => true);
+  });
+  it('keeps a keyboard-accessible create action available without a selected parent', async () => {
+    await open(); request('companies').flush(catalog); await settle();
+    const action = root().querySelector<HTMLAnchorElement>('.new-sensor')!;
+    expect(action.textContent?.trim()).toBe('Nouveau capteur'); expect(action.hasAttribute('title')).toBe(false);
+    expect(action.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(action.getAttribute('href')).toBe('/sensors/new?return_page=1&return_page_size=20');
+    action.focus(); expect(document.activeElement).toBe(action); action.click(); await settle(); request('companies').flush(catalog); await settle();
+    expect(root().querySelector('app-sensor-form')).not.toBeNull(); http.expectNone(() => true);
+  });
+  it('separates verified prefill from the complete return snapshot and navigates once', async () => {
+    await ready('/sensors?company_id=7&site_id=9&equipment_id=12&page=2&page_size=50&search=TEMP&status=inactive');
+    const query = component.newQuery(); expect(query).toMatchObject({ company_id: 7, site_id: 9, equipment_id: 12, return_page: 2, return_page_size: 50, return_search: 'TEMP', return_status: 'inactive' });
+    const router = TestBed.inject(Router), spy = vi.spyOn(router, 'navigateByUrl');
+    root().querySelector<HTMLAnchorElement>('.new-sensor')!.click(); await settle();
+    request('companies').flush(catalog); request('companies/7').flush(company); request('sites/9').flush(site); request('equipments/12').flush(equipment);
+    request('sites').flush({ ...catalog, items: [site] }); request('equipments').flush({ ...catalog, items: [equipment] }); await settle();
+    expect(spy).toHaveBeenCalledTimes(1); expect(root().querySelector('h1')?.textContent).toBe('Nouveau capteur industriel');
+  });
+  it('does not pass partial selection as prefill but keeps it for cancellation', async () => {
+    await open('/sensors?company_id=7'); request('companies').flush(catalog); request('companies/7').flush(company); await settle();
+    request('sites').flush({ ...catalog, items: [site] }); await settle();
+    expect(component.newQuery()).toMatchObject({ return_company_id: 7 }); expect(component.newQuery()['company_id']).toBeUndefined();
   });
   it('searches only on submission, trims search and retains only the applied search on status changes', async () => {
     await ready(); component.search.setValue('  mm/s  '); await settle(); http.expectNone(() => true);

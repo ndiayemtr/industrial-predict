@@ -1,4 +1,11 @@
-<app-page-header title="Capteurs" description="Consultez les capteurs d’un équipement et affinez votre recherche." />
+<app-page-header title="Capteurs" description="Consultez les capteurs d’un équipement et affinez votre recherche.">
+  <a class="new-sensor" routerLink="/sensors/new" [queryParams]="newQuery()">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <path d="M12 5v14 M5 12h14" />
+    </svg>
+    <span>Nouveau capteur</span>
+  </a>
+</app-page-header>
 @if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
 <section class="filters" aria-labelledby="sensor-context-title">
   <h2 id="sensor-context-title">Entreprise, site et équipement</h2>

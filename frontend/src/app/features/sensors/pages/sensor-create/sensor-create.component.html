@@ -1,0 +1,54 @@
+<app-page-header title="Nouveau capteur industriel" description="Créer un capteur et vérifier son rattachement à un équipement." />
+<section class="creation" aria-label="Nouveau capteur industriel" [attr.aria-busy]="state() === 'saving'">
+  @if (contextNotice) { <p role="status">{{ contextNotice }}</p> }
+  @if (state() === 'saving') { <app-loading-state message="Enregistrement du capteur en cours…" /> }
+  @if (state() === 'error') {
+    <app-error-state title="Création non confirmée" [message]="message()" />
+    @if (!uncertain()) { <button type="button" (click)="verifyReferences()">Vérifier à nouveau le rattachement</button> }
+    @if (uncertain()) {
+      <p><a routerLink="/sensors" [queryParams]="listQuery()" target="_blank" rel="noopener">Vérifier la liste dans un nouvel onglet</a></p>
+      <button type="button" (click)="acknowledgeVerification()">J’ai vérifié la liste, autoriser une nouvelle soumission</button>
+    }
+  }
+  @if (created()) {
+    <p role="status">Capteur créé avec succès.</p>
+    @if (message()) { <p>{{ message() }}</p> }
+    <a class="created-link" [href]="recoveryUrl()" (click)="recover($event)">Ouvrir la fiche du capteur créé</a>
+  }
+  <app-sensor-form [initialParents]="references.initialParents()" [companies]="references.companyOptions()" [sites]="references.siteOptions()" [equipments]="references.equipmentOptions()"
+    [verifiedCompanyId]="references.company()?.id ?? null" [verifiedSiteId]="references.site()?.id ?? null" [verifiedEquipmentId]="references.equipment()?.id ?? null"
+    [saving]="state() === 'saving'" [blocked]="uncertain() || state() === 'success'" [fieldErrors]="fieldErrors()"
+    (companyChanged)="selectCompany($event)" (siteChanged)="selectSite($event)" (equipmentChanged)="selectEquipment($event)"
+    (submitted)="save($event)" (cancelled)="cancel()" (edited)="clearFieldErrors()">
+    <div companyReferences>
+      @if (references.companies().status === 'loading') { <app-loading-state message="Chargement des entreprises…" /> }
+      @if (references.companies().status === 'ready' && references.companies().total === 0) { <p role="status">Aucun résultat dans le catalogue des entreprises.</p> }
+      @if (references.companies().status === 'error') { <app-error-state title="Catalogue entreprises indisponible" message="Les références déjà chargées restent disponibles."
+        [retryable]="references.companies().retryable" (retry)="references.retryCompanies()" /> }
+      @if (references.companies().status === 'ready' && references.companies().page < references.companies().pages) {
+        <button type="button" (click)="references.moreCompanies()">Charger davantage d’entreprises</button>
+      }
+    </div>
+    <div siteReferences>
+      @if (references.sites().status === 'loading') { <app-loading-state message="Chargement des sites…" /> }
+      @if (references.sites().status === 'ready' && references.sites().total === 0) { <p role="status">Aucun résultat dans le catalogue des sites.</p> }
+      @if (references.sites().status === 'error') { <app-error-state title="Catalogue sites indisponible" message="Les références déjà chargées restent disponibles."
+        [retryable]="references.sites().retryable" (retry)="references.retrySites()" /> }
+      @if (references.sites().status === 'ready' && references.sites().page < references.sites().pages) {
+        <button type="button" (click)="references.moreSites()">Charger davantage de sites</button>
+      }
+    </div>
+    <div equipmentReferences>
+      @if (references.equipments().status === 'loading') { <app-loading-state message="Chargement des équipements…" /> }
+      @if (references.equipments().status === 'ready' && references.equipments().total === 0) { <p role="status">Aucun résultat dans le catalogue des équipements.</p> }
+      @if (references.equipments().status === 'error') { <app-error-state title="Catalogue équipements indisponible" message="Les références déjà chargées restent disponibles."
+        [retryable]="references.equipments().retryable" (retry)="references.retryEquipments()" /> }
+      @if (references.equipments().status === 'ready' && references.equipments().page < references.equipments().pages) {
+        <button type="button" (click)="references.moreEquipments()">Charger davantage d’équipements</button>
+      }
+      @if (references.state() === 'loading') { <app-loading-state message="Vérification du rattachement entreprise/site/équipement…" /> }
+      @if (references.state() === 'error') { <app-error-state title="Rattachement indisponible" [message]="references.message()"
+        [retryable]="references.canRetry()" (retry)="verifyReferences()" /> }
+    </div>
+  </app-sensor-form>
+</section>

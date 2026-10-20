@@ -1,0 +1,55 @@
+<form #formElement [formGroup]="form" (ngSubmit)="submit()" aria-label="Création d’un capteur industriel" [attr.aria-busy]="saving()" novalidate>
+  <p>Les champs marqués « obligatoire » doivent être renseignés.</p>
+  <fieldset [disabled]="saving() || blocked()">
+    <legend>Rattachement industriel</legend>
+    @for (field of parentFields; track field.key) {
+      <div class="field">
+        <label [for]="'sensor-' + field.key">{{ field.label }} (obligatoire)</label>
+        <select [id]="'sensor-' + field.key" [formControlName]="field.key" required [attr.aria-describedby]="'sensor-' + field.key + '-error'" [attr.aria-invalid]="error(field.key) ? 'true' : null">
+          <option [ngValue]="null">Sélectionnez : {{ field.label }}</option>
+          @for (item of options(field.key); track item.id) { <option [ngValue]="item.id">{{ item.label }}</option> }
+        </select>
+        <p class="field-error" [id]="'sensor-' + field.key + '-error'">{{ error(field.key) }}</p>
+        @switch (field.key) {
+          @case ('company_id') { <ng-content select="[companyReferences]" /> }
+          @case ('site_id') { <ng-content select="[siteReferences]" /> }
+          @case ('equipment_id') { <ng-content select="[equipmentReferences]" /> }
+        }
+      </div>
+    }
+  </fieldset>
+  <fieldset [disabled]="saving() || blocked()">
+    <legend>Informations du capteur</legend>
+    @for (field of textFields; track field.key) {
+      <div class="field">
+        <label [for]="'sensor-' + field.key">{{ field.label }} (obligatoire)</label>
+        <input [id]="'sensor-' + field.key" [formControlName]="field.key" required [attr.aria-describedby]="'sensor-' + field.key + '-help sensor-' + field.key + '-error'" [attr.aria-invalid]="error(field.key) ? 'true' : null" />
+        <p class="help" [id]="'sensor-' + field.key + '-help'">{{ field.limit }} caractères Unicode maximum. La casse est conservée ; les espaces périphériques sont retirés.
+          @if (field.key === 'code') { Code unique dans l’ensemble de l’application, tous équipements et entreprises confondus. }
+          @if (field.key === 'sensor_type') { Type libre, sans catalogue imposé. }
+          @if (field.key === 'unit') { Unité libre, sans conversion des valeurs physiques. }
+        </p>
+        <p class="field-error" [id]="'sensor-' + field.key + '-error'">{{ error(field.key) }}</p>
+      </div>
+    }
+    <div class="field">
+      <label for="sensor-status">Statut (obligatoire)</label>
+      <select id="sensor-status" formControlName="status" required aria-describedby="sensor-status-help sensor-status-error" [attr.aria-invalid]="error('status') ? 'true' : null">
+        @for (value of statuses; track value) { <option [value]="value">{{ statusLabels[value] }}</option> }
+      </select>
+      <p id="sensor-status-help" class="help">Actif par défaut. Ce statut est administratif et ne commande pas l’acquisition.</p>
+      <p id="sensor-status-error" class="field-error">{{ error('status') }}</p>
+    </div>
+    <div class="field">
+      <label for="sensor-description">Description (facultative)</label>
+      <textarea id="sensor-description" formControlName="description" rows="5" aria-describedby="sensor-description-help sensor-description-error" [attr.aria-invalid]="error('description') ? 'true' : null"></textarea>
+      <p id="sensor-description-help" class="help">Les espaces et sauts de ligne sont conservés. Une description non touchée n’est pas envoyée.</p>
+      @if (form.controls.description.value !== null) { <button type="button" (click)="removeDescription()">Retirer la description</button> }
+      <p id="sensor-description-error" class="field-error">{{ error('description') }}</p>
+    </div>
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours…' : 'Créer le capteur' }}</button>
+    <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
+  </div>
+</form>

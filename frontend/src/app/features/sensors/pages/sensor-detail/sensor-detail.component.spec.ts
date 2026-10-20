@@ -142,6 +142,9 @@ describe('Sensor read-only detail and real parent chain', () => {
     expect(root().querySelector('.sensor-back')?.getAttribute('href')).toBe('/sensors?company_id=99&site_id=88&equipment_id=77&page=4&page_size=1&search=Other&status=inactive');
     expect(root().querySelector('.equipment-reference')?.getAttribute('href')).toBe('/equipments/12?site_id=9&company_id=7');
   });
+  it('does not treat query parameters as creation confirmation evidence', async () => {
+    await loaded('/sensors/17?createdSensorId=17'); expect(component.creationConfirmed()).toBe(false); expect(root().querySelector('.creation-confirmation')).toBeNull();
+  });
   it('sanitizes invalid return parameters and drops untrusted returnUrl', async () => {
     await loaded('/sensors/17?company_id=-1&site_id=abc&equipment_id=0&page=0&page_size=101&status=wrong&search=%20%20&returnUrl=https://example.com');
     expect(root().querySelector('.sensor-back')?.getAttribute('href')).toBe('/sensors?page=1&page_size=20');

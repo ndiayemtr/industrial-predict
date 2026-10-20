@@ -21,7 +21,7 @@ input, select, button {
   font: inherit; background: tokens.$surface-background; color: tokens.$text-primary;
 }
 button { @include actions.navigation-action(); cursor: pointer; white-space: normal; }
-button.primary { @include actions.navigation-action($primary: true); }
+.new-sensor, button.primary { @include actions.navigation-action($primary: true); }
 button:disabled, select:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:disabled { opacity: .65; }
 a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }

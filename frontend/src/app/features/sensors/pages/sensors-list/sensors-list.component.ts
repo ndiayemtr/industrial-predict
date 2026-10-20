@@ -169,6 +169,16 @@ export class SensorsListComponent {
   recoverPage(): void { const query = this.facade.query(), state = this.facade.state();
     if (query && state.status === 'success' && !state.data.items.length) void this.navigate({ ...query, page: Math.max(1, Math.min(query.page - 1, state.data.pages)) });
   }
+  newQuery(): Record<string, string | number | undefined> {
+    const query = this.facade.query(), result: Record<string, string | number | undefined> = {};
+    if (query) for (const key of keys) result['return_' + key] = query[key];
+    else { result['return_page'] = 1; result['return_page_size'] = 20; }
+    if (this.canFilter()) {
+      result['company_id'] = this.facade.company()!.id; result['site_id'] = this.facade.site()!.id;
+      result['equipment_id'] = this.facade.equipment()!.id;
+    }
+    return result;
+  }
   detailUrl(id: number): string {
     return this.router.serializeUrl(this.router.createUrlTree(['/sensors', id], { queryParams: this.facade.query() }));
   }

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, Subject, catchError, distinctUntilChanged, map, of, startWith, switchMap, throwError } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { CompanyRead, EquipmentRead, SiteRead } from '../../../../core/models/reference-data.model';
@@ -32,6 +32,9 @@ const validId = (id: number): boolean => Number.isSafeInteger(id) && id > 0;
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SensorDetailComponent {
+  private readonly createdSensorId = inject(Router).currentNavigation()?.extras.state?.['createdSensorId'];
+  readonly creationConfirmed = toSignal(inject(ActivatedRoute).paramMap.pipe(map(params => this.createdSensorId != null
+    && params.get('sensorId') === String(this.createdSensorId))), { requireSync: true });
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(SensorsApiService);
   private readonly references = inject(ReferenceDataApiService);
