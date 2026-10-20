@@ -52,16 +52,27 @@ describe('Sensors list, references and URL integration', () => {
     expect(component.equipment.enabled).toBe(true); expect(component.equipment.value).toBeNull(); http.expectNone(() => true);
     component.equipment.setValue(12); await settle(); await reload(); expect(component.facade.state().status).toBe('success');
   });
-  it('shows the five columns and French status, preparing a context URL without an active future detail route', async () => {
+  it('shows the five columns and French status, linking to the read-only detail with applied context', async () => {
     await ready();
     expect([...root().querySelectorAll('thead th')].map(el => el.textContent)).toEqual(['Nom', 'Code', 'Type', 'Unité', 'Statut']);
     expect(root().textContent).toContain('Actif'); expect(root().textContent).toContain('°C'); expect(root().textContent).toContain('Pompe principale - POMPE');
-    const link = root().querySelector('.detail-pending')!;
-    expect(link.getAttribute('data-detail-url')).toBe('/sensors/17?company_id=7&site_id=9&equipment_id=12&page=1&page_size=20');
-    expect(link.getAttribute('aria-disabled')).toBe('true'); expect(link.hasAttribute('href')).toBe(false);
+    const link = root().querySelector('.sensor-detail-link')!;
+    expect(link.getAttribute('href')).toBe('/sensors/17?company_id=7&site_id=9&equipment_id=12&page=1&page_size=20');
+    expect(link.hasAttribute('aria-disabled')).toBe(false);
     expect(root().querySelector('a[href*="/new"]')).toBeNull();
     expect(root().querySelector('.table-scroll')?.getAttribute('tabindex')).toBe('0');
     expect(root().querySelectorAll('label[for]')).toHaveLength(6);
+    expect(root().querySelectorAll('.results .scroll-help')).toHaveLength(1);
+    expect(root().querySelector('.scroll-help')?.textContent).toBe('Sur petit écran, faites défiler le tableau horizontalement.');
+  });
+  it('opens the real detail from a paginated filtered list without changing its applied snapshot', async () => {
+    await ready('/sensors?company_id=7&site_id=9&equipment_id=12&page=2&page_size=20&search=TEMP&status=active');
+    root().querySelector<HTMLAnchorElement>('.sensor-detail-link')!.click(); await settle();
+    expect(TestBed.inject(Router).url).toBe('/sensors/17?company_id=7&site_id=9&equipment_id=12&page=2&page_size=20&status=active&search=TEMP');
+    request('sensors/17').flush(sensor); parents(); await settle();
+    expect(root().querySelector('h1')?.textContent).toBe('Détail capteur');
+    expect(root().querySelector('.sensor-back')?.getAttribute('href')).toBe('/sensors?company_id=7&site_id=9&equipment_id=12&page=2&page_size=20&search=TEMP&status=active');
+    http.expectNone(() => true);
   });
   it('searches only on submission, trims search and retains only the applied search on status changes', async () => {
     await ready(); component.search.setValue('  mm/s  '); await settle(); http.expectNone(() => true);
@@ -90,12 +101,12 @@ describe('Sensors list, references and URL integration', () => {
     list().flush({ ...page, total, items: total ? [sensor] : [], pages: total ? 2 : 0 }); await settle();
     expect(root().textContent).toContain(`${total} ${total > 1 ? 'capteurs' : 'capteur'}`);
     expect(root().querySelector('.pagination') !== null).toBe(total > 0);
-    if (!total) expect(root().textContent).toContain('Aucun capteur');
+    if (!total) { expect(root().textContent).toContain('Aucun capteur'); expect(root().querySelector('.scroll-help')).toBeNull(); }
   });
   it('distinguishes filtered empty from out-of-range and recovers a page manually', async () => {
     await open('/sensors?company_id=7&site_id=9&equipment_id=12&status=inactive&page=99');
     request('companies').flush(catalog); parents(); await settle(); catalogs();
-    list().flush({ ...page, page: 99, items: [], pages: 2 }); await settle(); expect(root().textContent).toContain('Page hors plage'); http.expectNone(() => true);
+    list().flush({ ...page, page: 99, items: [], pages: 2 }); await settle(); expect(root().textContent).toContain('Page hors plage'); expect(root().querySelector('.scroll-help')).toBeNull(); http.expectNone(() => true);
     button('Revenir aux résultats').click(); await settle(); parents();
     const req = list(); expect(req.request.params.get('page')).toBe('2'); req.flush({ ...page, items: [], total: 0, pages: 0 }); await settle();
     expect(root().textContent).toContain('Aucun résultat'); button('Effacer les critères').click(); await settle();

@@ -18,8 +18,8 @@ describe('Sensors lazy routing in the Shell', () => {
         [{ name: 'industrial-predict', base: 'default', variables: {} }]), NbSidebarModule.forRoot())] });
   });
   afterEach(() => { try { TestBed.inject(HttpTestingController).verify(); } finally { TestBed.resetTestingModule(); vi.restoreAllMocks(); } });
-  it('declares only the full-match lazy list, with no detail or write route', () => {
-    expect(SENSOR_ROUTES.map(route => route.path)).toEqual(['']);
+  it('declares the full-match lazy list and detail without write routes', () => {
+    expect(SENSOR_ROUTES.map(route => route.path)).toEqual(['', ':sensorId']);
     expect(SENSOR_ROUTES[0].pathMatch).toBe('full'); expect(SENSOR_ROUTES[0].component).toBeUndefined();
     expect(typeof SENSOR_ROUTES[0].loadComponent).toBe('function');
     expect(typeof routes[0].children?.find(route => route.path === 'sensors')?.loadChildren).toBe('function');
@@ -35,11 +35,23 @@ describe('Sensors lazy routing in the Shell', () => {
     expect(h.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/sensors');
     expect(TestBed.inject(Title).getTitle()).toBe('Capteurs | Industrial Predict AI'); http.expectNone(() => true);
   });
-  it('leaves future detail and create paths to the global 404 without loading Sensors', async () => {
-    const h = await RouterTestingHarness.create('/sensors/17');
+  it.each(['/sensors/new', '/sensors/17/edit'])('leaves future write path %s to the global 404 without loading Sensors', async url => {
+    const h = await RouterTestingHarness.create(url);
     h.fixture.detectChanges(); await h.fixture.whenStable();
     expect(h.routeNativeElement!.querySelector('app-sensors-list')).toBeNull();
+    expect(h.routeNativeElement!.querySelector('app-sensor-detail')).toBeNull();
     expect(TestBed.inject(Title).getTitle()).toBe('Page introuvable | Industrial Predict AI');
     TestBed.inject(HttpTestingController).expectNone(() => true);
   });
+  it('opens the lazy detail in the Shell with a dedicated title', async () => {
+    const h = await RouterTestingHarness.create('/sensors/17'); h.fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/sensors/17').flush({}, { status: 404, statusText: 'Not found' });
+    h.fixture.detectChanges();
+    expect(h.routeNativeElement!.querySelector('app-sensor-detail')).not.toBeNull();
+    expect(h.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/sensors');
+    expect(TestBed.inject(Title).getTitle()).toBe('Détail capteur | Industrial Predict AI');
+    http.expectNone(() => true);
+  });
+
 });

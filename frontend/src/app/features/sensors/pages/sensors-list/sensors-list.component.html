@@ -106,13 +106,12 @@
         </app-empty-state>
       } @else {
         <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement.</p>
-        <p id="sensor-detail-help">La consultation détaillée sera disponible prochainement.</p>
         <div class="table-scroll" role="region" aria-label="Liste des capteurs" tabindex="0">
           <table>
             <caption>{{ state.data.total }} {{ state.data.total > 1 ? 'capteurs' : 'capteur' }} - Page {{ page() }} sur {{ state.data.pages }}</caption>
             <thead><tr><th scope="col">Nom</th><th scope="col">Code</th><th scope="col">Type</th><th scope="col">Unité</th><th scope="col">Statut</th></tr></thead>
             <tbody>@for (item of state.data.items; track item.id) {
-              <tr><td><span class="detail-pending" role="link" aria-disabled="true" aria-describedby="sensor-detail-help" [attr.data-detail-url]="detailUrl(item.id)">{{ item.name }}</span></td>
+              <tr><td><a class="sensor-detail-link" [routerLink]="['/sensors', item.id]" [queryParams]="facade.query()">{{ item.name }}</a></td>
                 <td>{{ item.code }}</td><td>{{ item.sensor_type }}</td><td>{{ item.unit }}</td>
                 <td><span class="badge">{{ statusLabels[item.status] }}</span></td></tr>
             }</tbody>

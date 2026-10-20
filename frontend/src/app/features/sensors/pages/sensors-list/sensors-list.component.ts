@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, Observable, Subject, catchError, merge, switchMap, tap } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { Page } from '../../../../core/models/page.model';
@@ -27,7 +27,7 @@ const same = (a: Readonly<SensorsQuery> | null, b: SensorsQuery) => a !== null &
 
 @Component({
   selector: 'app-sensors-list', standalone: true,
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [RouterLink, ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
   providers: [SensorsListFacade], templateUrl: './sensors-list.component.html',
   styleUrl: './sensors-list.component.scss', changeDetection: ChangeDetectionStrategy.OnPush
 })

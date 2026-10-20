@@ -7,6 +7,9 @@
   margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius;
 }
+.results { container: sensor-results / inline-size; }
+.scroll-help { display: none; }
+@container sensor-results (width < 38rem) { .scroll-help { display: block; } }
 .parents, .criteria, .search-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
 .parents > div, .criteria > div { min-width: 0; }
 label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
@@ -21,7 +24,7 @@ button { @include actions.navigation-action(); cursor: pointer; white-space: nor
 button.primary { @include actions.navigation-action($primary: true); }
 button:disabled, select:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:disabled { opacity: .65; }
-input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 #sensors-search-error:empty { display: none; }
@@ -30,7 +33,7 @@ h2 { margin-top: 0; font-size: 1.25rem; }
 table { width: 100%; min-width: 38rem; table-layout: fixed; border-collapse: collapse; }
 caption { text-align: left; padding-bottom: tokens.$space-md; }
 th, td { text-align: left; vertical-align: top; padding: tokens.$space-sm; border-bottom: tokens.$border-width solid tokens.$border-color; overflow-wrap: anywhere; }
-.detail-pending { display: inline-block; padding-block: .5rem; }
+.sensor-detail-link { display: inline-block; padding-block: .5rem; color: tokens.$navigation-active; }
 .badge { display: inline-block; padding: tokens.$space-xs; border-radius: tokens.$border-radius; background: tokens.$content-background; }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; gap: tokens.$space-sm; margin-top: tokens.$space-lg; }
 .pagination p { flex: 1 1 10rem; }
