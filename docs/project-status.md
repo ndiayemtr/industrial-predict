@@ -6,12 +6,12 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-sites`, HEAD de référence `b3d0352`, contrôlé le 19 octobre
-2026. UI 4.1 à UI 4.7.5 sont enregistrées dans dix commits locaux depuis
-`main` (`54dd128`). Sites MVP est implémenté et sa validation intégrée est
-documentée avec une réserve navigateur ouverte. UI 4.8 prépare uniquement
-la documentation et la fusion ; aucun commit documentaire, push ou merge
-n'est effectué. Voir le [bilan de livraison Sites](ui-4.8-sites-delivery.md).
+`feature/frontend-equipments`, HEAD de référence `39e2f0d`, contrôlé le
+20 octobre 2026. `main` et la référence locale `origin/main` sont à `667fe5b`
+(Sites intégré). Huit commits Équipements sont en avance sur `main`, sans
+retard. UI 5.8 actualise uniquement la documentation ; validation attendue avant
+commit documentaire et toute fusion. Aucun fetch effectué dans cette étape.
+Voir le [bilan de livraison Équipements](ui-5.8-equipments-delivery.md).
 
 À mettre à jour à chaque changement de branche.
 
@@ -314,13 +314,21 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 3.7.1 | Diagnostic de stabilité validé et commité (`ac2dc3a`), sans correctif spéculatif |
 | UI 3.8 | Documentation finale terminée (`a495f90`) ; Companies fusionné dans `main` (`537822c`) et publié |
 | UI 4.1 à UI 4.7.5 | Sites MVP implémenté et validation intégrée documentée ; dernier commit `b3d0352`, réserve sur le dialogue natif d'abandon conservée |
-| UI 4.8 | Documentation Sites préparée, validation attendue avant commit et fusion |
+| UI 4.8 | Documentation Sites commitée dans `667fe5b` ; Sites intégré dans `main` |
+| UI 5.1 | Conception Équipements et EQ-01 à EQ-07 approuvés (`f797c54`) |
+| UI 5.2 | Modèles et intégration API (`ff3fed3`) |
+| UI 5.3 / UI 5.3.1 | Liste, filtres et finitions UX (`c8af423`) |
+| UI 5.4 / UI 5.4.1 | Détail, libellés et navigation Site (`37992ff`) |
+| UI 5.5 | Création et formulaire réutilisable (`a874b4e`) |
+| Boutons | Harmonisation transversale (`70d2a0f`) |
+| UI 5.6 / UI 5.6.1 | Modification différentielle et suivi avant actions (`b4ffa06`) |
+| UI 5.7 | Intégration PostgreSQL réelle documentée (`39e2f0d`) |
+| UI 5.8 | Documentation de livraison préparée ; commit et fusion non effectués |
 
-Dashboard V1 est opérationnel via FastAPI/PostgreSQL. Companies MVP est terminé,
-fusionné dans `main` et publié. Sites est implémenté sur sa branche dédiée.
-Les six autres destinations
-de navigation et le détail équipement restent des placeholders. Rapports et
-Administration restent « À venir » et sans route dédiée. L'authentification
+Dashboard V1, Companies et Sites MVP sont intégrés dans `main`.
+Équipements MVP est implémenté sur sa branche dédiée. Capteurs, Mesures,
+Maintenance, Prédictions et Recommandations restent des placeholders.
+Rapports et Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
 production SaaS multi-tenant faute d'autorisation multi-entreprises démontrée.
 
@@ -359,6 +367,9 @@ en UI 2.1.1. Cette étape documentaire contrôle le contrat dans le code et les
 tests existants, la cohérence des documents et le diff Git.
 
 ## Sites MVP - livraison préparée UI 4.8
+
+Livraison documentaire enregistrée dans `667fe5b`, intégrée dans `main`.
+Les résultats ci-dessous conservent leur périmètre historique Sites.
 
 Liste avec sélection explicite d'entreprise, recherche serveur nom/code,
 pagination et contexte URL ; consultation du détail avec parent réel et dates ;
@@ -414,6 +425,57 @@ rapports [UI 4.7.4](ui-4.7.4-real-sites-crud.md) et
   et la sélection d'entreprise ; cet écart reste à arbitrer, sans ajout fonctionnel ici.
 - Lecteur d'écran réel, zoom Sites 200/400 %, charge et concurrence d'écritures
   non validés. Aucun verrou de version ou idempotence serveur promis.
+
+## Équipements MVP - livraison préparée UI 5.8
+
+La [conception UI 5.1](etape-ui-5.1-equipments.md), EQ-01 à EQ-07 approuvés,
+est implémentée : liste paginée, recherche explicite nom/code/type, entreprise
+puis site sans sélection arbitraire, filtres statut/criticité et contexte URL.
+Le détail résout Equipment -> Site -> Company indépendamment du contexte de
+retour. Liens Site vers Équipements et Équipement vers son Site livrés.
+
+Création avec défauts operational/medium et type libre ; modification des six
+champs autorisés avec PATCH différentiel, sans requête si valeurs restaurées.
+Description omise, vide et null distinguées. Aucun company_id dans les écritures,
+aucun site_id en PATCH, aucun transfert ni DELETE frontend. Formulaire partagé,
+notifications après navigation, confirmation accessible, protections de saisie,
+focus et boutons harmonisés sont livrés. Architecture et limites de validation
+accessibilité dans l'[architecture frontend](frontend-architecture.md#équipements-mvp---architecture-implémentée-ui-5).
+
+### Résultats de référence Équipements
+
+- [UI 5.6.1](ui-5.6-equipment-edit.md#ui-561---organisation-du-formulaire-dédition) :
+  **864 tests Angular réussis / 49 fichiers**, build production réussi ;
+  bundle initial **604,81 ko**, budget d'avertissement de 500 ko inchangé.
+- [UI 5.7](ui-5.7-equipments-integration.md) : Angular 4201 -> FastAPI 8001 ->
+  PostgreSQL 5434 / industrial_predict_dev, identité et compte non superutilisateur
+  vérifiés ; un POST **201** et un PATCH description seule **200** réels depuis Angular.
+  Persistance confirmée par rechargement, GET et SQL.
+- Équipement existant UI5-EQ-TEST-001 conservé ; équipement fictif dédié
+  UI57-EQ-20261020-01 ajouté puis modifié. **36 lignes seed et 38 lignes
+  préexistantes inchangées**, aucun orphelin ; équipements de 5 à 6 uniquement.
+- Erreurs d'écriture **409/422**, doubles soumissions et courses couvertes par
+  **HTTP simulé** ; GET 404 et refus GET 422 réels distincts dans UI 5.7.
+
+Aucun test, build, appel API ou contrôle PostgreSQL relancé en UI 5.8.
+Les rapports historiques sont conservés avec leurs résultats datés.
+
+### Limites et dettes Équipements
+
+- Dialogue natif d'abandon non validé complètement ; garde/confirm/beforeunload
+  couverts par simulation. Pas d'audit exhaustif lecteur d'écran ou zoom 200/400 %.
+- Bundle initial au-dessus du budget de **104,81 ko**, sans modification des seuils.
+- Secrets historiques suivis dans backend/alembic.ini et docker-compose.yml à
+  externaliser et renouveler, sans exposer leurs valeurs ni les modifier ici.
+- Authentification et autorisation multi-tenant absentes ; sélection de parents
+  et absence de transfert/DELETE dans l'UI ne sécurisent pas les endpoints backend.
+- Pas de verrou optimiste ou idempotence serveur promis ; résultat d'écriture
+  incertain à vérifier avant nouvelle soumission manuelle, sans retry automatique.
+- Écrans de gestion capteurs, mesures, maintenance, prédictions, Health Score et
+  RUL futurs. Le Dashboard fournit déjà des agrégats ; les fonctions ML backend
+  existantes ne sont pas intégrées à la fiche Équipement et aucun calcul ML n'y est lancé.
+
+Checklist et audit Git dans le [bilan UI 5.8](ui-5.8-equipments-delivery.md).
 
 ## Livraison UI 3 - Companies MVP et finition des dates
 
@@ -626,9 +688,7 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Valider le [bilan UI 4.8 et sa checklist de fusion](ui-4.8-sites-delivery.md),
-y compris les réserves et l'écart de navigation documentés, puis autoriser
-séparément le commit documentaire et toute fusion vers `main`.
-Aucun push, merge, changement PostgreSQL ou début du module suivant ici.
-La conception UI 4.1 reste la référence métier ; les rapports datés conservent
-leurs résultats sans transformer leurs anciennes prochaines étapes en actions actuelles.
+Valider le [bilan UI 5.8 et sa checklist](ui-5.8-equipments-delivery.md), puis
+faire autoriser séparément le commit documentaire et la fusion vers `main`.
+Aucun commit, push, merge, changement PostgreSQL ou module suivant dans UI 5.8.
+Les prochaines étapes mentionnées dans les rapports historiques restent datées.

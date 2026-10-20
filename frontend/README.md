@@ -56,11 +56,16 @@ La validation réelle et ses limites sont consignées séparément dans les rapp
 [UI 4.7.4](../docs/ui-4.7.4-real-sites-crud.md) et
 [UI 4.7.5](../docs/ui-4.7.5-sites-closure.md).
 
-La référence de livraison Sites est **583 tests Angular réussis avec deux workers**
-et un build production réussi. Exécuter tests et build séquentiellement lors
-d'une future modification exécutable et documenter toute nouvelle exécution ;
-aucune relance n'est nécessaire pour UI 4.8 documentaire. Le bilan et les dettes
-figurent dans le [statut Sites](../docs/project-status.md#sites-mvp---livraison-préparée-ui-48).
+La référence actuelle Équipements est **864 tests Angular réussis dans 49 fichiers**
+et un build production réussi (UI 5.6.1), initial **604,81 ko** pour un budget de
+500 ko. [UI 5.7](../docs/ui-5.7-equipments-integration.md) distingue POST 201/PATCH
+200 et persistance PostgreSQL réels des erreurs 409/422 d'écriture et doubles
+soumissions simulées. Le dialogue natif d'abandon reste partiellement non validé.
+
+Exécuter tests et build séquentiellement après modification exécutable ; aucune
+relance pour UI 5.8 documentaire. Voir le [statut courant](../docs/project-status.md#équipements-mvp---livraison-préparée-ui-58)
+et la [checklist de livraison](../docs/ui-5.8-equipments-delivery.md).
+Les références Sites ci-dessus restent historiques et ne sont pas réécrites.
 
 ## Additional Resources
 

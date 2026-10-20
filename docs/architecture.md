@@ -23,14 +23,15 @@ PostgreSQL   Models / Scoring / Recommendation Engine
 Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main` : Shell Nebular,
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
 accessible du focus. Dashboard V1 et Companies MVP sont livrés dans `main`.
-Sites MVP est implémenté sur `feature/frontend-sites`, en préparation de fusion
-après validation UI 4.8. Les six autres destinations disponibles et le détail équipement
-restent des placeholders.
+Sites MVP est intégré dans `main` à `667fe5b`. Équipements MVP est implémenté
+sur `feature/frontend-equipments`, HEAD `39e2f0d`, en préparation de livraison
+UI 5.8. Capteurs, Mesures, Maintenance, Prédictions et Recommandations restent
+des placeholders, sans confusion avec les agrégats Dashboard ou le ML backend.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
-est implémenté ; `features/dashboard`, `features/companies` et `features/sites` existent.
+est implémenté ; `features/dashboard`, `features/companies`, `features/sites` et `features/equipments` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -90,6 +91,17 @@ La validation réelle Angular/FastAPI/PostgreSQL et les limites sont décrites d
 le [statut Sites](project-status.md#sites-mvp---livraison-préparée-ui-48), sans
 réexécution en UI 4.8. Aucun contrôle d'authentification ou d'autorisation
 multi-tenant n'est actuellement livré.
+
+Équipements réutilise les modèles core et le transport de références via
+EquipmentsApiService. La liste utilise une façade locale, les pages détail,
+création et édition orchestrent leurs états et EquipmentForm est partagé.
+La résolution réelle Equipment -> Site -> Company est indépendante du contexte URL.
+POST inclut site_id validé, jamais company_id ; PATCH ne contient que les six
+champs éditables modifiés. Aucun transfert ou DELETE frontend. Les descendants
+et données prédictives ne sont ni chargés ni inventés dans cette fiche.
+Voir l'[architecture implémentée](frontend-architecture.md#équipements-mvp---architecture-implémentée-ui-5)
+et le [bilan de livraison](ui-5.8-equipments-delivery.md) pour les références,
+les preuves réelles/simulées et les limites de sécurité. Aucun backend modifié.
 
 ## Backend
 

@@ -43,7 +43,7 @@
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
-Companies et Sites les réutilisent également ; les autres pages métier restent des placeholders.
+Companies, Sites et Équipements les réutilisent également ; les autres pages métier restent des placeholders.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
@@ -158,14 +158,14 @@ de livraison ne sont pas de nouvelles exécutions documentaires. Voir les rappor
 minutes ; le mode avancé conserve secondes et millisecondes, avec confirmation
 explicite en cas de conversion vers la minute. Les bornes UTC sont préservées.
 
-Dette actuelle : 601,51 ko initial pour un budget de 500 ko, dont +32,48 ko après
+Dette historique Companies : 601,51 ko initial pour un budget de 500 ko, dont +32,48 ko après
 intégration de NbToastrService ; dépassement 101,51 ko, seuils inchangés.
 Liste/détail/formulaire Companies restent différés. DELETE est exclu du MVP à
 cause de la cascade. L'autorisation multi-entreprises reste non démontrée ;
 le module n'est pas prêt pour une production SaaS multi-tenant. Les écritures
 réelles POST/PATCH restent non testées de bout en bout.
 
-### UI 4 - Sites industriels implémentés, livraison en préparation
+### UI 4 - Sites industriels intégrés dans main
 
 - [x] UI 4.1 - Analyse et conception fonctionnelle validées, [rapport](etape-ui-4.1-sites.md), commit `1630ebc`
 - [x] UI 4.2 - DTO et intégration HTTP validés, [bilan](ui-4.2-sites-data-access.md), commit `cd2389d`
@@ -179,14 +179,35 @@ réelles POST/PATCH restent non testées de bout en bout.
 - [x] UI 4.7.3 - Jeu industriel fictif et seed idempotent validés, [bilan](ui-4.7.3-development-data.md)
 - [x] UI 4.7.4 - POST/PATCH réels et persistance PostgreSQL, [preuves](ui-4.7.4-real-sites-crud.md), rapport enregistré dans `b3d0352`
 - [x] UI 4.7.5 - Clôture documentée avec réserve navigateur, tests complétés, [bilan](ui-4.7.5-sites-closure.md), commit `b3d0352`
-- [ ] UI 4.8 - Documentation et [préparation de livraison](ui-4.8-sites-delivery.md) réalisées dans le répertoire de travail ; validation puis commit documentaire attendus
-- [ ] Fusion de `feature/frontend-sites` vers `main`, après validation distincte
+- [x] UI 4.8 - Documentation de [livraison Sites](ui-4.8-sites-delivery.md) commitée dans `667fe5b`
+- [x] Fusion fast-forward locale de `feature/frontend-sites` vers `main` à `667fe5b`
 
 Le [statut Sites](project-status.md#sites-mvp---livraison-préparée-ui-48) centralise
 les fonctionnalités, les résultats de référence et les limites : 583 tests Angular,
 build réussi, intégration DEV réelle, réserve d'abandon, budget dépassé et sécurité
 à industrialiser. Aucun test ou build relancé pour UI 4.8 documentaire.
-Le module suivant reste non commencé.
+
+### UI 5 - Équipements industriels implémentés, livraison en préparation
+
+- [x] UI 5.1 - [Conception et EQ-01 à EQ-07 approuvés](etape-ui-5.1-equipments.md), `f797c54`
+- [x] UI 5.2 - [Modèles et intégration API](ui-5.2-equipments-data-access.md), `ff3fed3`
+- [x] UI 5.3 / UI 5.3.1 - [Liste, filtres et UX](ui-5.3-equipments-list.md), `c8af423`
+- [x] UI 5.4 / UI 5.4.1 - [Détail et navigation Site](ui-5.4-equipment-detail.md), `37992ff`
+- [x] UI 5.5 - [Création et formulaire partagé](ui-5.5-equipment-create.md), `a874b4e`
+- [x] [Harmonisation des boutons](ui-buttons-harmonization.md), `70d2a0f`
+- [x] UI 5.6 / UI 5.6.1 - [Modification différentielle et suivi](ui-5.6-equipment-edit.md), `b4ffa06`
+- [x] UI 5.7 - [Intégration PostgreSQL réelle](ui-5.7-equipments-integration.md), `39e2f0d`
+- [ ] UI 5.8 - [Documentation de livraison préparée](ui-5.8-equipments-delivery.md), validation puis commit attendus
+- [ ] Fusion vers `main` après autorisation explicite et actualisation des références
+
+Référence historique conservée : 864 tests Angular / 49 fichiers, build réussi,
+initial 604,81 ko pour 500 ko. POST 201/PATCH 200 et persistance réels en UI 5.7 ;
+erreurs d'écriture 409/422 et double soumission simulées, dialogue natif réservé.
+Le [statut Équipements](project-status.md#équipements-mvp---livraison-préparée-ui-58)
+centralise le périmètre, les limites et les dettes. Aucun test/build relancé ici.
+Capteurs, maintenance et prédictions restent des écrans futurs ; agrégats Dashboard
+et ML backend existants ne constituent pas leur implémentation frontend.
+Aucun module suivant commencé.
 
 ### Écrans métier restant à implémenter
 

@@ -80,8 +80,9 @@ réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 `docs/project-status.md`. DELETE est exclu du MVP en raison de la cascade.
 Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
 mais validés par simulation, sans écriture réelle dans PostgreSQL.
-Sites est également implémenté sur sa branche dédiée ; les autres pages métier
-restent des placeholders. Aucun identifiant d'entreprise
+Sites est intégré dans `main` à `667fe5b`. Équipements MVP est implémenté sur
+`feature/frontend-equipments` ; les cinq autres destinations métier restent des
+placeholders. Aucun identifiant d'entreprise
 par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
 `docs/decisions.md` ; le contrat consommé et l'architecture livrée sont décrits
@@ -98,7 +99,7 @@ La référence Companies UI 3.7.1 comprend trois suites complètes à 348/348 te
 « neuf liens attendus, zéro reçu » n'est pas reproduit ; les timeouts sous
 concurrence justifient des validations séquentielles, sans correctif spéculatif.
 Voir `docs/ui-3.7.1-test-stability.md`. Ces tests ne sont pas relancés en UI 3.8.
-Bundle initial actuel : 601,51 ko pour un budget de 500 ko, dont +32,48 ko après
+Bundle initial historique Sites : 601,51 ko pour un budget de 500 ko, dont +32,48 ko après
 intégration de NbToastrService ; aucun budget relevé. Zoom Companies 200/400 %
 non validé, lecteur d'écran réel non testé et autorisation multi-entreprises non
 démontrée. Companies n'est pas prêt pour une production SaaS multi-tenant.
@@ -106,11 +107,11 @@ Validation finale de livraison Companies : 386 tests Angular réussis, build pro
 réussi et `npm audit` sans vulnérabilité signalée. Ces résultats historiques
 ne sont pas de nouvelles exécutions lors de la synchronisation documentaire.
 Voir `docs/frontend-datetime-display.md` et `docs/dashboard-date-precision.md`.
-UI 4 - Sites MVP est implémenté sur `feature/frontend-sites`, référence `b3d0352`.
+UI 4 - Sites MVP est intégré dans `main` à `667fe5b` ; validation de référence `b3d0352`.
 La [conception UI 4.1](docs/etape-ui-4.1-sites.md) reste la référence métier :
 entreprise explicite, code unique globalement, PATCH différentiel sans company_id,
 entreprise non transférable et aucun DELETE frontend. Liste/recherche/pagination,
-détail, création, édition, navigation et notifications sont livrés sur cette branche.
+détail, création, édition, navigation et notifications sont livrés dans `main`.
 Les [preuves UI 4.7.4](docs/ui-4.7.4-real-sites-crud.md) complètent les simulations
 par POST 201/PATCH 200 réels via Angular 4201 et FastAPI 8001 vers DEV :
 persistance SQL, deux entreprises et quatre sites, seed de 36 lignes préservé.
@@ -119,8 +120,25 @@ La [clôture UI 4.7.5](docs/ui-4.7.5-sites-closure.md) fixe la référence à
 la réserve sur le dialogue natif d'abandon. Le [statut Sites](docs/project-status.md#sites-mvp---livraison-préparée-ui-48)
 centralise les limites et dettes, dont les secrets historiques suivis à externaliser
 et à renouveler et l'absence actuelle d'authentification/autorisation multi-tenant.
-UI 4.8 est documentaire : [livraison préparée](docs/ui-4.8-sites-delivery.md),
-validation requise avant commit documentaire et fusion. Aucun module suivant commencé.
+UI 4.8 et sa [documentation de livraison](docs/ui-4.8-sites-delivery.md) sont enregistrées dans `667fe5b`.
+
+UI 5 - Équipements MVP est implémenté sur `feature/frontend-equipments`, HEAD
+`39e2f0d`. Les décisions EQ-01 à EQ-07 de la [conception](docs/etape-ui-5.1-equipments.md)
+sont approuvées : sélection entreprise/site, liste/recherche/filtres/pagination,
+détail avec parents réels, liens Site/Équipements, création et édition différentielle.
+Type libre, défauts operational/medium, aucun transfert ni DELETE frontend.
+Boutons harmonisés et protections des formulaires livrés. Capteurs, maintenance,
+prédictions, Health Score et RUL ne sont pas des écrans Équipements livrés.
+Références historiques : 864 tests Angular / 49 fichiers, build réussi,
+bundle initial 604,81 ko. [UI 5.7](docs/ui-5.7-equipments-integration.md) prouve
+POST 201/PATCH 200 et persistance DEV, seed et données préexistantes préservés.
+409/422 d'écriture et double soumission restent simulés ; dialogue natif réservé.
+Le [statut courant](docs/project-status.md#équipements-mvp---livraison-préparée-ui-58)
+centralise les limites : budget dépassé, secrets historiques à externaliser et
+renouveler, absence d'authentification et d'autorisation multi-tenant.
+[UI 5.8](docs/ui-5.8-equipments-delivery.md) est documentaire, sans relance des
+tests/build. Attendre validation avant commit documentaire et toute fusion.
+Aucun module suivant commencé.
 
 ### Machine Learning
 

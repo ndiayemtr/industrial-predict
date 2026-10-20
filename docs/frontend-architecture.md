@@ -14,15 +14,16 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé en UI 4.8 le 19 octobre 2026 sur
-`feature/frontend-sites`, HEAD de référence `b3d0352`. Le socle, Dashboard V1
-et Companies MVP sont fusionnés dans `main`. Sites est implémenté sur sa branche,
-avec livraison Git en attente de validation. Les sections datées UI 1/UI 2/UI 3
-conservent leurs résultats historiques ; le bilan courant est dans
-[project-status.md](project-status.md#sites-mvp---livraison-préparée-ui-48).
+État documentaire synchronisé en UI 5.8 le 20 octobre 2026 sur
+`feature/frontend-equipments`, HEAD de référence `39e2f0d`. Le socle, Dashboard,
+Companies et Sites sont intégrés dans `main` à `667fe5b`. Équipements MVP est
+implémenté sur sa branche, en attente de validation du commit documentaire puis
+de la fusion. Les sections datées conservent leurs résultats historiques ;
+le [statut courant](project-status.md#équipements-mvp---livraison-préparée-ui-58)
+centralise les résultats et limites. Aucun test/build relancé en UI 5.8.
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle, Dashboard V1, Companies et Sites MVP
+## Structure réellement présente - socle, Dashboard V1, Companies, Sites et Équipements MVP
 
 ```text
 frontend/
@@ -51,7 +52,10 @@ frontend/
 
 `features/sites/` complète cet inventaire avec models/, data-access/,
 sites-list.facade.*, sites.routes.*, pages/ et components/site-form/.
-Le détail de cette feature figure dans la section Sites ci-dessous.
+`features/equipments/` contient models/, data-access/, equipments-list.facade.*,
+equipments.routes.*, pages/ et components/equipment-form/. Les détails figurent
+dans les sections Sites et Équipements ci-dessous. Les styles d'actions et
+interactions communs sont dans src/styles/_actions.scss et _buttons.scss.
 
 `AppComponent` contient le Router Outlet racine. `ShellComponent` contient
 un seul `nb-layout`, un `nb-sidebar`, un `nb-layout-header subheader`
@@ -145,19 +149,21 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | `/sites/new` | Nouveau site industriel | SiteCreateComponent, création | Sites |
 | `/sites/:siteId/edit` | Modifier le site | SiteEditComponent, modification | Sites |
 | `/sites/:siteId` | Détail du site | SiteDetailComponent | Sites |
-| `/equipments` | Équipements | FeaturePlaceholderComponent | Équipements |
+| `/equipments` | Équipements | EquipmentsListComponent | Équipements |
+| `/equipments/new` | Nouvel équipement industriel | EquipmentCreateComponent | Équipements |
+| `/equipments/:equipmentId/edit` | Modifier l’équipement | EquipmentEditComponent | Équipements |
+| `/equipments/:equipmentId` | Détail équipement | EquipmentDetailComponent | Équipements |
 | `/sensors` | Capteurs | FeaturePlaceholderComponent | Capteurs |
 | `/measurements` | Mesures | FeaturePlaceholderComponent | Mesures |
 | `/maintenance` | Maintenance | FeaturePlaceholderComponent | Maintenance |
 | `/predictions` | Prédictions | FeaturePlaceholderComponent | Prédictions |
 | `/recommendations` | Recommandations | FeaturePlaceholderComponent | Recommandations |
-| `/equipments/:equipmentId` | Détail équipement | FeaturePlaceholderComponent | Équipements |
 | `**` (dernière route) | Page introuvable | NotFoundComponent, `data.isNotFound: true` | Aucune sélection trompeuse |
 
 Chaque page a un titre de document `pageTitle | Industrial Predict AI`.
-Le paramètre `equipmentId` est un paramètre Router ; aucun équipement n'est
-encore récupéré ou validé par appel backend. Un changement d'identifiant
-sans retour à la liste est couvert par les tests de routing.
+Le paramètre `equipmentId` est validé localement avant GET Equipment ; les
+lectures obsolètes sont annulées lorsqu'il change. Les parents réels sont résolus
+depuis Equipment.site_id puis Site.company_id, jamais depuis le contexte URL.
 
 Rapports et Administration n'ont ni chemin dans la navigation ni route dédiée.
 Ils sont désactivés et libellés « À venir ». `/reports`, `/administration` et
@@ -167,11 +173,11 @@ exacte des liens et évite une sélection Équipements incorrecte ; le détail
 valide `/equipments/42` conserve la sélection de section.
 
 Le Shell, DashboardComponent, le placeholder commun et la 404 utilisent
-`loadComponent` avec import dynamique. Companies et Sites utilisent `loadChildren`
-vers `COMPANY_ROUTES` et `SITE_ROUTES`, puis `loadComponent` pour leurs pages,
+`loadComponent` avec import dynamique. Companies, Sites et Équipements utilisent
+`loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES` et `EQUIPMENT_ROUTES`, puis
+`loadComponent` pour leurs pages,
 sans préchargement configuré. Dans chaque feature, `new` puis la route d'édition
-précèdent l'identifiant dynamique. Les six autres destinations métier disponibles
-et le détail équipement partagent le même placeholder, sans créer sept pages définitives.
+précèdent l'identifiant dynamique. Les cinq autres destinations métier disponibles partagent le même placeholder.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -179,8 +185,8 @@ routés ; la route Dashboard charge uniquement DashboardComponent.
 
 ## Structure générale cible
 
-Les dossiers métier autres que `dashboard` et `companies` constituent la cible.
-`core`, `layout`, `shared` et ces deux features existent.
+Les dossiers métier autres que `dashboard`, `companies`, `sites` et `equipments`
+constituent la cible. `core`, `layout`, `shared` et ces quatre features existent.
 
 ```text
 src/app/
@@ -216,8 +222,10 @@ src/app/
 
 ## Pages prioritaires à implémenter
 
-Dashboard V1 et Companies MVP sont implémentés. Les autres fonctionnalités ci-dessous restent des
-objectifs métier futurs ; leurs routes actuelles rendent des placeholders.
+Dashboard V1, Companies, Sites et Équipements MVP sont implémentés. Les listes
+ci-dessous distinguent les fonctions livrées des intentions produit futures ;
+les routes Capteurs, Mesures, Maintenance, Prédictions et Recommandations rendent
+encore des placeholders.
 
 ### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
 
@@ -231,27 +239,14 @@ Les intentions antérieures de santé des équipements, risques de panne et aler
 critiques restent des objectifs ultérieurs ; elles ne sont pas fournies par le
 contrat Dashboard et ne font pas partie de V1 (D014 / DASH-01).
 
-### Équipements
+### Équipements et détail - MVP livré en UI 5
 
-- liste
-- filtres
-- Health Score
-- Failure Risk
-- RUL
-- statut
-- dernière maintenance
-
-### Détail équipement
-
-Onglets :
-
-- Vue d'ensemble
-- Capteurs
-- Mesures
-- Prédictions
-- Recommandations
-- Maintenance
-- Documents
+Liste/recherche/pagination, filtres statut/criticité, sélection entreprise/site,
+détail des données réelles, création et modification différentielle sont livrés.
+Voir l'[architecture implémentée](#équipements-mvp---architecture-implémentée-ui-5).
+Health Score, Failure Risk, RUL et dernière maintenance ne sont pas affichés.
+Les onglets Capteurs, Mesures, Prédictions, Recommandations, Maintenance et
+Documents restent des intentions futures, sans compteurs fictifs ni calcul ML.
 
 ### Prédictions
 
@@ -283,7 +278,8 @@ Page
 Les composants visuels ne doivent pas contenir de logique métier complexe.
 Ce flux est implémenté pour Dashboard V1, avec façade locale à la page et
 services HTTP ; Companies utilise également une façade locale pour sa liste
-et un service dédié. Les services des autres domaines restent à développer.
+et un service dédié. Sites et Équipements suivent cette séparation ; les services
+des autres écrans métier restent à développer.
 
 ## Gestion API
 
@@ -291,7 +287,7 @@ Les appels HTTP sont centralisés dans des services dédiés.
 
 Exemples :
 
-- EquipmentApiService
+- EquipmentsApiService (implémenté)
 - DashboardApiService
 - CompaniesApiService (implémenté)
 - SitesApiService (implémenté)
@@ -543,7 +539,10 @@ Le Dashboard ne retourne pas les noms/listes de référence nécessaires aux fil
 | --- | --- |
 | Entreprises | `/companies?page=…&page_size=…&search=…` |
 | Sites | `/sites?company_id=…&page=…&page_size=…&search=…` |
-| Équipements | `/equipments?site_id=…&page=…&page_size=…&search=…` |
+| Équipements | `/equipments?site_id=…&page=…&page_size=…&search=…&status=…&criticality=…` |
+
+Les filtres status/criticality sont facultatifs depuis UI 5.2 ; les appels
+Dashboard existants sont conservés et omettent ces paramètres.
 
 Les réponses `Page<T>` contiennent `items`, `total`, `page`, `page_size`, `pages`.
 Page initiale 1, taille par défaut 20, maximum 100 : ne pas présenter la première
@@ -882,6 +881,63 @@ réserve sur le dialogue natif, les dettes de bundle/secrets et l'absence
 d'authentification/autorisation multi-tenant. UI 4.8 ne relance aucune validation
 applicative. Les décisions D001 à D014 et la conception restent inchangées.
 
+## Équipements MVP - architecture implémentée UI 5
+
+La [conception UI 5.1](etape-ui-5.1-equipments.md), EQ-01 à EQ-07 approuvés,
+reste la référence métier. Routes lazy dans EQUIPMENT_ROUTES : liste, new,
+:equipmentId/edit, :equipmentId. Shell, Sidebar, titres et 404 sont préservés.
+
+- EquipmentsListFacade locale coordonne références paginées, appartenance du
+  site, annulation des lectures et états sélection attendue/loading/vide/erreur.
+  Aucune sélection automatique ni GET liste sans site_id valide. Recherche
+  explicite nom/code/type, filtres statut et criticité, pagination serveur et
+  tailles 20/50/100. Aucun tri local ou filtre Equipment company_id.
+- Contexte validé company_id/site_id/search/status/criticality/page/page_size
+  conservé entre liste, détail et formulaires. Le parent réel est indépendant de
+  ce contexte de retour. SiteDetail propose Voir les équipements ; le détail
+  Equipment lie son site réel et affiche Entreprise de rattachement.
+- EquipmentsApiService réutilise EquipmentRead/Status/Criticality core, Page et
+  ReferenceDataApiService pour les GET. EquipmentCreate exige site_id ;
+  EquipmentUpdate limite les six champs name/code/equipment_type/status/
+  criticality/description. Whitelist POST/PATCH, aucun company_id, métadonnée,
+  descendant ou site_id en PATCH ; aucune méthode DELETE.
+- EquipmentForm est partagé par EquipmentCreate et EquipmentEdit. Nom/code/type
+  libres et non blancs, limites Unicode 150/100/100 ; casse préservée, trim à la
+  création. Défauts operational/medium en création. Édition comparant les valeurs
+  brutes initiales/courantes : espaces et Unicode intacts préservés, valeurs
+  restaurées exclues, aucun PATCH sans différence. Description inchangée omise,
+  effacée vide, retrait explicite null. Aucun déplacement d'équipement.
+- GET Equipment puis Site puis Company réels ; détail utilisable malgré une
+  erreur parent distincte, édition bloquée si parent non vérifié. En édition,
+  rattachement en lecture seule, champs modifiables, suivi sans contrôle FormGroup,
+  puis actions. Dates administratives via formateur partagé, sans fuseau inventé.
+- Gardes CanDeactivate/beforeunload, blocage pendant saving et double soumission,
+  focus du premier champ invalide, messages sûrs et saisies conservées. Erreurs
+  409 génériques, 422 limitées aux champs body reconnus ; réseau/5xx incertains
+  sans retry automatique. Navigation échouée après succès : lien de récupération,
+  formulaire verrouillé, aucune réécriture. Toast unique après navigation réussie
+  et confirmation persistante role=status sur le détail.
+- _actions.scss reprend la référence Nouvelle entreprise ; _buttons.scss partage
+  hover/focus/active, transitions, disabled/loading et mouvement réduit. Hiérarchie
+  primaire/secondaire conservée, plus décoratif, noms accessibles et aides intacts,
+  aucun tooltip redondant ajouté. Voir le [rapport boutons](ui-buttons-harmonization.md).
+
+Les rapports [UI 5.2](ui-5.2-equipments-data-access.md),
+[UI 5.3](ui-5.3-equipments-list.md), [UI 5.4](ui-5.4-equipment-detail.md),
+[UI 5.5](ui-5.5-equipment-create.md) et [UI 5.6](ui-5.6-equipment-edit.md)
+conservent leurs tests HTTP simulés et observations aux six largeurs CSS
+1440/1024/1023/768/390/320 px. UI 5.6.1 précise la vérification finale de l'ordre.
+Le dialogue natif reste réservé ; ces contrôles ne valent pas audit complet
+lecteur d'écran, zoom ou accessibilité. Appui maintenu et mouvement réduit n'ont
+pas été émulés dans l'audit navigateur des boutons.
+
+[UI 5.7](ui-5.7-equipments-integration.md) ajoute les deux écritures réelles et
+la persistance SQL ; 409/422 d'écriture et concurrence restent simulés. Références
+864 tests / build / 604,81 ko et dettes centralisées dans le
+[statut Équipements](project-status.md#équipements-mvp---livraison-préparée-ui-58).
+Aucun endpoint ML ou descendant appelé par cette fiche. Aucun contrôle
+d'authentification/autorisation multi-tenant ou verrou de version serveur ajouté.
+
 ## Autres composants partagés envisagés
 
 La liste suivante décrit des besoins ultérieurs, sans engagement d'implémentation
@@ -909,17 +965,9 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout, Dashboard V1 et Companies MVP sont livrés dans `main`. Sites MVP
-est implémenté sur `feature/frontend-sites` ; UI 4.8 prépare la documentation
-avant validation du commit documentaire et de la fusion. Les conceptions
-[Companies](etape-ui-3.1-companies.md) et [Sites](etape-ui-4.1-sites.md) sont
-conservées, distinctes de l'état réalisé. Aucun module suivant commencé.
-
-L’ordre antérieur des autres intentions frontend reste indicatif :
-
-1. Liste des équipements
-2. Détail équipement
-3. Prédictions
-4. Recommandations
-5. Maintenance
-6. Autres modules
+Le layout, Dashboard, Companies et Sites sont intégrés dans `main` (`667fe5b`).
+Équipements MVP est implémenté sur feature/frontend-equipments (`39e2f0d`).
+UI 5.8 prépare la [livraison documentaire](ui-5.8-equipments-delivery.md), avant
+validation du commit puis de toute fusion. Les conceptions historiques restent
+conservées ; les écrans métier et indicateurs prédictifs futurs nécessiteront
+une conception et une autorisation distinctes. Aucun module suivant commencé.
