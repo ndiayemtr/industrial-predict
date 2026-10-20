@@ -26,6 +26,13 @@ class SensorRepository:
             statement
         ).scalar_one_or_none()
 
+    def get_by_code(self, code: str) -> Sensor | None:
+        statement = select(Sensor).where(
+            Sensor.code == code
+        )
+
+        return self.db.scalar(statement)
+
     def get_by_equipment_id(
         self,
         equipment_id: int,
