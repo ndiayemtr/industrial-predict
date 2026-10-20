@@ -114,7 +114,7 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/sensors', 'Capteurs'], ['/measurements', 'Mesures'], ['/maintenance', 'Maintenance'],
+    ['/measurements', 'Mesures'], ['/maintenance', 'Maintenance'],
     ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {
     const harness = await open(path);
@@ -123,6 +123,14 @@ describe('Sidebar navigation', () => {
     expect(main.querySelector('h1')?.textContent).toBe(title);
     expect(main.textContent).toContain('Écran en préparation');
     expect(main.textContent).toContain('Aucune donnée métier');
+  });
+
+  it('shows the lazy Sensors list while waiting for explicit company, site and equipment', async () => {
+    const harness = await open('/sensors');
+    expect(harness.routeNativeElement!.querySelector('main h1')?.textContent).toBe('Capteurs');
+    expect(harness.routeNativeElement!.querySelector('app-feature-placeholder')).toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('Sélectionnez une entreprise, puis un site et un équipement');
+    expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Capteurs']);
   });
 
   it('shows the real Sites page in the Shell while waiting for explicit company selection', async () => {

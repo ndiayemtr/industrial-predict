@@ -1,0 +1,129 @@
+<app-page-header title="Capteurs" description="Consultez les capteurs d’un équipement et affinez votre recherche." />
+@if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
+<section class="filters" aria-labelledby="sensor-context-title">
+  <h2 id="sensor-context-title">Entreprise, site et équipement</h2>
+  <div class="parents">
+    <div>
+      @let validcompany = facade.company()?.id === company.value && company.value !== null;
+      <label for="sensors-company">Entreprise</label>
+      <select id="sensors-company" [formControl]="company" [attr.aria-describedby]="validcompany ? null : 'company-help'">
+        <option [ngValue]="null">Sélectionner : entreprise</option>
+        @for (item of companyOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!validcompany) { <p id="company-help">Choisissez explicitement une entreprise.</p> }
+      @if (companies().status === 'loading') { <p role="status">Chargement des entreprises…</p> }
+      @if (companies().status === 'error') {
+        <p role="alert">Le catalogue des entreprises ne peut pas être chargé.</p>
+        @if (companies().retryable) { <button type="button" (click)="retryCompanies()">Réessayer les entreprises</button> }
+      }
+      @if (companies().status === 'ready' && companies().total === 0) { <p>Aucune entreprise disponible.</p> }
+      @if (companies().status === 'ready' && companies().page < companies().pages) {
+        <button type="button" (click)="moreCompanies()">Charger plus d’entreprises</button>
+      }
+    </div>
+    <div>
+      @let validsite = facade.site()?.id === site.value && site.value !== null;
+      <label for="sensors-site">Site industriel</label>
+      <select id="sensors-site" [formControl]="site" [attr.aria-describedby]="validsite ? null : 'site-help'">
+        <option [ngValue]="null">Sélectionner : site industriel</option>
+        @for (item of siteOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!validsite) { <p id="site-help">Choisissez un site vérifié de l’entreprise sélectionnée.</p> }
+      @if (sites().status === 'loading') { <p role="status">Chargement des sites…</p> }
+      @if (sites().status === 'error') {
+        <p role="alert">Le catalogue des sites ne peut pas être chargé.</p>
+        @if (sites().retryable) { <button type="button" (click)="retrySites()">Réessayer les sites</button> }
+      }
+      @if (sites().status === 'ready' && sites().total === 0) { <p>Aucun site disponible pour cette entreprise.</p> }
+      @if (sites().status === 'ready' && sites().page < sites().pages) {
+        <button type="button" (click)="moreSites()">Charger plus de sites</button>
+      }
+    </div>
+    <div>
+      @let validequipment = facade.equipment()?.id === equipment.value && equipment.value !== null;
+      <label for="sensors-equipment">Équipement industriel</label>
+      <select id="sensors-equipment" [formControl]="equipment" [attr.aria-describedby]="validequipment ? null : 'equipment-help'">
+        <option [ngValue]="null">Sélectionner : équipement industriel</option>
+        @for (item of equipmentOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!validequipment) { <p id="equipment-help">Choisissez un équipement vérifié du site sélectionné.</p> }
+      @if (equipments().status === 'loading') { <p role="status">Chargement des équipements…</p> }
+      @if (equipments().status === 'error') {
+        <p role="alert">Le catalogue des équipements ne peut pas être chargé.</p>
+        @if (equipments().retryable) { <button type="button" (click)="retryEquipments()">Réessayer les équipements</button> }
+      }
+      @if (equipments().status === 'ready' && equipments().total === 0) { <p>Aucun équipement disponible pour ce site.</p> }
+      @if (equipments().status === 'ready' && equipments().page < equipments().pages) {
+        <button type="button" (click)="moreEquipments()">Charger plus d’équipements</button>
+      }
+    </div>
+  </div>
+  <form (submit)="applySearch($event)" aria-label="Recherche des capteurs">
+    <label for="sensors-search">Rechercher par nom, code, type ou unité</label>
+    <div class="search-controls">
+      <input id="sensors-search" type="search" [formControl]="search" maxlength="100"
+        aria-describedby="sensors-search-help sensors-search-error" [attr.aria-invalid]="search.touched && search.invalid" />
+      <button class="primary" type="submit" [disabled]="!canFilter() || search.invalid">Rechercher</button>
+      <button type="button" (click)="clearSearch()" [disabled]="!canFilter()">Effacer la recherche</button>
+    </div>
+    <p id="sensors-search-help">Validez avec Entrée ou le bouton Rechercher. 100 caractères maximum.</p>
+    <p id="sensors-search-error" role="alert">@if (search.touched && search.invalid) { La recherche dépasse 100 caractères. }</p>
+  </form>
+  <div class="criteria">
+    <div><label for="sensors-status">Statut</label>
+      <select id="sensors-status" [formControl]="status"><option value="">Tous</option>
+        @for (value of statuses; track value) { <option [value]="value">{{ statusLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="sensors-size">Capteurs par page</label>
+      <select id="sensors-size" [formControl]="size">
+        @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+      </select>
+    </div>
+  </div>
+</section>
+<section class="results" aria-labelledby="sensor-results-title" [attr.aria-busy]="busy()">
+  <h2 id="sensor-results-title">Capteurs de l’équipement</h2>
+  @if (facade.equipment(); as selected) {
+    <p class="context">{{ referenceLabel(facade.company()!) }} / {{ referenceLabel(facade.site()!) }} / {{ referenceLabel(selected) }}</p>
+  }
+  @let state = facade.state();
+  @switch (state.status) {
+    @case ('idle') { <app-empty-state title="Sélection attendue" message="Sélectionnez une entreprise, puis un site et un équipement pour consulter ses capteurs." /> }
+    @case ('loading') { <app-loading-state message="Vérification du contexte et chargement des capteurs…" /> }
+    @case ('error') { <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" /> }
+    @case ('empty') {
+      <p role="status">0 capteur</p>
+      <app-empty-state [title]="filtered() ? 'Aucun résultat' : 'Aucun capteur'"
+        [message]="filtered() ? 'Aucun capteur ne correspond à ces critères sur cet équipement.' : 'Cet équipement ne comporte pas encore de capteur.'">
+        @if (filtered()) { <button type="button" (click)="clearFilters()">Effacer les critères</button> }
+      </app-empty-state>
+    }
+    @case ('success') {
+      @if (state.data.items.length === 0) {
+        <app-empty-state title="Page hors plage" message="Cette page ne contient plus de capteurs. Revenez à une page disponible.">
+          <button type="button" (click)="recoverPage()">Revenir aux résultats</button>
+        </app-empty-state>
+      } @else {
+        <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement.</p>
+        <p id="sensor-detail-help">La consultation détaillée sera disponible prochainement.</p>
+        <div class="table-scroll" role="region" aria-label="Liste des capteurs" tabindex="0">
+          <table>
+            <caption>{{ state.data.total }} {{ state.data.total > 1 ? 'capteurs' : 'capteur' }} - Page {{ page() }} sur {{ state.data.pages }}</caption>
+            <thead><tr><th scope="col">Nom</th><th scope="col">Code</th><th scope="col">Type</th><th scope="col">Unité</th><th scope="col">Statut</th></tr></thead>
+            <tbody>@for (item of state.data.items; track item.id) {
+              <tr><td><span class="detail-pending" role="link" aria-disabled="true" aria-describedby="sensor-detail-help" [attr.data-detail-url]="detailUrl(item.id)">{{ item.name }}</span></td>
+                <td>{{ item.code }}</td><td>{{ item.sensor_type }}</td><td>{{ item.unit }}</td>
+                <td><span class="badge">{{ statusLabels[item.status] }}</span></td></tr>
+            }</tbody>
+          </table>
+        </div>
+      }
+      <nav class="pagination" aria-label="Pagination des capteurs">
+        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>
+        <p role="status">Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} {{ state.data.total > 1 ? 'capteurs' : 'capteur' }}</p>
+        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">Suivant</button>
+      </nav>
+    }
+  }
+</section>
