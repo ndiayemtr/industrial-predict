@@ -86,12 +86,13 @@ describe('Routing configuration invariants', () => {
     }
   });
 
-  it('declares one lazy Equipment detail after the full-match list, reserving future static/edit pages', () => {
-    expect(EQUIPMENT_ROUTES.map(route => route.path)).toEqual(['', 'new', ':equipmentId']);
+  it('declares lazy Equipment creation and guarded edit before the full-match detail', () => {
+    expect(EQUIPMENT_ROUTES.map(route => route.path)).toEqual(['', 'new', ':equipmentId/edit', ':equipmentId']);
     expect(EQUIPMENT_ROUTES.every(route => route.pathMatch === 'full')).toBe(true);
     expect(typeof EQUIPMENT_ROUTES[2].loadComponent).toBe('function');
     expect(EQUIPMENT_ROUTES[2].component).toBeUndefined();
     expect(EQUIPMENT_ROUTES[1].canDeactivate).toHaveLength(1);
+    expect(EQUIPMENT_ROUTES[2].canDeactivate).toHaveLength(1);
   });
 });
 
@@ -159,7 +160,14 @@ describe('Routing integration gaps', () => {
     expect(harness.routeNativeElement!.querySelector('app-equipment-detail')).toBeNull();
     expect(harness.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/equipments');
   });
-  it.each(['/equipments/12/edit', '/equipments/12/extra'])(
+  it('loads Equipment edit with its title, Shell and active Sidebar', async () => {
+    const harness = await RouterTestingHarness.create('/equipments/12/edit'); await settle(harness);
+    expect(TestBed.inject(Title).getTitle()).toBe('Modifier l’équipement | Industrial Predict AI');
+    expect(harness.routeNativeElement!.querySelector('app-equipment-edit')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/equipments');
+    expect(harness.routeNativeElement!.querySelector('app-header .header-title')?.textContent).toBe('Modifier l’équipement');
+  });
+  it.each(['/equipments/12/extra', '/equipments/12/edit/extra'])(
     'keeps future or unknown Equipment path %s on the global 404', async path => {
       const harness = await RouterTestingHarness.create(path); await settle(harness);
       expect(TestBed.inject(Title).getTitle()).toBe('Page introuvable | Industrial Predict AI');

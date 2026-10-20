@@ -11,7 +11,12 @@ export const EQUIPMENT_ROUTES: Routes = [{
   canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
   loadComponent: () => import('./pages/equipment-create/equipment-create.component').then(m => m.EquipmentCreateComponent)
 }, {
-  // Add the future ':equipmentId/edit' page before this detail route.
+  path: ':equipmentId/edit', pathMatch: 'full',
+  title: 'Modifier l’équipement | Industrial Predict AI',
+  data: { pageTitle: 'Modifier l’équipement' },
+  canDeactivate: [(component: { canLeave(): boolean }) => component.canLeave()],
+  loadComponent: () => import('./pages/equipment-edit/equipment-edit.component').then(m => m.EquipmentEditComponent)
+}, {
   path: ':equipmentId', pathMatch: 'full',
   title: 'Détail équipement | Industrial Predict AI',
   data: { pageTitle: 'Détail équipement' },

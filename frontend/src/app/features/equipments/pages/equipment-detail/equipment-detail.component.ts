@@ -33,6 +33,9 @@ const validId = (id: number): boolean => Number.isSafeInteger(id) && id > 0;
 })
 export class EquipmentDetailComponent {
   private readonly createdEquipmentId = inject(Router).currentNavigation()?.extras.state?.['createdEquipmentId'];
+  private readonly updatedEquipmentId = inject(Router).currentNavigation()?.extras.state?.['updatedEquipmentId'];
+  readonly updateConfirmed = toSignal(inject(ActivatedRoute).paramMap.pipe(map(params => this.updatedEquipmentId != null
+    && params.get('equipmentId') === String(this.updatedEquipmentId))), { requireSync: true });
   readonly creationConfirmed = toSignal(inject(ActivatedRoute).paramMap.pipe(map(params => this.createdEquipmentId != null
     && params.get('equipmentId') === String(this.createdEquipmentId))), { requireSync: true });
   private readonly route = inject(ActivatedRoute);

@@ -1,7 +1,14 @@
-<form #formElement [formGroup]="form" (ngSubmit)="submit()" aria-label="Création d’un équipement industriel" [attr.aria-busy]="saving()" novalidate>
+<form #formElement [formGroup]="form" (ngSubmit)="submit()" [attr.aria-label]="editMode() ? 'Modification d’un équipement industriel' : 'Création d’un équipement industriel'" [attr.aria-busy]="saving()" novalidate>
   <p>Les champs marqués « obligatoire » doivent être renseignés.</p>
   <fieldset [disabled]="saving() || blocked()">
     <legend>Rattachement et informations de l’équipement</legend>
+    @if (editMode()) {
+      <dl class="readonly-parents">
+        <div><dt>Entreprise de rattachement</dt><dd>{{ companyLabel() }}</dd></div>
+        <div><dt>Site industriel</dt><dd>{{ siteLabel() }}</dd></div>
+      </dl>
+      <p class="help">Le rattachement de cet équipement ne peut pas être modifié.</p>
+    } @else {
     @let companyHelp = form.controls.company_id.value === null || form.controls.company_id.value !== verifiedCompanyId();
     @let siteHelp = companyHelp || form.controls.site_id.value === null || form.controls.site_id.value !== verifiedSiteId();
     <div class="field">
@@ -24,11 +31,12 @@
       <p id="equipment-site_id-error" class="field-error">{{ error('site_id') }}</p>
       <ng-content select="[siteReferences]" />
     </div>
+    }
     @for (field of textFields; track field.key) {
       <div class="field">
         <label [for]="'equipment-' + field.key">{{ field.label }} (obligatoire)</label>
         <input [id]="'equipment-' + field.key" [formControlName]="field.key" required [attr.aria-describedby]="'equipment-' + field.key + '-help equipment-' + field.key + '-error'" [attr.aria-invalid]="error(field.key) ? 'true' : null" />
-        <p class="help" [id]="'equipment-' + field.key + '-help'">{{ field.limit }} caractères Unicode maximum. La casse est conservée ; les espaces périphériques sont retirés.
+        <p class="help" [id]="'equipment-' + field.key + '-help'">{{ field.limit }} caractères Unicode maximum. {{ editMode() ? 'La casse et les espaces sont conservés.' : 'La casse est conservée ; les espaces périphériques sont retirés.' }}
           @if (field.key === 'code') { Code unique pour tous les équipements, tous sites et entreprises confondus. }
           @if (field.key === 'equipment_type') { Type libre, sans catalogue imposé. }
         </p>
@@ -57,8 +65,9 @@
       <p id="equipment-description-error" class="field-error">{{ error('description') }}</p>
     </div>
   </fieldset>
+  <ng-content select="[equipmentTracking]" />
   <div class="actions">
-    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours…' : 'Créer l’équipement' }}</button>
+    <button type="submit" class="primary" [disabled]="saving() || blocked()">{{ saving() ? 'Enregistrement en cours…' : editMode() ? 'Enregistrer les modifications' : 'Créer l’équipement' }}</button>
     <button type="button" [disabled]="saving()" (click)="cancelled.emit()">Annuler</button>
   </div>
 </form>

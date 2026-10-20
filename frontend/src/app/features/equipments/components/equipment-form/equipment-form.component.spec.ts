@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EquipmentFormComponent } from './equipment-form.component';
+import { EquipmentRead } from '../../../../core/models/reference-data.model';
 
 describe('EquipmentForm creation contract', () => {
   let fixture: ComponentFixture<EquipmentFormComponent>;
@@ -76,5 +77,54 @@ describe('EquipmentForm creation contract', () => {
   it.each(['saving', 'blocked'])('disables controls and ignores submission when %s', input => {
     fill(); fixture.componentRef.setInput(input, true); fixture.detectChanges(); const emitted = vi.fn(); component.submitted.subscribe(emitted); component.submit();
     expect(root().querySelector('fieldset')?.disabled).toBe(true); expect(emitted).not.toHaveBeenCalled();
+  });
+});
+
+describe('EquipmentForm raw differential editing contract', () => {
+  let fixture: ComponentFixture<EquipmentFormComponent>;
+  let component: EquipmentFormComponent;
+  const original: EquipmentRead = { id: 87, site_id: 9, name: ' Pompe 日本 ', code: ' Code É ', equipment_type: ' Type libre ',
+    status: 'maintenance', criticality: 'high', description: ' Texte\n日本 ', created_at: '', updated_at: '' };
+  beforeEach(() => {
+    fixture = TestBed.createComponent(EquipmentFormComponent); component = fixture.componentInstance;
+    fixture.componentRef.setInput('editMode', true); fixture.componentRef.setInput('initialEquipment', original);
+    fixture.componentRef.setInput('companyLabel', 'Entreprise réelle'); fixture.componentRef.setInput('siteLabel', 'Site réel');
+    fixture.detectChanges(); TestBed.tick(); fixture.detectChanges();
+  });
+  it('keeps parents read-only and separates editing output from creation', () => {
+    const updated = vi.fn(), created = vi.fn(); component.updated.subscribe(updated); component.submitted.subscribe(created);
+    expect(fixture.nativeElement.querySelector('#equipment-company_id')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#equipment-site_id')).toBeNull();
+    expect(component.changes()).toEqual({}); expect(component.hasChanges()).toBe(false);
+    component.form.controls.name.setValue('  Nouvelle pompe 日本  '); component.submit();
+    expect(updated).toHaveBeenCalledExactlyOnceWith({ name: '  Nouvelle pompe 日本  ' }); expect(created).not.toHaveBeenCalled();
+  });
+  it.each([['name', 150], ['code', 100], ['equipment_type', 100]] as const)('counts raw Unicode and spaces for changed %s', (field, maximum) => {
+    const emitted = vi.fn(); component.updated.subscribe(emitted);
+    component.form.controls[field].setValue('😀'.repeat(maximum)); component.submit(); expect(emitted).toHaveBeenCalledTimes(1);
+    emitted.mockClear(); component.form.controls[field].setValue('😀'.repeat(maximum) + ' '); component.submit();
+    expect(emitted).not.toHaveBeenCalled(); expect(document.activeElement?.id).toBe(`equipment-${field}`);
+    component.form.controls[field].setValue(' \t\n '); component.submit(); expect(component.form.controls[field].hasError('required')).toBe(true);
+  });
+  it('uses value comparison rather than dirty flags for all editable fields', () => {
+    component.form.patchValue({ name: 'Other', code: 'Other', equipment_type: 'Other', status: 'operational', criticality: 'low', description: '' });
+    expect(Object.keys(component.changes())).toHaveLength(6);
+    component.form.patchValue(original); expect(component.changes()).toEqual({}); expect(component.hasChanges()).toBe(false);
+  });
+  it('removes description as null and treats restoration as clean', () => {
+    component.removeDescription(); expect(component.changes()).toEqual({ description: null });
+    component.form.controls.description.setValue(original.description); expect(component.hasChanges()).toBe(false);
+    component.form.controls.description.setValue(''); expect(component.changes()).toEqual({ description: '' });
+  });
+  it.each(['status', 'criticality'] as const)('validates edited %s without inventing a transition rule', field => {
+    const updated = vi.fn(); component.updated.subscribe(updated);
+    component.form.controls[field].setValue('invalid' as never); component.submit(); expect(updated).not.toHaveBeenCalled();
+    expect(document.activeElement?.id).toBe(`equipment-${field}`);
+  });
+  it('resets to a newly loaded record without carrying the previous draft forward', () => {
+    component.form.controls.name.setValue('Draft');
+    fixture.componentRef.setInput('initialEquipment', { ...original, id: 88, name: 'Autre équipement' });
+    fixture.detectChanges(); TestBed.tick(); fixture.detectChanges();
+    expect(component.form.controls.name.value).toBe('Autre équipement'); expect(component.hasChanges()).toBe(false);
   });
 });

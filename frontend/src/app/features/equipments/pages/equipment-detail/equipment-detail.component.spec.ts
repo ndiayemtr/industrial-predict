@@ -51,6 +51,7 @@ describe('Equipment read-only detail and real parent chain', () => {
     expect(root().querySelector('.context-notice')?.textContent).toContain('conservé pour revenir à la liste');
     expect(root().querySelector('.site-reference')?.getAttribute('href')).toBe('/sites/9?company_id=7');
     expect(root().querySelector('.equipment-back')?.getAttribute('href')).toBe('/equipments?company_id=99&site_id=88&page=3&page_size=50&search=Pompe&status=operational&criticality=low');
+    expect(root().querySelector('.equipment-edit')?.getAttribute('href')).toBe('/equipments/12/edit?company_id=99&site_id=88&page=3&page_size=50&search=Pompe&status=operational&criticality=low');
     expect(values()).toContainEqual(['Type d’équipement', equipment.equipment_type]);
     expect(values()).toContainEqual(['Statut', 'En maintenance']); expect(values()).toContainEqual(['Criticité', 'Critique']);
     expect(values()).toContainEqual(['Création', '31/08/2026 à 14:58']); expect(values()).toContainEqual(['Dernière modification', '16/10/2026 à 11:51 UTC']);
@@ -61,7 +62,8 @@ describe('Equipment read-only detail and real parent chain', () => {
     expect(values().map(([label]) => label)).toEqual(['Nom', 'Code métier', 'Type d’équipement', 'Statut', 'Criticité', 'Description', 'Site industriel', 'Entreprise de rattachement', 'Création', 'Dernière modification']);
     expect(values().map(([, value]) => value)).not.toContain('12'); expect(values().map(([, value]) => value)).not.toContain('9'); expect(values().map(([, value]) => value)).not.toContain('7');
     expect(root().querySelectorAll('form,input,select,button')).toHaveLength(0);
-    expect(root().textContent).not.toMatch(/Modifier|Supprimer|Health Score|RUL|capteur|maintenance prédi|Prédiction|Identifiant/);
+    expect(root().textContent).not.toMatch(/Supprimer|Health Score|RUL|capteur|maintenance prédi|Prédiction|Identifiant/);
+    expect(root().querySelector('.equipment-edit')?.getAttribute('href')).toBe('/equipments/12/edit?page=1&page_size=20');
     const link = root().querySelector<HTMLAnchorElement>('.site-reference')!; link.focus(); expect(document.activeElement).toBe(link);
     expect(root().querySelector('.description dd')?.textContent).toBe(equipment.description);
     expect(root().querySelector('.context-notice')).toBeNull();
@@ -70,6 +72,14 @@ describe('Equipment read-only detail and real parent chain', () => {
   it('does not accept URL query parameters as creation-success evidence', async () => {
     await loaded('/equipments/12?createdEquipmentId=12'); expect(component.creationConfirmed()).toBe(false);
     expect(root().querySelector('.creation-confirmation')).toBeNull();
+  });
+  it('does not accept URL query parameters as update-success evidence', async () => {
+    await loaded('/equipments/12?updatedEquipmentId=12'); expect(component.updateConfirmed()).toBe(false);
+    expect(root().querySelector('.update-confirmation')).toBeNull();
+  });
+  it('offers editing only once the Equipment GET has succeeded', async () => {
+    await open(); expect(root().querySelector('.equipment-edit')).toBeNull();
+    read().flush({}, { status: 404, statusText: 'Not found' }); await settle(); expect(root().querySelector('.equipment-edit')).toBeNull();
   });
   it.each(['0', '-1', 'abc', '1.5', '1e2', '9007199254740992'])('rejects identifier %s locally without any HTTP', async id => {
     await open(`/equipments/${id}`); expect(root().textContent).toContain('Identifiant invalide'); expect(root().querySelector('dl')).toBeNull(); http.expectNone(() => true);

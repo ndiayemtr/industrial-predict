@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
-import { EquipmentCriticality, EquipmentStatus } from '../../../../core/models/reference-data.model';
-import { EquipmentCreate } from '../../models/equipment-write.model';
+import { EquipmentCriticality, EquipmentRead, EquipmentStatus } from '../../../../core/models/reference-data.model';
+import { EquipmentCreate, EquipmentUpdate } from '../../models/equipment-write.model';
 import { equipmentCriticalityLabels, equipmentStatusLabels } from '../../models/equipment-labels';
 
 export type EquipmentField = 'company_id' | 'site_id' | 'name' | 'code' | 'equipment_type' | 'status' | 'criticality' | 'description';
 export type EquipmentFieldErrors = Partial<Record<EquipmentField, string>>;
 export interface EquipmentParentSelection { company_id: number | null; site_id: number | null }
 export interface EquipmentParentOption { id: number; label: string }
-function textLimit(maximum: number): ValidatorFn {
+function textLimit(maximum: number, preserveSpaces = false): ValidatorFn {
   return (control: AbstractControl) => !String(control.value).trim() ? { required: true }
-    : Array.from(String(control.value).trim()).length > maximum ? { maxlength: true } : null;
+    : Array.from(preserveSpaces ? String(control.value) : String(control.value).trim()).length > maximum ? { maxlength: true } : null;
 }
 function requiredId(control: AbstractControl) { return Number.isSafeInteger(control.value) && control.value > 0 ? null : { required: true }; }
 
@@ -21,6 +21,10 @@ function requiredId(control: AbstractControl) { return Number.isSafeInteger(cont
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EquipmentFormComponent {
+  readonly editMode = input(false);
+  readonly initialEquipment = input<EquipmentRead | null>(null);
+  readonly companyLabel = input('Entreprise indisponible');
+  readonly siteLabel = input('Site indisponible');
   readonly initialParents = input<EquipmentParentSelection | null>(null);
   readonly companies = input<readonly EquipmentParentOption[]>([]);
   readonly sites = input<readonly EquipmentParentOption[]>([]);
@@ -32,6 +36,7 @@ export class EquipmentFormComponent {
   readonly companyChanged = output<number | null>();
   readonly siteChanged = output<number | null>();
   readonly submitted = output<EquipmentCreate>();
+  readonly updated = output<EquipmentUpdate>();
   readonly cancelled = output<void>();
   readonly edited = output<void>();
   private readonly element = viewChild.required<ElementRef<HTMLFormElement>>('formElement');
@@ -61,8 +66,20 @@ export class EquipmentFormComponent {
 
   constructor() {
     effect(() => {
+      const original = this.initialEquipment(), editing = this.editMode();
+      if (!editing || !original) return;
+      this.form.reset({ company_id: null, site_id: original.site_id, name: original.name, code: original.code,
+        equipment_type: original.equipment_type, status: original.status, criticality: original.criticality,
+        description: original.description }, { emitEvent: false });
+      this.form.controls.company_id.disable({ emitEvent: false }); this.form.controls.site_id.disable({ emitEvent: false });
+      for (const field of this.textFields) {
+        this.form.controls[field.key].setValidators(control => control.value === original[field.key] ? null : textLimit(field.limit, true)(control));
+        this.form.controls[field.key].updateValueAndValidity({ emitEvent: false });
+      }
+    });
+    effect(() => {
       const parents = this.initialParents();
-      if (parents && !this.form.controls.company_id.dirty && !this.form.controls.site_id.dirty) {
+      if (!this.editMode() && parents && !this.form.controls.company_id.dirty && !this.form.controls.site_id.dirty) {
         this.form.patchValue(parents, { emitEvent: false }); this.baselineParents = { ...parents };
       }
     });
@@ -73,10 +90,22 @@ export class EquipmentFormComponent {
     this.form.valueChanges.pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.edited.emit());
   }
   hasChanges(): boolean {
+    if (this.editMode()) return Object.keys(this.changes()).length > 0;
     const value = this.form.getRawValue();
     return value.company_id !== this.baselineParents.company_id || value.site_id !== this.baselineParents.site_id
       || value.name !== '' || value.code !== '' || value.equipment_type !== '' || value.status !== 'operational'
       || value.criticality !== 'medium' || value.description !== null;
+  }
+  changes(): EquipmentUpdate {
+    const original = this.initialEquipment(), value = this.form.getRawValue(), patch: EquipmentUpdate = {};
+    if (!original) return patch;
+    if (value.name !== original.name) patch.name = value.name;
+    if (value.code !== original.code) patch.code = value.code;
+    if (value.equipment_type !== original.equipment_type) patch.equipment_type = value.equipment_type;
+    if (value.status !== original.status) patch.status = value.status;
+    if (value.criticality !== original.criticality) patch.criticality = value.criticality;
+    if (value.description !== original.description) patch.description = value.description;
+    return patch;
   }
   focusField(field: EquipmentField): void { this.element().nativeElement.querySelector<HTMLElement>(`#equipment-${field}`)?.focus(); }
   error(field: EquipmentField): string {
@@ -97,10 +126,12 @@ export class EquipmentFormComponent {
     if (this.saving() || this.blocked()) return;
     this.form.markAllAsTouched();
     const value = this.form.getRawValue();
-    const first = this.fieldOrder.find(field => this.form.controls[field].invalid
+    const fields = this.editMode() ? this.fieldOrder.filter(field => field !== 'company_id' && field !== 'site_id') : this.fieldOrder;
+    const first = fields.find(field => this.form.controls[field].invalid
       || (field === 'company_id' && value.company_id !== this.verifiedCompanyId())
       || (field === 'site_id' && value.site_id !== this.verifiedSiteId()));
     if (first) { this.focusField(first); return; }
+    if (this.editMode()) { this.updated.emit(this.changes()); return; }
     this.submitted.emit({ site_id: value.site_id!, name: value.name.trim(), code: value.code.trim(),
       equipment_type: value.equipment_type.trim(), status: value.status, criticality: value.criticality,
       ...(this.form.controls.description.dirty ? { description: value.description } : {}) });
