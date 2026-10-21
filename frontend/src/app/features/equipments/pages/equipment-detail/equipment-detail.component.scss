@@ -1,6 +1,7 @@
 @use '../../../../../styles/tokens' as tokens;
 @use '../../../../../styles/actions' as actions;
 
+.equipment-sensors { @include actions.navigation-action; }
 .equipment-edit { @include actions.navigation-action($primary: true); }
 
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }

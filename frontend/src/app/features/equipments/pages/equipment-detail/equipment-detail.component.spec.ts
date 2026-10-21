@@ -62,7 +62,7 @@ describe('Equipment read-only detail and real parent chain', () => {
     expect(values().map(([label]) => label)).toEqual(['Nom', 'Code métier', 'Type d’équipement', 'Statut', 'Criticité', 'Description', 'Site industriel', 'Entreprise de rattachement', 'Création', 'Dernière modification']);
     expect(values().map(([, value]) => value)).not.toContain('12'); expect(values().map(([, value]) => value)).not.toContain('9'); expect(values().map(([, value]) => value)).not.toContain('7');
     expect(root().querySelectorAll('form,input,select,button')).toHaveLength(0);
-    expect(root().textContent).not.toMatch(/Supprimer|Health Score|RUL|capteur|maintenance prédi|Prédiction|Identifiant/);
+    expect(root().textContent).not.toMatch(/Supprimer|Health Score|RUL|maintenance prédi|Prédiction|Identifiant/);
     expect(root().querySelector('.equipment-edit')?.getAttribute('href')).toBe('/equipments/12/edit?page=1&page_size=20');
     const link = root().querySelector<HTMLAnchorElement>('.site-reference')!; link.focus(); expect(document.activeElement).toBe(link);
     expect(root().querySelector('.description dd')?.textContent).toBe(equipment.description);

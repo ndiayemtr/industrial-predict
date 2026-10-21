@@ -1,5 +1,8 @@
 <app-page-header title="Détail équipement" description="Informations de l’équipement industriel en lecture seule.">
   <a class="equipment-back" routerLink="/equipments" [queryParams]="listQuery()">Retour à la liste des équipements</a>
+  @if (sensorsQuery(); as query) {
+    <a class="equipment-sensors" routerLink="/sensors" [queryParams]="query">Voir les capteurs</a>
+  }
   @let detail = state();
   @if (detail.status === 'success') {
     <a class="equipment-edit" [routerLink]="['/equipments', detail.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>
