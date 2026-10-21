@@ -43,7 +43,8 @@
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
-Companies, Sites et Équipements les réutilisent également ; les autres pages métier restent des placeholders.
+Companies, Sites, Équipements et Sensors les réutilisent également ; Mesures,
+Maintenance, Prédictions et Recommandations restent des placeholders.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
@@ -187,7 +188,7 @@ les fonctionnalités, les résultats de référence et les limites : 583 tests A
 build réussi, intégration DEV réelle, réserve d'abandon, budget dépassé et sécurité
 à industrialiser. Aucun test ou build relancé pour UI 4.8 documentaire.
 
-### UI 5 - Équipements industriels implémentés, livraison en préparation
+### UI 5 - Équipements industriels intégrés dans main
 
 - [x] UI 5.1 - [Conception et EQ-01 à EQ-07 approuvés](etape-ui-5.1-equipments.md), `f797c54`
 - [x] UI 5.2 - [Modèles et intégration API](ui-5.2-equipments-data-access.md), `ff3fed3`
@@ -197,17 +198,44 @@ build réussi, intégration DEV réelle, réserve d'abandon, budget dépassé et
 - [x] [Harmonisation des boutons](ui-buttons-harmonization.md), `70d2a0f`
 - [x] UI 5.6 / UI 5.6.1 - [Modification différentielle et suivi](ui-5.6-equipment-edit.md), `b4ffa06`
 - [x] UI 5.7 - [Intégration PostgreSQL réelle](ui-5.7-equipments-integration.md), `39e2f0d`
-- [ ] UI 5.8 - [Documentation de livraison préparée](ui-5.8-equipments-delivery.md), validation puis commit attendus
-- [ ] Fusion vers `main` après autorisation explicite et actualisation des références
+- [x] UI 5.8 - [Documentation de livraison](ui-5.8-equipments-delivery.md), `a76e49c`
+- [x] Équipements intégré dans `main`, référence locale `a76e49c`
 
 Référence historique conservée : 864 tests Angular / 49 fichiers, build réussi,
 initial 604,81 ko pour 500 ko. POST 201/PATCH 200 et persistance réels en UI 5.7 ;
 erreurs d'écriture 409/422 et double soumission simulées, dialogue natif réservé.
 Le [statut Équipements](project-status.md#équipements-mvp---livraison-préparée-ui-58)
 centralise le périmètre, les limites et les dettes. Aucun test/build relancé ici.
-Capteurs, maintenance et prédictions restent des écrans futurs ; agrégats Dashboard
-et ML backend existants ne constituent pas leur implémentation frontend.
-Aucun module suivant commencé.
+Ces résultats Équipements restent historiques. La gestion Sensors est désormais
+implémentée ci-dessous ; les agrégats Dashboard et le ML backend ne constituent
+pas les futurs écrans Mesures, Maintenance ou Prédictions.
+
+### UI 6 - Sensors MVP implémenté, fusion en préparation
+
+- [x] UI 6.1 - [Conception SEN-01 à SEN-10 validée](etape-ui-6.1-sensors.md) et B-SEN-01 corrigé, `4defbe9`
+- [x] UI 6.2 - [Modèles et accès API](ui-6.2-sensors-data-access.md), `9efa8fa`
+- [x] UI 6.3 - [Liste, sélection, recherche et filtres](ui-6.3-sensors-list.md), `b5d74e5`
+- [x] UI 6.4 - [Détail et navigation](ui-6.4-sensor-detail.md), `e9cdf7f`
+- [x] UI 6.5 - [Création et formulaire partagé](ui-6.5-sensor-create.md), `012cfd2`
+- [x] UI 6.6 - [Édition différentielle](ui-6.6-sensor-edit.md), `576314d`
+- [x] UI 6.7 / UI 6.7.2 - [Intégration réelle et navigation Equipment](ui-6.7-sensors-integration.md), `a317e22`
+- [ ] UI 6.8 - [Documentation et checklist préparées](ui-6.8-sensors-delivery.md), validation puis commit attendus
+- [ ] Fusion vers main sur autorisation distincte, après revérification des références
+
+Références Sensors : 1 179 tests Angular, build production réussi, initial
+605,24 kB ; POST 201/PATCH 200 et persistance SQL réels, 40 lignes finales et
+39 lignes préexistantes préservées. Le [statut Sensors](project-status.md#sensors-mvp---livraison-préparée-ui-68)
+centralise les limites : B-SEN-02/03, seed strict non conforme, sécurité, budget,
+dialogue natif et couverture PostgreSQL incomplète. Aucun test/build relancé
+en UI 6.8 documentaire. UI 7 non commencée.
+
+### Measurements et fonctions IA futures
+
+Le module Angular Measurements reste à concevoir sur le contrat backend réel :
+aucun écran, acquisition temps réel ou dernière mesure ajouté dans Sensors.
+Maintenance, Prédictions et Recommandations restent des placeholders ; leurs
+futurs parcours nécessitent conception et validation distinctes. Aucun faux
+compteur, graphique, Health Score ou RUL fourni par le module Sensors.
 
 ### Écrans métier restant à implémenter
 

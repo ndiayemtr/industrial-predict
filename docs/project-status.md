@@ -6,12 +6,12 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-equipments`, HEAD de référence `39e2f0d`, contrôlé le
-20 octobre 2026. `main` et la référence locale `origin/main` sont à `667fe5b`
-(Sites intégré). Huit commits Équipements sont en avance sur `main`, sans
-retard. UI 5.8 actualise uniquement la documentation ; validation attendue avant
-commit documentaire et toute fusion. Aucun fetch effectué dans cette étape.
-Voir le [bilan de livraison Équipements](ui-5.8-equipments-delivery.md).
+`feature/frontend-sensors`, HEAD de référence `a317e22`, contrôlé le
+21 octobre 2026, dépôt propre avant UI 6.8. `main` et la référence locale
+`origin/main` sont à `a76e49c` (Équipements intégré). Sept commits Sensors en
+avance, aucun retard. Aucun fetch ici ; l'état distant reste à revérifier avant
+fusion autorisée. UI 6.8 modifie uniquement la documentation, sans commit ni
+fusion. Voir le [bilan de livraison Sensors](ui-6.8-sensors-delivery.md).
 
 À mettre à jour à chaque changement de branche.
 
@@ -323,11 +323,15 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | Boutons | Harmonisation transversale (`70d2a0f`) |
 | UI 5.6 / UI 5.6.1 | Modification différentielle et suivi avant actions (`b4ffa06`) |
 | UI 5.7 | Intégration PostgreSQL réelle documentée (`39e2f0d`) |
-| UI 5.8 | Documentation de livraison préparée ; commit et fusion non effectués |
+| UI 5.8 | Documentation Équipements commitée et intégrée dans main (`a76e49c`) |
+| UI 6.1 / B-SEN-01 | SEN-01 à SEN-10 validées, recherche exacte globale du code rétablie (`4defbe9`) |
+| UI 6.2 à UI 6.6 | Modèles/API, liste, détail, création et édition Sensors livrés sur la branche |
+| UI 6.7 / UI 6.7.2 | Intégration DEV et navigation Equipment <-> Sensors validées (`a317e22`) |
+| UI 6.8 | Documentation et checklist Sensors préparées, validation attendue |
 
-Dashboard V1, Companies et Sites MVP sont intégrés dans `main`.
-Équipements MVP est implémenté sur sa branche dédiée. Capteurs, Mesures,
-Maintenance, Prédictions et Recommandations restent des placeholders.
+Dashboard V1, Companies, Sites et Équipements MVP sont intégrés dans `main`.
+Sensors MVP est implémenté sur feature/frontend-sensors, pas encore fusionné.
+Mesures, Maintenance, Prédictions et Recommandations restent des placeholders.
 Rapports et Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
 production SaaS multi-tenant faute d'autorisation multi-entreprises démontrée.
@@ -471,11 +475,76 @@ Les rapports historiques sont conservés avec leurs résultats datés.
   et absence de transfert/DELETE dans l'UI ne sécurisent pas les endpoints backend.
 - Pas de verrou optimiste ou idempotence serveur promis ; résultat d'écriture
   incertain à vérifier avant nouvelle soumission manuelle, sans retry automatique.
-- Écrans de gestion capteurs, mesures, maintenance, prédictions, Health Score et
-  RUL futurs. Le Dashboard fournit déjà des agrégats ; les fonctions ML backend
+- Gestion Sensors livrée sur sa branche dédiée, avec lien Equipment -> Sensors
+  ajouté en UI 6.7.2. Mesures, maintenance, prédictions, Health Score et RUL
+  restent des écrans futurs. Le Dashboard fournit déjà des agrégats ; les fonctions ML backend
   existantes ne sont pas intégrées à la fiche Équipement et aucun calcul ML n'y est lancé.
 
 Checklist et audit Git dans le [bilan UI 5.8](ui-5.8-equipments-delivery.md).
+
+## Sensors MVP - livraison préparée UI 6.8
+
+La [conception UI 6.1](etape-ui-6.1-sensors.md), SEN-01 à SEN-10 validées,
+est implémentée sur feature/frontend-sensors à a317e22. B-SEN-01 est corrigé
+dans 4defbe9 ; les états de blocage décrits dans le rapport UI 6.1 restent
+l'historique de l'audit, pas le statut actuel.
+
+Liste avec sélection explicite Entreprise -> Site -> Équipement, catalogues
+paginés, recherche nom/code/type/unité, statut active/inactive et pagination
+serveur. Aucun GET Sensors avant vérification des parents ; company_id/site_id
+restent dans le contexte URL et ne partent jamais vers l'API Sensors. Détail
+avec chaîne Sensor -> Equipment -> Site -> Company réelle, erreur parent
+distincte et données Sensor conservées ; navigation Equipment <-> Sensors livrée.
+
+Création et édition réutilisent SensorForm. Code globalement unique, type et
+unité libres en création, statut initial active. En édition, entreprise, site,
+équipement, type et unité en lecture seule ; PATCH différentiel limité à
+name/code/status/description, sans requête si aucune différence effective.
+Description omise, vide et null explicite distinguées. Suivi administratif en
+lecture seule, garde de sortie, double soumission bloquée, valeurs conservées
+après erreur et récupération après navigation échouée. Aucun DELETE/transfert
+frontend, mesure ou prédiction fictive. Measurements et IA restent hors périmètre.
+
+### Références de validation Sensors
+
+- [UI 6.7, sections 9 et 10](ui-6.7-sensors-integration.md) : **1 179 tests
+  Angular réussis dans 58 fichiers**, dont 393 ciblés ; build production réussi.
+  Initial **605 239 octets, soit 605,24 kB** ; dépassement du warning de 500 kB
+  de **105,24 kB**. Seuil d'erreur 1 MB et budgets composants 4/8 kB inchangés.
+- POST **201** et PATCH **200** réels depuis Angular 4201 -> FastAPI 8001 ->
+  PostgreSQL industrial_predict_dev sur 5434 ; Sensor 7, code UI67-SEN-20261020-01.
+  PATCH exactement name/status/description, persistance confirmée par reload/GET/SQL.
+- **40 lignes métier finales, 39 lignes préexistantes préservées**. Intégrité
+  des huit tables vérifiée, aucun doublon de code ni orphelin ; les 40 lignes
+  restent inchangées pendant le correctif SEN-08, contrôlé en lecture seule.
+- 409/422, réseau, doubles soumissions, abandon et navigation échouée restent
+  des preuves simulées. B-SEN-01 couvre aussi les routes en SQLite isolée ;
+  les tests PostgreSQL spécifiques ne sont pas intégralement exécutés.
+
+Aucune relance de tests/build, requête API ou opération PostgreSQL en UI 6.8.
+Les rapports UI 6.1 à UI 6.7 sont préservés, avec leurs résultats datés.
+
+### Réserves Sensors ouvertes
+
+- **B-SEN-02 non corrigé** : blancs, longueurs et null divergent entre Pydantic
+  et SQL ; les validations Angular ne réparent pas le contrat backend.
+- **B-SEN-03 non corrigé** : conflits IntegrityError/concurrence, FK/unicité et
+  transactions repository/service. Pas de version, verrou optimiste ou garantie
+  d'idempotence ; vérifier toute écriture incertaine avant reprise manuelle.
+- **Seed check strict non conforme**, SeedConflict conservé : Sensor 1 conserve
+  description `Capteur fictif` et updated_at `2026-10-20 22:11:55.315993`,
+  au lieu de `Capteur fictif.` et `2026-10-16 12:00:00`. Exception acceptée
+  pour cette recette seulement, sans modifier le seed ni son contrôle.
+- Dialogue natif d'abandon/beforeunload **non vérifié manuellement** ; couverture
+  simulée seulement. Responsive 390 px mesuré à 389 et 391 px ; lecteur d'écran,
+  charge et concurrence PostgreSQL non exhaustivement validés.
+- Authentification et isolation multi-tenant absentes ; filtres et immutabilité
+  UI ne sécurisent pas les endpoints backend plus permissifs.
+- Budget Angular dépassé, sans relèvement. Secrets historiques suivis déjà
+  signalés dans le bilan Équipements, à externaliser et renouveler séparément.
+
+Le [rapport UI 6.8](ui-6.8-sensors-delivery.md) porte la checklist de fusion.
+Cette préparation ne vaut ni fusion effectuée ni validation de production SaaS.
 
 ## Livraison UI 3 - Companies MVP et finition des dates
 
@@ -688,7 +757,8 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Valider le [bilan UI 5.8 et sa checklist](ui-5.8-equipments-delivery.md), puis
+Valider le [bilan UI 6.8 et sa checklist](ui-6.8-sensors-delivery.md), puis
 faire autoriser séparément le commit documentaire et la fusion vers `main`.
-Aucun commit, push, merge, changement PostgreSQL ou module suivant dans UI 5.8.
+Aucun commit, push, rebase, merge ou opération PostgreSQL/Docker dans UI 6.8.
+UI 7 non commencée.
 Les prochaines étapes mentionnées dans les rapports historiques restent datées.

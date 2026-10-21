@@ -80,9 +80,10 @@ réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 `docs/project-status.md`. DELETE est exclu du MVP en raison de la cascade.
 Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
 mais validés par simulation, sans écriture réelle dans PostgreSQL.
-Sites est intégré dans `main` à `667fe5b`. Équipements MVP est implémenté sur
-`feature/frontend-equipments` ; les cinq autres destinations métier restent des
-placeholders. Aucun identifiant d'entreprise
+Sites et Équipements sont intégrés dans `main` (référence locale `a76e49c`).
+Sensors MVP est implémenté sur `feature/frontend-sensors` à `a317e22`, en
+préparation documentaire UI 6.8. Mesures, Maintenance, Prédictions et
+Recommandations restent des placeholders. Aucun identifiant d'entreprise
 par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
 `docs/decisions.md` ; le contrat consommé et l'architecture livrée sont décrits
@@ -122,8 +123,8 @@ centralise les limites et dettes, dont les secrets historiques suivis à externa
 et à renouveler et l'absence actuelle d'authentification/autorisation multi-tenant.
 UI 4.8 et sa [documentation de livraison](docs/ui-4.8-sites-delivery.md) sont enregistrées dans `667fe5b`.
 
-UI 5 - Équipements MVP est implémenté sur `feature/frontend-equipments`, HEAD
-`39e2f0d`. Les décisions EQ-01 à EQ-07 de la [conception](docs/etape-ui-5.1-equipments.md)
+UI 5 - Équipements MVP est intégré dans `main` à `a76e49c`. Sa validation
+historique reste référencée par `39e2f0d`. Les décisions EQ-01 à EQ-07 de la [conception](docs/etape-ui-5.1-equipments.md)
 sont approuvées : sélection entreprise/site, liste/recherche/filtres/pagination,
 détail avec parents réels, liens Site/Équipements, création et édition différentielle.
 Type libre, défauts operational/medium, aucun transfert ni DELETE frontend.
@@ -133,12 +134,24 @@ Références historiques : 864 tests Angular / 49 fichiers, build réussi,
 bundle initial 604,81 ko. [UI 5.7](docs/ui-5.7-equipments-integration.md) prouve
 POST 201/PATCH 200 et persistance DEV, seed et données préexistantes préservés.
 409/422 d'écriture et double soumission restent simulés ; dialogue natif réservé.
-Le [statut courant](docs/project-status.md#équipements-mvp---livraison-préparée-ui-58)
+Le [statut Équipements](docs/project-status.md#équipements-mvp---livraison-préparée-ui-58)
 centralise les limites : budget dépassé, secrets historiques à externaliser et
 renouveler, absence d'authentification et d'autorisation multi-tenant.
-[UI 5.8](docs/ui-5.8-equipments-delivery.md) est documentaire, sans relance des
-tests/build. Attendre validation avant commit documentaire et toute fusion.
-Aucun module suivant commencé.
+[UI 5.8](docs/ui-5.8-equipments-delivery.md) a finalisé la documentation,
+enregistrée dans `a76e49c`. Ses résultats restent historiques.
+
+UI 6 - Sensors MVP est implémenté sur `feature/frontend-sensors`, HEAD `a317e22`.
+SEN-01 à SEN-10 approuvées : sélection explicite entreprise/site/équipement,
+liste avec recherche/statut/pagination serveur, détail et rattachement réel,
+création, édition différentielle et navigation Equipment <-> Sensors. Code
+unique globalement ; parent, type et unité immuables en édition, aucun DELETE
+frontend ni mesure ou prédiction fictive. B-SEN-01 est corrigé dans `4defbe9`.
+Le [statut Sensors](docs/project-status.md#sensors-mvp---livraison-préparée-ui-68)
+centralise les références 1 179 tests/build/605,24 kB, les preuves réelles et
+les réserves ouvertes. [UI 6.8](docs/ui-6.8-sensors-delivery.md) prépare la
+fusion sans modifier les sources ni relancer les validations. Sensors n'est
+pas encore intégré dans main. Attendre validation avant commit documentaire
+et toute fusion ; UI 7 non commencée.
 
 ### Machine Learning
 

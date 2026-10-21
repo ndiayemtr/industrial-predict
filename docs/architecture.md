@@ -23,15 +23,16 @@ PostgreSQL   Models / Scoring / Recommendation Engine
 Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main` : Shell Nebular,
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
 accessible du focus. Dashboard V1 et Companies MVP sont livrés dans `main`.
-Sites MVP est intégré dans `main` à `667fe5b`. Équipements MVP est implémenté
-sur `feature/frontend-equipments`, HEAD `39e2f0d`, en préparation de livraison
-UI 5.8. Capteurs, Mesures, Maintenance, Prédictions et Recommandations restent
-des placeholders, sans confusion avec les agrégats Dashboard ou le ML backend.
+Sites et Équipements MVP sont intégrés dans `main` (référence locale `a76e49c`).
+Sensors MVP est implémenté sur `feature/frontend-sensors` à `a317e22`, en
+préparation de livraison UI 6.8. Mesures, Maintenance, Prédictions et Recommandations
+restent des placeholders, distincts des agrégats Dashboard et du ML backend.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
-est implémenté ; `features/dashboard`, `features/companies`, `features/sites` et `features/equipments` existent.
+est implémenté ; `features/dashboard`, `features/companies`, `features/sites`, `features/equipments`
+et `features/sensors` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -102,6 +103,24 @@ et données prédictives ne sont ni chargés ni inventés dans cette fiche.
 Voir l'[architecture implémentée](frontend-architecture.md#équipements-mvp---architecture-implémentée-ui-5)
 et le [bilan de livraison](ui-5.8-equipments-delivery.md) pour les références,
 les preuves réelles/simulées et les limites de sécurité. Aucun backend modifié.
+
+Sensors possède ses DTO stricts et SensorsApiService (GET paginé/détail, POST,
+PATCH), une façade locale de liste et un formulaire partagé création/édition.
+La chaîne Sensor -> Equipment -> Site -> Company est vérifiée sur les données
+réelles ; les références indisponibles ne font pas disparaître la fiche Sensor.
+L'API Sensors ne reçoit jamais company_id/site_id depuis Angular. La whitelist
+PATCH ne contient que name/code/status/description réellement modifiés ; parent,
+type et unité immuables en édition. Code globalement unique, aucun DELETE
+frontend. Les liens Equipment <-> Sensors utilisent les parents réels, sans
+transférer les filtres entre modules. Aucune mesure ou prédiction inventée.
+
+B-SEN-01 rétablit SensorRepository.get_by_code par égalité exacte globale dans
+`4defbe9`, avec tests isolés ; B-SEN-02/03 restent ouverts. Les restrictions UI
+n'interdisent pas directement les opérations backend plus permissives.
+L'[architecture Sensors](frontend-architecture.md#sensors-mvp---architecture-implémentée-ui-6)
+décrit les flux ; le [statut Sensors](project-status.md#sensors-mvp---livraison-préparée-ui-68)
+centralise preuves, réserves et limite de validation PostgreSQL.
+[UI 6.8](ui-6.8-sensors-delivery.md) prépare la fusion sans opération de base.
 
 ## Backend
 

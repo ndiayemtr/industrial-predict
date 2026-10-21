@@ -14,16 +14,15 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé en UI 5.8 le 20 octobre 2026 sur
-`feature/frontend-equipments`, HEAD de référence `39e2f0d`. Le socle, Dashboard,
-Companies et Sites sont intégrés dans `main` à `667fe5b`. Équipements MVP est
-implémenté sur sa branche, en attente de validation du commit documentaire puis
-de la fusion. Les sections datées conservent leurs résultats historiques ;
-le [statut courant](project-status.md#équipements-mvp---livraison-préparée-ui-58)
-centralise les résultats et limites. Aucun test/build relancé en UI 5.8.
+État documentaire synchronisé en UI 6.8 le 21 octobre 2026 sur
+`feature/frontend-sensors`, HEAD de référence `a317e22`. Le socle, Dashboard,
+Companies, Sites et Équipements sont intégrés dans `main` à `a76e49c`. Sensors
+MVP est implémenté sur sa branche, en préparation de fusion. Les sections datées
+conservent leurs résultats historiques ; le [statut courant](project-status.md#sensors-mvp---livraison-préparée-ui-68)
+centralise les références et réserves. Aucun test/build relancé en UI 6.8.
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle, Dashboard V1, Companies, Sites et Équipements MVP
+## Structure réellement présente - socle et modules MVP jusqu'à Sensors
 
 ```text
 frontend/
@@ -54,7 +53,9 @@ frontend/
 sites-list.facade.*, sites.routes.*, pages/ et components/site-form/.
 `features/equipments/` contient models/, data-access/, equipments-list.facade.*,
 equipments.routes.*, pages/ et components/equipment-form/. Les détails figurent
-dans les sections Sites et Équipements ci-dessous. Les styles d'actions et
+dans les sections Sites et Équipements ci-dessous. `features/sensors/` contient
+models/, data-access/, sensors-list.facade.*, sensors.routes.*, pages/ et
+components/sensor-form/ ; voir la section Sensors. Les styles d'actions et
 interactions communs sont dans src/styles/_actions.scss et _buttons.scss.
 
 `AppComponent` contient le Router Outlet racine. `ShellComponent` contient
@@ -153,7 +154,10 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | `/equipments/new` | Nouvel équipement industriel | EquipmentCreateComponent | Équipements |
 | `/equipments/:equipmentId/edit` | Modifier l’équipement | EquipmentEditComponent | Équipements |
 | `/equipments/:equipmentId` | Détail équipement | EquipmentDetailComponent | Équipements |
-| `/sensors` | Capteurs | FeaturePlaceholderComponent | Capteurs |
+| `/sensors` | Capteurs | SensorsListComponent | Capteurs |
+| `/sensors/new` | Nouveau capteur industriel | SensorCreateComponent | Capteurs |
+| `/sensors/:sensorId/edit` | Modifier le capteur | SensorEditComponent | Capteurs |
+| `/sensors/:sensorId` | Détail capteur | SensorDetailComponent | Capteurs |
 | `/measurements` | Mesures | FeaturePlaceholderComponent | Mesures |
 | `/maintenance` | Maintenance | FeaturePlaceholderComponent | Maintenance |
 | `/predictions` | Prédictions | FeaturePlaceholderComponent | Prédictions |
@@ -173,11 +177,11 @@ exacte des liens et évite une sélection Équipements incorrecte ; le détail
 valide `/equipments/42` conserve la sélection de section.
 
 Le Shell, DashboardComponent, le placeholder commun et la 404 utilisent
-`loadComponent` avec import dynamique. Companies, Sites et Équipements utilisent
-`loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES` et `EQUIPMENT_ROUTES`, puis
+`loadComponent` avec import dynamique. Companies, Sites, Équipements et Sensors utilisent
+`loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES`, `EQUIPMENT_ROUTES` et `SENSOR_ROUTES`, puis
 `loadComponent` pour leurs pages,
 sans préchargement configuré. Dans chaque feature, `new` puis la route d'édition
-précèdent l'identifiant dynamique. Les cinq autres destinations métier disponibles partagent le même placeholder.
+précèdent l'identifiant dynamique. Les quatre autres destinations métier disponibles partagent le même placeholder.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -185,8 +189,8 @@ routés ; la route Dashboard charge uniquement DashboardComponent.
 
 ## Structure générale cible
 
-Les dossiers métier autres que `dashboard`, `companies`, `sites` et `equipments`
-constituent la cible. `core`, `layout`, `shared` et ces quatre features existent.
+Les dossiers métier autres que `dashboard`, `companies`, `sites`, `equipments`
+et `sensors` constituent la cible. `core`, `layout`, `shared` et ces cinq features existent.
 
 ```text
 src/app/
@@ -222,10 +226,9 @@ src/app/
 
 ## Pages prioritaires à implémenter
 
-Dashboard V1, Companies, Sites et Équipements MVP sont implémentés. Les listes
-ci-dessous distinguent les fonctions livrées des intentions produit futures ;
-les routes Capteurs, Mesures, Maintenance, Prédictions et Recommandations rendent
-encore des placeholders.
+Dashboard V1, Companies, Sites, Équipements et Sensors MVP sont implémentés.
+Les listes ci-dessous distinguent les fonctions livrées des intentions futures ;
+Mesures, Maintenance, Prédictions et Recommandations rendent des placeholders.
 
 ### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
 
@@ -245,8 +248,9 @@ Liste/recherche/pagination, filtres statut/criticité, sélection entreprise/sit
 détail des données réelles, création et modification différentielle sont livrés.
 Voir l'[architecture implémentée](#équipements-mvp---architecture-implémentée-ui-5).
 Health Score, Failure Risk, RUL et dernière maintenance ne sont pas affichés.
-Les onglets Capteurs, Mesures, Prédictions, Recommandations, Maintenance et
-Documents restent des intentions futures, sans compteurs fictifs ni calcul ML.
+L'action Voir les capteurs ouvre la liste Sensors contextualisée avec les parents
+réels, page 1 et taille 20. Les onglets Mesures, Prédictions, Recommandations,
+Maintenance et Documents restent futurs, sans compteurs fictifs ni calcul ML.
 
 ### Prédictions
 
@@ -938,6 +942,57 @@ la persistance SQL ; 409/422 d'écriture et concurrence restent simulés. Réfé
 Aucun endpoint ML ou descendant appelé par cette fiche. Aucun contrôle
 d'authentification/autorisation multi-tenant ou verrou de version serveur ajouté.
 
+## Sensors MVP - architecture implémentée UI 6
+
+La [conception UI 6.1](etape-ui-6.1-sensors.md), SEN-01 à SEN-10 approuvées,
+reste la référence métier. SENSOR_ROUTES charge la liste, new, :sensorId/edit
+puis :sensorId dans cet ordre ; pages standalone lazy sous le Shell, garde
+CanDeactivate des formulaires, sélection Sidebar Capteurs et titres français.
+
+- SensorRead contient les dix champs réels, description nullable et dates en
+  chaînes ; SensorStatus vaut active/inactive. SensorCreate et SensorPatch sont
+  distincts. SensorsApiService reconstruit les whitelists : GET liste avec
+  equipment_id obligatoire, status/search/page/page_size, GET détail, POST, PATCH.
+  Aucun company_id/site_id vers Sensors, aucun DELETE ni liste globale exposée.
+- SensorsListFacade locale valide la chaîne Equipment -> Site -> Company avant
+  GET Sensors. Catalogues par pages de 50, suite explicite et aucune sélection
+  automatique. Recherche nom/code/type/unité appliquée explicitement, filtre
+  statut, pagination serveur, URL company_id/site_id/equipment_id/search/status/
+  page/page_size. switchMap annule les lectures obsolètes, erreurs et vides sont
+  distincts, une page hors plage propose une récupération manuelle.
+- SensorDetail résout Sensor puis Equipment/Site/Company réels et vérifie chaque
+  id/FK, indépendamment du retour URL. Une erreur parent conserve les données
+  Sensor. Lien réel vers Equipment ; le lien inverse attend la chaîne Equipment
+  complète et utilise page=1/page_size=20, sans filtres Equipment transférés.
+- SensorCreateReferencesFacade porte les catalogues et la vérification du parent
+  pour la création. SensorCreate et SensorEdit orchestrent SensorForm typé partagé.
+  Nom/code/type/unité non blancs, limites Unicode 150/100/100/30 ; type/unité
+  libres en création, statut initial active, code globalement unique. L'édition
+  laisse entreprise/site/équipement/type/unité en lecture seule et les dates
+  hors FormGroup dans Informations de suivi, avant les actions.
+- PATCH ne contient que name/code/status/description réellement modifiés. Valeur
+  restaurée exclue, aucune requête sans différence. Whitelist défensive excluant
+  equipment_id/sensor_type/unit, company_id/site_id, id et dates. Description
+  inchangée omise, effacement vide, retrait explicite null ; aucune conversion
+  implicite de ces trois états. Aucun transfert ni suppression frontend.
+- État saving et gardes bloquent doubles envois et sorties ; erreurs 404/409/422,
+  réseau/5xx préservent la saisie. Conflit générique, champs 422 reconnus seulement,
+  écriture incertaine à vérifier sans retry automatique. Après succès, fiche de
+  l'id réel, toast unique et confirmation accessible ; navigation échouée :
+  succès conservé et lien de récupération sans nouvelle écriture.
+- PageHeader, LoadingState, EmptyState, ErrorState, formateur de dates et styles
+  d'actions existants réutilisés. _buttons.scss ajoute uniquement les classes
+  new-sensor/sensor-edit aux actions primaires et equipment-sensors aux actions
+  secondaires, avec interactions et mouvement réduit existants. Aucun changement
+  des contrats des composants shared, package ou budget.
+
+L'[intégration UI 6.7, sections 9 et 10](ui-6.7-sensors-integration.md) distingue
+HTTP réel, SQL et tests simulés. Le [statut Sensors](project-status.md#sensors-mvp---livraison-préparée-ui-68)
+centralise 1 179 tests/build/605,24 kB et les réserves B-SEN-02/03, seed strict
+non conforme, sécurité absente, dialogue natif, arrondi à 390 px et couverture
+PostgreSQL incomplète. Aucun appel Measurements ou IA, polling, mesure temps
+réel ou prédiction fictive. [UI 6.8](ui-6.8-sensors-delivery.md) est documentaire.
+
 ## Autres composants partagés envisagés
 
 La liste suivante décrit des besoins ultérieurs, sans engagement d'implémentation
@@ -965,9 +1020,9 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout, Dashboard, Companies et Sites sont intégrés dans `main` (`667fe5b`).
-Équipements MVP est implémenté sur feature/frontend-equipments (`39e2f0d`).
-UI 5.8 prépare la [livraison documentaire](ui-5.8-equipments-delivery.md), avant
+Le layout, Dashboard, Companies, Sites et Équipements sont intégrés dans `main`
+(`a76e49c`). Sensors MVP est implémenté sur feature/frontend-sensors (`a317e22`).
+UI 6.8 prépare la [livraison documentaire](ui-6.8-sensors-delivery.md), avant
 validation du commit puis de toute fusion. Les conceptions historiques restent
 conservées ; les écrans métier et indicateurs prédictifs futurs nécessiteront
-une conception et une autorisation distinctes. Aucun module suivant commencé.
+une conception et une autorisation distinctes. UI 7 non commencée.
