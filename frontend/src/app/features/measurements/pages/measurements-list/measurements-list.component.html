@@ -153,11 +153,10 @@
               <tr><td><time [attr.datetime]="item.timestamp" [title]="item.timestamp">{{ formatTime(item.timestamp) }}</time></td>
                 <td>{{ formatValue(item.value) }}</td><td>{{ facade.sensor()!.unit || 'Non renseignée' }}</td>
                 <td><span class="badge">{{ qualityLabels[item.quality] }}</span></td>
-                <td><span [attr.data-detail-url]="detailUrl(item.id)">Mesure #{{ item.id }}</span></td></tr>
+                <td><a class="measurement-reference" [routerLink]="['/measurements', item.id]" queryParamsHandling="preserve" [preserveFragment]="true">Mesure #{{ item.id }}</a></td></tr>
             }</tbody>
           </table>
         </div>
-        <p class="detail-notice">La fiche détaillée sera disponible à une prochaine étape.</p>
       }
       <nav class="pagination" aria-label="Pagination des mesures">
         <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>

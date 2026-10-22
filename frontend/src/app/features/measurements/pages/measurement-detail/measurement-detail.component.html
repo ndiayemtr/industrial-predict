@@ -1,0 +1,87 @@
+<app-page-header title="Détail mesure" description="Informations de la mesure industrielle en lecture seule.">
+  <a class="measurement-back" routerLink="/measurements" [queryParams]="listQuery()" [fragment]="fragment() ?? undefined">Retour à la liste des mesures</a>
+</app-page-header>
+@let current = state();
+<section class="measurement-detail" aria-labelledby="measurement-information-title" [attr.aria-busy]="current.status === 'loading'">
+  <h2 id="measurement-information-title">Informations de la mesure</h2>
+  @if (current.status === 'loading') {
+    <app-loading-state message="Chargement de la mesure…" />
+  } @else if (current.status === 'error') {
+    <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
+  } @else {
+    @if (differentContext()) {
+      <p class="context-notice" role="status">Le rattachement réel de cette mesure diffère du contexte de retour. Celui-ci est conservé pour revenir à la liste.</p>
+    }
+    <dl class="measurement-fields">
+      <div><dt>Identifiant de la mesure</dt><dd>{{ current.data.id }}</dd></div>
+      <div><dt>Identifiant du capteur</dt><dd>{{ current.data.sensor_id }}</dd></div>
+      <div class="timestamp"><dt>Horodatage UTC</dt><dd>
+        <time [attr.datetime]="current.data.timestamp">{{ formatTime(current.data.timestamp) }}</time>
+        <p class="note">Affichage UTC explicite. Horodatage ISO reçu, offset et précision conservés :</p>
+        <code class="source-timestamp">{{ current.data.timestamp }}</code>
+      </dd></div>
+      <div><dt>Valeur</dt><dd class="measurement-value">{{ formatValue(current.data.value) }}</dd></div>
+      <div><dt>Qualité déclarée</dt><dd>{{ qualityLabels[current.data.quality] }}</dd></div>
+    </dl>
+    <p class="note">La qualité est déclarée par la source ; elle ne certifie pas la fiabilité physique de la mesure.</p>
+  }
+</section>
+@if (current.status === 'success') {
+  <section class="measurement-detail" aria-labelledby="measurement-references-title">
+    <h2 id="measurement-references-title">Rattachement industriel réel</h2>
+    <dl class="reference-fields">
+      <div><dt>Capteur</dt><dd [attr.aria-busy]="current.references.sensor.status === 'loading'">
+        @let sensor = current.references.sensor;
+        @switch (sensor.status) {
+          @case ('waiting') { <p>Référence non résolue : la mesure est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement du capteur réel…" /> }
+          @case ('error') { <app-error-state [title]="sensor.title" [message]="sensor.message" [retryable]="sensor.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <a class="sensor-reference" [routerLink]="['/sensors', sensor.data.id]" [queryParams]="sensorQuery()">{{ referenceLabel(sensor.data) }}</a>
+            <p>Type de capteur : {{ sensor.data.sensor_type || 'Non renseigné' }}</p>
+          }
+        }
+      </dd></div>
+      <div><dt>Équipement</dt><dd [attr.aria-busy]="current.references.equipment.status === 'loading'">
+        @let equipment = current.references.equipment;
+        @switch (equipment.status) {
+          @case ('waiting') { <p>Référence non résolue : la référence du capteur est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement de l’équipement réel…" /> }
+          @case ('error') { <app-error-state [title]="equipment.title" [message]="equipment.message" [retryable]="equipment.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <p class="equipment-reference">{{ referenceLabel(equipment.data) }}</p>
+          }
+        }
+      </dd></div>
+      <div><dt>Site industriel</dt><dd [attr.aria-busy]="current.references.site.status === 'loading'">
+        @let site = current.references.site;
+        @switch (site.status) {
+          @case ('waiting') { <p>Référence non résolue : la référence de l’équipement est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement du site réel…" /> }
+          @case ('error') { <app-error-state [title]="site.title" [message]="site.message" [retryable]="site.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <p class="site-reference">{{ referenceLabel(site.data) }}</p>
+          }
+        }
+      </dd></div>
+      <div><dt>Entreprise de rattachement</dt><dd [attr.aria-busy]="current.references.company.status === 'loading'">
+        @let company = current.references.company;
+        @switch (company.status) {
+          @case ('waiting') { <p>Référence non résolue : la référence du site est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement de l’entreprise réelle…" /> }
+          @case ('error') { <app-error-state [title]="company.title" [message]="company.message" [retryable]="company.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <p class="company-reference">{{ referenceLabel(company.data) }}</p>
+          }
+        }
+      </dd></div>
+    </dl>
+    <h3>Unité actuelle du capteur</h3>
+    @if (currentUnit(); as unit) {
+      <p class="sensor-unit">{{ unit }}</p>
+    } @else {
+      <p class="sensor-unit">Unité indisponible ou non renseignée par le capteur.</p>
+    }
+    <p class="note">Cette unité est celle du capteur aujourd’hui. Elle ne constitue pas une unité historique garantie pour cette mesure ; aucune conversion n’est effectuée.</p>
+  </section>
+}

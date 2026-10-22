@@ -34,13 +34,13 @@ describe('Measurements list, four selections and applied URL',()=>{
     expect(root().querySelector('#equipment-help')).toBeNull();expect(root().querySelector('#sensor-help')).not.toBeNull();expect(c.sensor.value).toBeNull();expect(c.sensor.enabled).toBe(true);http.expectNone(()=>true);
     c.sensor.setValue(17);await settle();chain();read('measurements').flush(page);await settle();expect(c.facade.state().status).toBe('success');expect(root().querySelectorAll('.parents [id$="-help"]')).toHaveLength(0);
   });
-  it('renders real microseconds, negative values, quality and current unit without a misleading detail link',async()=>{
+  it('renders real microseconds, negative values, quality and current unit with an active detail link',async()=>{
     await ready();expect([...root().querySelectorAll('thead th')].map(el=>el.textContent)).toEqual(['Horodatage UTC','Valeur','Unité actuelle','Qualité','Référence']);
     expect(root().querySelector('time')?.textContent).toBe('22/10/2026 à 12:00:00.123456 UTC');expect(root().querySelector('time')?.getAttribute('datetime')).toBe(row.timestamp);
     expect(root().querySelector('tbody')?.textContent).toContain('-2,5');expect(root().querySelector('tbody')?.textContent).toContain('Manquante');expect(root().querySelector('tbody')?.textContent).toContain('°C');
-    expect(root().querySelector('tbody a,tbody [role="link"],a[href*="/new"]')).toBeNull();
-    expect(root().querySelector('[data-detail-url]')?.getAttribute('data-detail-url')).toContain('/measurements/23?');
-    expect(root().querySelector('[data-detail-url]')?.hasAttribute('tabindex')).toBe(false);expect(root().querySelector('.table-scroll')?.getAttribute('tabindex')).toBe('0');
+    expect(root().querySelector('a[href*="/new"]')).toBeNull();
+    expect(root().querySelector('tbody a')?.getAttribute('href')).toContain('/measurements/23?');
+    expect(root().querySelector('tbody a')?.getAttribute('tabindex')).not.toBe('-1');expect(root().querySelector('.table-scroll')?.getAttribute('tabindex')).toBe('0');
     expect(root().querySelectorAll('label[for]')).toHaveLength(12);
   });
   it('completes sensor-only context without duplicate measurement reads and preserves unknown params/fragment',async()=>{
@@ -150,6 +150,19 @@ describe('Measurements list, four selections and applied URL',()=>{
     // jsdom does not implement partial native picker editing; simulate the browser validity contract.
     Object.defineProperty(input,'validity',{configurable:true,get:()=>({valid:false,badInput:true})});
     c.applyPeriod();await settle();expect(c.periodError()).toContain('Période invalide');http.expectNone(()=>true);
+  });
+
+  it('navigates list to detail and back with the applied snapshot, repeats and fragment, ignoring a temporal draft',async()=>{
+    const raw='2026-10-22T17:30:00.123456+05:30';
+    await ready('&page=2&page_size=50&quality=missing&start_time='+encodeURIComponent(raw)+'&extra=a&extra=b&return_sensor_search=TEMP#history');
+    c.start.controls.fraction.setValue('999999');
+    const detail=root().querySelector<HTMLAnchorElement>('tbody a')!;expect(detail.getAttribute('href')).toContain('/measurements/23?');detail.click();await settle();
+    read('measurements/23').flush(row);chain();await settle();
+    const back=root().querySelector<HTMLAnchorElement>('.measurement-back')!;const router=TestBed.inject(Router);const snapshot=router.parseUrl(back.getAttribute('href')!);
+    expect(snapshot.queryParams).toMatchObject({company_id:'7',site_id:'9',equipment_id:'12',sensor_id:'17',quality:'missing',page:'2',page_size:'50',start_time:raw,extra:['a','b'],return_sensor_search:'TEMP'});expect(snapshot.fragment).toBe('history');
+    back.click();await settle();read('companies').flush(catalog([company]));chain();await settle();catalogs();const req=read('measurements');
+    expect(req.request.params.get('page')).toBe('2');expect(req.request.params.get('page_size')).toBe('50');expect(req.request.params.get('quality')).toBe('missing');expect(req.request.params.get('start_time')).toBe(raw);
+    expect(req.request.params.has('company_id')).toBe(false);req.flush({...page,page:2,page_size:50});await settle();expect(root().querySelector('time')).not.toBeNull();
   });
 
 });

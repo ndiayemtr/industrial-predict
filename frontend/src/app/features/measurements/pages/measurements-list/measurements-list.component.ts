@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, Observable, Subject, catchError, merge, switchMap, tap } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { Page } from '../../../../core/models/page.model';
@@ -17,6 +17,7 @@ import { SensorsApiService } from '../../../sensors/data-access/sensors-api.serv
 import { MeasurementQuality } from '../../models/measurement.model';
 import { formatMeasurementUtc, validateMeasurementPeriod } from '../../utils/measurement-time';
 import { restoreMeasurementBound, serializeMeasurementBound } from '../../utils/measurement-period-draft';
+import { formatMeasurementValue, measurementQualityLabels } from '../../utils/measurement-display';
 import { MeasurementsQuery } from '../../models/measurements-state.model';
 import { MeasurementsListFacade } from '../../measurements-list.facade';
 
@@ -31,7 +32,7 @@ const same = (a: Readonly<MeasurementsQuery> | null, b: MeasurementsQuery) => a 
 
 @Component({
   selector: 'app-measurements-list', standalone: true,
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [RouterLink, ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
   providers: [MeasurementsListFacade], templateUrl: './measurements-list.component.html',
   styleUrl: './measurements-list.component.scss', changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -65,7 +66,7 @@ export class MeasurementsListComponent {
   readonly size = new FormControl(20, { nonNullable: true });
   readonly urlNotice = signal('');
   readonly referenceLabel = businessReferenceLabel;
-  readonly qualityLabels: Record<MeasurementQuality,string> = { good: 'Bonne', suspect: 'Suspecte', bad: 'Mauvaise', missing: 'Manquante', estimated: 'Estimée' };
+  readonly qualityLabels = measurementQualityLabels();
   readonly qualities = Object.keys(this.qualityLabels) as MeasurementQuality[];
   readonly sensorOptions = computed(() => this.options(this.sensors().items, this.facade.sensor()).filter(item => item.equipment_id === this.sensors().scope));
   readonly companyOptions = computed(() => this.options(this.companies().items, this.facade.company()));
@@ -237,10 +238,7 @@ export class MeasurementsListComponent {
   recoverPage(): void { const query = this.facade.query(), state = this.facade.state();
     if (query && state.status === 'success' && !state.data.items.length) void this.navigate({ ...query, page: Math.max(1, Math.min(query.page - 1, state.data.pages)) });
   }
-  formatValue(value: number): string { return (Object.is(value, -0) ? '-0' : String(value)).replace('.', ','); }
-  detailUrl(id: number): string {
-    return this.router.serializeUrl(this.router.createUrlTree(['/measurements', id], { queryParams: this.facade.query() }));
-  }
+  readonly formatValue = formatMeasurementValue;
   private navigate(query: MeasurementsQuery, replaceUrl = false): Promise<boolean> {
     return this.router.navigate([], { relativeTo: this.route, queryParams: { company_id: query.company_id ?? null,
       site_id: query.site_id ?? null, equipment_id: query.equipment_id ?? null, sensor_id: query.sensor_id ?? null, quality: query.quality ?? null, start_time: query.start_time ?? null, end_time: query.end_time ?? null,

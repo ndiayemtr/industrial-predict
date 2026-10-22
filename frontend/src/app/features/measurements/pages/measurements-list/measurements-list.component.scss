@@ -10,8 +10,7 @@
 .results { container: measurement-results / inline-size; }
 .scroll-help { display: none; }
 @container measurement-results (width < 38rem) { .scroll-help { display: block; } }
-.parents, .criteria { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
-.parents > div, .criteria > div { min-width: 0; }
+.parents, .criteria, .period-layout, .bound-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
 label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
 form, .criteria { margin-top: tokens.$space-lg; }
 h3 { font-size: 1rem; margin: tokens.$space-lg 0 tokens.$space-sm; }
@@ -25,7 +24,7 @@ button { @include actions.navigation-action(); cursor: pointer; white-space: nor
 button.primary { @include actions.navigation-action($primary: true); }
 button:disabled, select:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:disabled { opacity: .65; }
-input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 
@@ -38,11 +37,10 @@ time { font-variant-numeric: tabular-nums; }
 .badge { display: inline-block; padding: tokens.$space-xs; border-radius: tokens.$border-radius; background: tokens.$content-background; }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; gap: tokens.$space-sm; margin-top: tokens.$space-lg; }
 .pagination p { flex: 1 1 10rem; }
-.period-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; align-items: end; }
+.period-layout, .bound-controls { align-items: end; }
 .period-bound { min-width: 0; margin: 0; padding: 0; border: 0; }
 .period-bound legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
-.bound-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-sm; align-items: end; }
-.bound-controls > div { min-width: 0; }
+.bound-controls { gap: tokens.$space-sm; }
 .bound-controls input { padding-inline: tokens.$space-sm; }
 .bound-controls label { font-size: tokens.$font-size-small; }
 @media (min-width: 48rem) {
@@ -65,3 +63,5 @@ time { font-variant-numeric: tabular-nums; }
   .bound-controls { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); }
   .bound-date { grid-column: auto; }
 }
+
+.measurement-reference { display: inline-flex; align-items: center; min-height: 2.75rem; max-width: 100%; color: tokens.$navigation-active; }
