@@ -14,15 +14,15 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé en UI 6.8 le 21 octobre 2026 sur
-`feature/frontend-sensors`, HEAD de référence `a317e22`. Le socle, Dashboard,
-Companies, Sites et Équipements sont intégrés dans `main` à `a76e49c`. Sensors
-MVP est implémenté sur sa branche, en préparation de fusion. Les sections datées
-conservent leurs résultats historiques ; le [statut courant](project-status.md#sensors-mvp---livraison-préparée-ui-68)
-centralise les références et réserves. Aucun test/build relancé en UI 6.8.
+État documentaire synchronisé en UI 7.6 le 22 octobre 2026 sur
+`feature/frontend-measurements`, HEAD de référence `43d12fa`. Le socle, Dashboard,
+Companies, Sites, Équipements et Sensors sont intégrés dans `main` à `20293a4`.
+Measurements MVP en lecture seule est implémenté sur sa branche, avant fusion.
+Les sections datées conservent leurs validations historiques ; le [statut courant](project-status.md#measurements-mvp---livraison-préparée-ui-76)
+centralise les références et réserves. Aucun test/build relancé en UI 7.6.
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle et modules MVP jusqu'à Sensors
+## Structure réellement présente - socle et modules MVP jusqu'à Measurements
 
 ```text
 frontend/
@@ -57,6 +57,9 @@ dans les sections Sites et Équipements ci-dessous. `features/sensors/` contient
 models/, data-access/, sensors-list.facade.*, sensors.routes.*, pages/ et
 components/sensor-form/ ; voir la section Sensors. Les styles d'actions et
 interactions communs sont dans src/styles/_actions.scss et _buttons.scss.
+`features/measurements/` contient models/, data-access/, measurements-list.facade.*,
+measurements.routes.*, pages/measurements-list/, pages/measurement-detail/ et
+utils/ pour temps précis, brouillons et présentation. Aucun formulaire d'écriture.
 
 `AppComponent` contient le Router Outlet racine. `ShellComponent` contient
 un seul `nb-layout`, un `nb-sidebar`, un `nb-layout-header subheader`
@@ -158,7 +161,8 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | `/sensors/new` | Nouveau capteur industriel | SensorCreateComponent | Capteurs |
 | `/sensors/:sensorId/edit` | Modifier le capteur | SensorEditComponent | Capteurs |
 | `/sensors/:sensorId` | Détail capteur | SensorDetailComponent | Capteurs |
-| `/measurements` | Mesures | FeaturePlaceholderComponent | Mesures |
+| `/measurements` | Mesures | MeasurementsListComponent | Mesures |
+| `/measurements/:measurementId` | Détail mesure | MeasurementDetailComponent | Mesures |
 | `/maintenance` | Maintenance | FeaturePlaceholderComponent | Maintenance |
 | `/predictions` | Prédictions | FeaturePlaceholderComponent | Prédictions |
 | `/recommendations` | Recommandations | FeaturePlaceholderComponent | Recommandations |
@@ -177,11 +181,14 @@ exacte des liens et évite une sélection Équipements incorrecte ; le détail
 valide `/equipments/42` conserve la sélection de section.
 
 Le Shell, DashboardComponent, le placeholder commun et la 404 utilisent
-`loadComponent` avec import dynamique. Companies, Sites, Équipements et Sensors utilisent
-`loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES`, `EQUIPMENT_ROUTES` et `SENSOR_ROUTES`, puis
+`loadComponent` avec import dynamique. Companies, Sites, Équipements, Sensors
+et Measurements utilisent `loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES`,
+`EQUIPMENT_ROUTES`, `SENSOR_ROUTES` et `MEASUREMENT_ROUTES`, puis
 `loadComponent` pour leurs pages,
 sans préchargement configuré. Dans chaque feature, `new` puis la route d'édition
-précèdent l'identifiant dynamique. Les quatre autres destinations métier disponibles partagent le même placeholder.
+précèdent l'identifiant dynamique lorsque ces formulaires existent. Measurements
+expose uniquement liste et détail, sans new/edit. Les trois destinations
+Maintenance, Prédictions et Recommandations conservent le placeholder.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -226,9 +233,9 @@ src/app/
 
 ## Pages prioritaires à implémenter
 
-Dashboard V1, Companies, Sites, Équipements et Sensors MVP sont implémentés.
+Dashboard V1, Companies, Sites, Équipements, Sensors et Measurements MVP sont implémentés.
 Les listes ci-dessous distinguent les fonctions livrées des intentions futures ;
-Mesures, Maintenance, Prédictions et Recommandations rendent des placeholders.
+Maintenance, Prédictions et Recommandations rendent des placeholders.
 
 ### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
 
@@ -990,8 +997,95 @@ L'[intégration UI 6.7, sections 9 et 10](ui-6.7-sensors-integration.md) disting
 HTTP réel, SQL et tests simulés. Le [statut Sensors](project-status.md#sensors-mvp---livraison-préparée-ui-68)
 centralise 1 179 tests/build/605,24 kB et les réserves B-SEN-02/03, seed strict
 non conforme, sécurité absente, dialogue natif, arrondi à 390 px et couverture
-PostgreSQL incomplète. Aucun appel Measurements ou IA, polling, mesure temps
-réel ou prédiction fictive. [UI 6.8](ui-6.8-sensors-delivery.md) est documentaire.
+PostgreSQL incomplète. Le lien Voir les mesures, ajouté en UI 7.5.1, n'apparaît
+qu'après résolution Sensor/Equipment/Site/Company et utilise les quatre ids réels,
+page=1/page_size=20, sans search/status ou période/qualité transférés. Aucun GET
+Measurements tant que l'action n'est pas activée. Pas de polling, mesure temps
+réel ou prédiction fictive. [UI 6.8](ui-6.8-sensors-delivery.md) reste historique.
+
+## Measurements MVP - architecture implémentée UI 7
+
+[UI 7.1](etape-ui-7.1-measurements.md) porte MES-01 à MES-12 validées ;
+[UI 7.2](ui-7.2-measurements-data-access.md), [UI 7.3/7.3.1](ui-7.3-measurements-list.md)
+et [UI 7.4](ui-7.4-measurement-detail.md) conservent les contrats et implémentations.
+MEASUREMENT_ROUTES charge la liste puis :measurementId en lazy et full-match,
+sous le Shell, titres Mesures/Détail mesure et Sidebar Mesures active. Aucun
+formulaire ni route new/edit ; pas de transfert ou DELETE.
+
+### Transport, modèles et précision
+
+MeasurementRead contient exactement id, sensor_id, timestamp, value, quality.
+MeasurementQuality vaut good/suspect/bad/missing/estimated, affichées Bonne,
+Suspecte, Mauvaise, Manquante, Estimée. Qualité déclarée, sans certification
+physique ; missing ne remplace pas value par zéro. MeasurementPage réutilise Page.
+MeasurementPageQuery exige sensor_id ; seules page/page_size/quality/start_time/
+end_time optionnelles complètent la whitelist. GET paginé /api/v1/measurements
+et GET /api/v1/measurements/{id} sont les seules méthodes publiques du service.
+Aucun DTO d'écriture, POST/PATCH/DELETE, parent, unité, search ou tri envoyé.
+Les deux endpoints backend spécialisés par capteur restent exclus.
+
+HttpClient fournit des Observable froids ; validation défensive à la souscription
+et contrôle des cinq champs/page/périmètre en réponse, sans coercition, tri ou
+résultat synthétique. Ids entiers positifs sûrs, qualité exacte, nombre fini et
+réellement numérique. Null, booléen, chaîne et non-fini refusés sans substitution.
+Valeur valide affichée sans arrondi arbitraire ; précision float déjà perdue côté
+backend/JSON non reconstructible. Erreurs HTTP propagées sans retry automatique.
+
+Les chaînes ISO restent inchangées, offsets explicites et jusqu'à six décimales.
+measurement-time valide le calendrier et compare les instants par BigInt à la
+microseconde, sans Date/toISOString. L'affichage UTC convertit les composantes
+sans perdre la fraction ; détail et attribut time.datetime gardent l'ISO source.
+Les bornes [début, fin) sont facultatives séparément ; deux bornes exigent début
+strictement avant fin. Pas de restriction future copiée du Dashboard.
+
+### Liste, catalogue, URL et détail
+
+MeasurementsListFacade est locale à la page, avec signals, switchMap et nettoyage.
+ReferenceDataApiService et SensorsApiService fournissent les catalogues paginés
+de 50 et détails par id. Quatre choix explicites Entreprise -> Site -> Équipement
+-> Capteur, jamais de premier choix automatique ; Charger la suite et référence
+hors première page pris en charge. Sensor inactif consultable.
+Chaque id/FK de Sensor -> Equipment -> Site -> Company est vérifié avant GET
+Measurements. URL sensor_id seule complétée avec les parents réels ; contradiction
+ou référence invalide bloque sans repli global. Réponses obsolètes annulées.
+
+Calendrier date et heure UTC step=1 natifs, fraction textuelle facultative,
+Reactive Forms typés sans Date Nebular ni package ajouté. Un brouillon ne modifie
+pas la requête appliquée. Application explicite et contrôle des bornes partielles ;
+restauration d'une valeur initiale conserve exactement son offset et sa fraction.
+Qualité/taille/période appliquée remet page à 1 ; pagination serveur, tri fixe
+backend timestamp DESC/id DESC. Sélection attendue, chargement, historique vide,
+aucun résultat filtré, page hors plage et erreurs distingués. Récupération de page
+manuelle, pas de téléchargement intégral d'historique ni polling.
+
+La liste transmet son URL appliquée au détail et le retour la préserve : parents,
+qualité, bornes, page, taille, paramètres répétés/inconnus et fragment. Aucun de
+ces paramètres ne devient filtre API hors whitelist. Le détail résout la mesure
+puis Sensor/Equipment/Site/Company réels ; erreur parent séparée et cinq champs
+conservés. Unité issue du Sensor actuel avec réserve historique explicite.
+Lien Sensor seulement après GET réel ; contexte return_sensor_* valide séparé,
+sinon parents réels ou id seul, jamais de returnUrl externe suivi.
+Sensor -> Measurements attend la chaîne complète et réinitialise page 1/taille 20
+sans recycler les filtres Sensors ni inventer qualité/période.
+
+### Présentation et validation
+
+PageHeader, LoadingState, EmptyState, ErrorState et liens accessibles réutilisés.
+Tableau défilable localement, aides conditionnelles, focus visible et flex-wrap.
+UI 7.5.2 réutilise actions.navigation-action pour Retour Sensor, Voir les mesures,
+Modifier primaire bleu et Retour Measurement ; la mixin était déjà présente pour
+les actions Equipment. _buttons.scss étend les sélecteurs sensor-back,
+measurement-back et sensor-measurements, y compris mouvement réduit. Aucun
+contrat de composant shared, package ou budget changé. Le retour Équipement
+historique garde son interligne local ; détail dans le rapport de finition.
+
+[UI 7.5, sections 10 et 11](ui-7.5-measurements-integration.md) distingue GET réels,
+SQL/empreintes, simulations et finitions. Le [statut Measurements](project-status.md#measurements-mvp---livraison-préparée-ui-76)
+centralise 1 482 tests/build/605,65 kB historiques, les 40 lignes et huit tables
+préservées, les risques B-MES/B-SEN, seed, sécurité, budget, couverture PostgreSQL
+et réserves d'accessibilité/390 px. F-MES-01 est traité dans cette feature.
+Aucune donnée temps réel, graphique ou prédiction fictive. UI 7.6 documentaire
+ne relance aucune validation applicative ou opération de base.
 
 ## Autres composants partagés envisagés
 
@@ -1020,9 +1114,9 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout, Dashboard, Companies, Sites et Équipements sont intégrés dans `main`
-(`a76e49c`). Sensors MVP est implémenté sur feature/frontend-sensors (`a317e22`).
-UI 6.8 prépare la [livraison documentaire](ui-6.8-sensors-delivery.md), avant
-validation du commit puis de toute fusion. Les conceptions historiques restent
-conservées ; les écrans métier et indicateurs prédictifs futurs nécessiteront
-une conception et une autorisation distinctes. UI 7 non commencée.
+Le layout, Dashboard, Companies, Sites, Équipements et Sensors sont intégrés
+dans `main` (`20293a4`). Measurements MVP est implémenté sur
+feature/frontend-measurements (`43d12fa`). UI 7.6 prépare le [dossier documentaire](ui-7.6-measurements-delivery.md),
+avant validation du commit puis autorisation de fusion. Les rapports historiques
+restent conservés ; Maintenance et les fonctions prédictives futures nécessitent
+une conception et une autorisation distinctes. UI 8 non commencée.

@@ -43,7 +43,7 @@
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
-Companies, Sites, Équipements et Sensors les réutilisent également ; Mesures,
+Companies, Sites, Équipements, Sensors et Measurements les réutilisent également ;
 Maintenance, Prédictions et Recommandations restent des placeholders.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
@@ -208,9 +208,10 @@ Le [statut Équipements](project-status.md#équipements-mvp---livraison-prépar�
 centralise le périmètre, les limites et les dettes. Aucun test/build relancé ici.
 Ces résultats Équipements restent historiques. La gestion Sensors est désormais
 implémentée ci-dessous ; les agrégats Dashboard et le ML backend ne constituent
-pas les futurs écrans Mesures, Maintenance ou Prédictions.
+pas les écrans Measurements en lecture seule décrits ci-dessous, ni les futurs
+écrans Maintenance ou Prédictions.
 
-### UI 6 - Sensors MVP implémenté, fusion en préparation
+### UI 6 - Sensors MVP intégré dans main
 
 - [x] UI 6.1 - [Conception SEN-01 à SEN-10 validée](etape-ui-6.1-sensors.md) et B-SEN-01 corrigé, `4defbe9`
 - [x] UI 6.2 - [Modèles et accès API](ui-6.2-sensors-data-access.md), `9efa8fa`
@@ -219,23 +220,46 @@ pas les futurs écrans Mesures, Maintenance ou Prédictions.
 - [x] UI 6.5 - [Création et formulaire partagé](ui-6.5-sensor-create.md), `012cfd2`
 - [x] UI 6.6 - [Édition différentielle](ui-6.6-sensor-edit.md), `576314d`
 - [x] UI 6.7 / UI 6.7.2 - [Intégration réelle et navigation Equipment](ui-6.7-sensors-integration.md), `a317e22`
-- [ ] UI 6.8 - [Documentation et checklist préparées](ui-6.8-sensors-delivery.md), validation puis commit attendus
-- [ ] Fusion vers main sur autorisation distincte, après revérification des références
+- [x] UI 6.8 - [Documentation et checklist Sensors](ui-6.8-sensors-delivery.md), `20293a4`
+- [x] Sensors intégré dans la référence locale main `20293a4`
 
 Références Sensors : 1 179 tests Angular, build production réussi, initial
 605,24 kB ; POST 201/PATCH 200 et persistance SQL réels, 40 lignes finales et
 39 lignes préexistantes préservées. Le [statut Sensors](project-status.md#sensors-mvp---livraison-préparée-ui-68)
 centralise les limites : B-SEN-02/03, seed strict non conforme, sécurité, budget,
 dialogue natif et couverture PostgreSQL incomplète. Aucun test/build relancé
-en UI 6.8 documentaire. UI 7 non commencée.
+en UI 6.8 documentaire ; ces rapports restent historiques.
 
-### Measurements et fonctions IA futures
+### UI 7 - Measurements MVP lecture seule, livraison préparée
 
-Le module Angular Measurements reste à concevoir sur le contrat backend réel :
-aucun écran, acquisition temps réel ou dernière mesure ajouté dans Sensors.
+- [x] UI 7.1 - [Conception MES-01 à MES-12 validée](etape-ui-7.1-measurements.md), `19b64e2`
+- [x] UI 7.2 - [Modèles stricts et API GET](ui-7.2-measurements-data-access.md), `4b34f67`
+- [x] UI 7.3 / UI 7.3.1 - [Historique et contrôles UTC précis](ui-7.3-measurements-list.md), `bbd18d6`
+- [x] UI 7.4 - [Fiche détail et retour contextuel](ui-7.4-measurement-detail.md), `7b1265a`
+- [x] UI 7.5 / UI 7.5.1 / UI 7.5.2 - [Intégration DEV, navigation Sensor et actions harmonisées](ui-7.5-measurements-integration.md), `43d12fa`
+- [ ] UI 7.6 - [Documentation et checklist préparées](ui-7.6-measurements-delivery.md), validation puis commit attendus
+- [ ] Fusion Measurements vers main, sur autorisation distincte après contrôles finaux
+
+Livré sur feature/frontend-measurements : quatre sélections explicites et
+rattachements vérifiés, historique paginé, cinq qualités déclarées, calendrier/
+heure/fraction UTC [début, fin), microsecondes et offsets conservés, détail et
+unité actuelle non historique. Navigation Sensor -> Measurements et retours
+contextuels, boutons Equipment/Sensor/Measurement harmonisés. Aucun POST,
+PATCH ou DELETE frontend Measurements, graphique, polling ou donnée fictive.
+
+Références historiques : 1 482 tests Angular, build production réussi,
+initial 605,65 kB, GET réels et SQL concordants, 40 lignes préservées et
+compteurs/empreintes des huit tables inchangés. Le [statut Measurements](project-status.md#measurements-mvp---livraison-préparée-ui-76)
+centralise les réserves backend, seed, sécurité, dialogue natif, budget et
+couverture PostgreSQL. Aucune validation relancée en UI 7.6 documentaire.
+
+### Maintenance et fonctions IA futures
+
 Maintenance, Prédictions et Recommandations restent des placeholders ; leurs
-futurs parcours nécessitent conception et validation distinctes. Aucun faux
-compteur, graphique, Health Score ou RUL fourni par le module Sensors.
+parcours nécessitent conception et validation distinctes. Le backend ML et les
+agrégats Dashboard ne constituent pas des écrans prédictifs Measurements livrés.
+Aucune acquisition temps réel, graphique, prédiction, Health Score ou RUL n'est
+ajouté au module Measurements. UI 8 non commencée.
 
 ### Écrans métier restant à implémenter
 

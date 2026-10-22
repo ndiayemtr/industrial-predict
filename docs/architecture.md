@@ -24,15 +24,16 @@ Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main`
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
 accessible du focus. Dashboard V1 et Companies MVP sont livrés dans `main`.
 Sites et Équipements MVP sont intégrés dans `main` (référence locale `a76e49c`).
-Sensors MVP est implémenté sur `feature/frontend-sensors` à `a317e22`, en
-préparation de livraison UI 6.8. Mesures, Maintenance, Prédictions et Recommandations
-restent des placeholders, distincts des agrégats Dashboard et du ML backend.
+Sensors MVP est intégré dans `main` à `20293a4`. Measurements MVP en lecture
+seule est implémenté sur `feature/frontend-measurements` à `43d12fa`, en préparation
+de livraison UI 7.6. Maintenance, Prédictions et Recommandations restent des
+placeholders, distincts des agrégats Dashboard et du ML backend.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
 est implémenté ; `features/dashboard`, `features/companies`, `features/sites`, `features/equipments`
-et `features/sensors` existent.
+ainsi que `features/sensors` et `features/measurements` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -120,7 +121,31 @@ n'interdisent pas directement les opérations backend plus permissives.
 L'[architecture Sensors](frontend-architecture.md#sensors-mvp---architecture-implémentée-ui-6)
 décrit les flux ; le [statut Sensors](project-status.md#sensors-mvp---livraison-préparée-ui-68)
 centralise preuves, réserves et limite de validation PostgreSQL.
-[UI 6.8](ui-6.8-sensors-delivery.md) prépare la fusion sans opération de base.
+[UI 6.8](ui-6.8-sensors-delivery.md) conserve la préparation historique Sensors,
+intégrée dans main à 20293a4.
+
+Measurements suit page -> façade locale -> MeasurementsApiService pour la liste,
+et états locaux pour le détail. Le service expose seulement GET paginé avec
+sensor_id obligatoire et GET détail, aucun POST/PATCH/DELETE frontend. Les
+contrats temporels spécialisés backend restent distincts et inutilisés.
+Quatre choix explicites valident Sensor -> Equipment -> Site -> Company ; les
+parents de contexte ne partent pas dans la query Measurements. Qualité déclarée
+parmi cinq valeurs et périodes UTC [début, fin) filtrent la pagination serveur.
+
+Les horodatages restent des chaînes ISO avec offsets et microsecondes, sans
+Date/toISOString ; l'affichage UTC est explicite. L'unité est celle du Sensor
+actuel, pas un snapshot garanti. Une référence indisponible conserve la mesure.
+Sensor -> Measurements utilise les quatre ids réels et page=1/page_size=20 ;
+liste/détail/retour préservent leur contexte. Styles d'actions existants réutilisés.
+Aucun graphique, polling, flux temps réel ou calcul prédictif fictif.
+
+L'[architecture Measurements](frontend-architecture.md#measurements-mvp---architecture-implémentée-ui-7)
+détaille les flux ; le [statut Measurements](project-status.md#measurements-mvp---livraison-préparée-ui-76)
+centralise les preuves historiques et dettes : 1 482 tests/build/605,65 kB, GET
+réels et SQL concordants, 40 lignes conservées, empreintes des huit tables
+inchangées. Ni la chaîne UI ni la recette DEV ne fournissent une autorisation
+multi-tenant. [UI 7.6](ui-7.6-measurements-delivery.md) prépare la livraison sans
+nouveau test, build, accès PostgreSQL ou changement backend.
 
 ## Backend
 

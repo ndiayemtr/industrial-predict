@@ -67,7 +67,7 @@ relance pour les étapes documentaires. Voir le [statut historique Équipements]
 et sa [checklist de livraison](../docs/ui-5.8-equipments-delivery.md).
 Les références Sites ci-dessus restent historiques et ne sont pas réécrites.
 
-## Sensors MVP - livraison préparée UI 6.8
+## Sensors MVP - intégré dans main
 
 Routes lazy : `/sensors`, `/sensors/new`, `/sensors/:sensorId/edit`,
 `/sensors/:sensorId`. Liste avec sélection explicite Entreprise -> Site ->
@@ -76,7 +76,8 @@ serveur. Détail avec parents réels, création et formulaire partagé d'éditio
 PATCH différentiel limité à name/code/status/description. Code unique
 globalement ; parent, type et unité immuables en édition. Navigation
 Equipment <-> Sensors et retours conservant le contexte URL. Aucun DELETE
-frontend, mesure temps réel ou prédiction fictive. Measurements reste à concevoir.
+frontend, mesure temps réel ou prédiction fictive. Sensors est intégré dans main
+à `20293a4` ; Measurements est livré sur sa branche dédiée, décrit ci-dessous.
 
 Référence UI 6.7.2 : **1 179 tests Angular réussis dans 58 fichiers**, build
 production réussi, initial **605,24 kB**, soit 105,24 kB au-dessus du budget
@@ -89,6 +90,42 @@ intégralement exécutés. Seed strict non conforme (capteur 1 conservé), B-SEN
 dialogue natif non vérifié manuellement et absence d'authentification/isolation
 multi-tenant restent ouverts. Voir le [statut courant](../docs/project-status.md#sensors-mvp---livraison-préparée-ui-68)
 et la [checklist de fusion](../docs/ui-6.8-sensors-delivery.md).
+
+## Measurements MVP - livraison préparée UI 7.6
+
+Routes lazy `/measurements` et `/measurements/:measurementId`, en lecture seule.
+Sélection explicite Entreprise -> Site -> Équipement -> Capteur, catalogues
+paginés avec suite et vérification des références réelles avant toute liste.
+Historique paginé serveur, cinq qualités good/suspect/bad/missing/estimated
+(Bonne/Suspecte/Mauvaise/Manquante/Estimée), sans recherche ou tri inventé.
+Les périodes UTC [début, fin) utilisent calendrier, heure avec secondes et fraction
+facultative jusqu'à six chiffres. ISO, offsets et microsecondes restent intacts
+au transport et dans l'URL ; l'affichage UTC conserve la précision et le détail
+montre aussi l'ISO source. Unité actuelle du capteur, sans garantie historique.
+
+MeasurementsApiService expose uniquement GET `/api/v1/measurements` paginé avec
+sensor_id obligatoire côté Angular et GET `/api/v1/measurements/{id}`. Whitelist
+quality/start_time/end_time/page/page_size ; aucun parent, unité ou search vers
+cette API. Pas de POST, PATCH, DELETE, formulaire manuel, polling, graphique,
+mesure temps réel ou prédiction fictive. Les endpoints temporels spécialisés
+restent exclus, leurs contrats ne sont pas interchangeables.
+
+Navigation Sensor -> Measurements avec les quatre ids réels et page=1/page_size=20,
+sans filtre Sensors transféré ; liste/détail/retour conservent le contexte appliqué.
+Les actions des fiches Equipment, Sensor et Measurement réutilisent les styles
+partagés ; aucune action d'écriture Measurement n'est ajoutée.
+
+Référence historique UI 7.5.2 : **1 482 tests Angular réussis dans 66 fichiers**,
+build production réussi, initial **605,65 kB**, budget de 500 kB dépassé de
+105,65 kB, sans relèvement. [UI 7.5](../docs/ui-7.5-measurements-integration.md)
+porte les GET réels Angular -> FastAPI -> PostgreSQL, SQL concordants, 40 lignes
+préservées et compteurs/empreintes des huit tables inchangés. Erreurs défensives
+et offsets non nuls restent couverts par simulation ; ces preuves sont distinctes.
+Aucune relance en UI 7.6 documentaire. Voir le [statut et les réserves](../docs/project-status.md#measurements-mvp---livraison-préparée-ui-76)
+et le [dossier de livraison](../docs/ui-7.6-measurements-delivery.md), avant commit
+et fusion séparément autorisés. Authentification/isolation tenant absentes,
+seed strict non conforme et couverture PostgreSQL incomplète : aucune aptitude
+à la production SaaS n'est déclarée.
 
 ## Additional Resources
 

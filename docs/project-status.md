@@ -6,12 +6,12 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-sensors`, HEAD de référence `a317e22`, contrôlé le
-21 octobre 2026, dépôt propre avant UI 6.8. `main` et la référence locale
-`origin/main` sont à `a76e49c` (Équipements intégré). Sept commits Sensors en
+`feature/frontend-measurements`, HEAD de référence `43d12fa`, contrôlé le
+22 octobre 2026, dépôt propre avant UI 7.6. `main` et la référence locale
+`origin/main` sont à `20293a4` (Sensors intégré). Cinq commits Measurements en
 avance, aucun retard. Aucun fetch ici ; l'état distant reste à revérifier avant
-fusion autorisée. UI 6.8 modifie uniquement la documentation, sans commit ni
-fusion. Voir le [bilan de livraison Sensors](ui-6.8-sensors-delivery.md).
+fusion autorisée. UI 7.6 modifie uniquement la documentation, sans commit ni
+fusion. Voir le [bilan de livraison Measurements](ui-7.6-measurements-delivery.md).
 
 À mettre à jour à chaque changement de branche.
 
@@ -327,11 +327,17 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 6.1 / B-SEN-01 | SEN-01 à SEN-10 validées, recherche exacte globale du code rétablie (`4defbe9`) |
 | UI 6.2 à UI 6.6 | Modèles/API, liste, détail, création et édition Sensors livrés sur la branche |
 | UI 6.7 / UI 6.7.2 | Intégration DEV et navigation Equipment <-> Sensors validées (`a317e22`) |
-| UI 6.8 | Documentation et checklist Sensors préparées, validation attendue |
+| UI 6.8 | Documentation Sensors enregistrée et intégrée dans main (`20293a4`) |
+| UI 7.1 | Conception Measurements lecture seule, MES-01 à MES-12 validées (`19b64e2`) |
+| UI 7.2 | Modèles stricts et accès GET (`4b34f67`) |
+| UI 7.3 / UI 7.3.1 | Historique paginé et contrôles UTC précis (`bbd18d6`) |
+| UI 7.4 | Fiche détail et retours contextuels (`7b1265a`) |
+| UI 7.5 / UI 7.5.1 / UI 7.5.2 | Recette DEV, navigation Sensor et finition des actions (`43d12fa`) |
+| UI 7.6 | Documentation et checklist Measurements préparées, validation attendue |
 
-Dashboard V1, Companies, Sites et Équipements MVP sont intégrés dans `main`.
-Sensors MVP est implémenté sur feature/frontend-sensors, pas encore fusionné.
-Mesures, Maintenance, Prédictions et Recommandations restent des placeholders.
+Dashboard V1, Companies, Sites, Équipements et Sensors MVP sont intégrés dans `main`.
+Measurements MVP en lecture seule est implémenté sur feature/frontend-measurements,
+pas encore fusionné. Maintenance, Prédictions et Recommandations restent des placeholders.
 Rapports et Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
 production SaaS multi-tenant faute d'autorisation multi-entreprises démontrée.
@@ -485,7 +491,7 @@ Checklist et audit Git dans le [bilan UI 5.8](ui-5.8-equipments-delivery.md).
 ## Sensors MVP - livraison préparée UI 6.8
 
 La [conception UI 6.1](etape-ui-6.1-sensors.md), SEN-01 à SEN-10 validées,
-est implémentée sur feature/frontend-sensors à a317e22. B-SEN-01 est corrigé
+est intégrée dans main à 20293a4. B-SEN-01 est corrigé
 dans 4defbe9 ; les états de blocage décrits dans le rapport UI 6.1 restent
 l'historique de l'audit, pas le statut actuel.
 
@@ -503,7 +509,8 @@ name/code/status/description, sans requête si aucune différence effective.
 Description omise, vide et null explicite distinguées. Suivi administratif en
 lecture seule, garde de sortie, double soumission bloquée, valeurs conservées
 après erreur et récupération après navigation échouée. Aucun DELETE/transfert
-frontend, mesure ou prédiction fictive. Measurements et IA restent hors périmètre.
+frontend, mesure ou prédiction fictive. La consultation Measurements est décrite
+séparément ci-dessous ; l’action Voir les mesures est livrée en UI 7.5.1.
 
 ### Références de validation Sensors
 
@@ -545,6 +552,93 @@ Les rapports UI 6.1 à UI 6.7 sont préservés, avec leurs résultats datés.
 
 Le [rapport UI 6.8](ui-6.8-sensors-delivery.md) porte la checklist de fusion.
 Cette préparation ne vaut ni fusion effectuée ni validation de production SaaS.
+
+## Measurements MVP - livraison préparée UI 7.6
+
+La [conception UI 7.1](etape-ui-7.1-measurements.md), MES-01 à MES-12 validées,
+est implémentée dans les cinq commits de 19b64e2 à 43d12fa sur la branche dédiée.
+Liste/historique et détail sont strictement en lecture seule. Les rapports datés
+UI 7.1 à UI 7.5 sont préservés, y compris UI 7.3.1 et UI 7.5.1/7.5.2.
+
+Sélection explicite Entreprise -> Site -> Équipement -> Capteur, sans premier
+choix automatique. Catalogues paginés avec suite, chaque id/FK vérifié contre
+Sensor -> Equipment -> Site -> Company avant GET liste Measurements. Un contexte
+contradictoire bloque sans lecture globale. Capteurs inactifs consultables.
+
+La liste utilise exclusivement GET /api/v1/measurements paginé, sensor_id
+obligatoire côté Angular, quality/start_time/end_time/page/page_size whitelistés.
+Cinq qualités déclarées : good, suspect, bad, missing, estimated. Pagination
+serveur, tailles 20/50/100 et tailles d'URL valides 1..100 ; tri backend fixe
+timestamp DESC puis id DESC. Aucun search, tri local ou filtre parent transmis.
+
+Calendrier natif, heure UTC avec secondes et fractions jusqu'à six chiffres,
+application explicite des bornes [début, fin), sans requête à chaque saisie.
+Chaînes ISO, microsecondes et offsets conservés au transport et dans l'URL ;
+affichage UTC précis et ISO source en détail, sans aller-retour JavaScript Date.
+Une période invalide bloque sans élargissement silencieux. Les nombres reçus
+restent fidèles, sans arrondi métier ou conversion de missing/non-fini en zéro.
+
+Fiche GET détail affichant les cinq champs réels id/sensor_id/timestamp/value/
+quality. Références réelles résolues séparément ; une erreur parent conserve
+la mesure. Unité actuelle issue du Sensor, sans snapshot historique garanti.
+Navigation Sensor -> Measurements avec quatre ids réels et page=1/page_size=20,
+sans filtres Sensors. Retour liste conservant filtres, bornes, page, contexte et
+fragment. Retour Sensor distinct et borné ; aucun returnUrl externe suivi.
+Actions Equipment/Sensor/Measurement harmonisées via les styles existants.
+Aucun POST, PATCH ou DELETE Measurements, saisie manuelle, transfert, polling,
+graphique, indicateur, prédiction ou mesure temps réel inventés.
+
+### Références historiques Measurements
+
+- [UI 7.5.2, section 11](ui-7.5-measurements-integration.md#11-ui-752---harmonisation-des-actions-de-détail) :
+  **1 482 tests Angular réussis dans 66 fichiers**, dont 256 ciblés dans six fichiers,
+  build production réussi. Bundle initial **605 652 octets, soit 605,65 kB**,
+  dépassement du warning de 500 kB de **105,65 kB** ; budgets inchangés.
+- [UI 7.5 et UI 7.5.1](ui-7.5-measurements-integration.md) : GET réels Angular 4201 ->
+  FastAPI 8001 -> industrial_predict_dev sur 5434, corroboration HTTP 200 et
+  comparaison SQL/DOM des cinq champs, périodes d'une microseconde et pagination.
+  L'inventaire XHR est dédupliqué, sans promesse de HAR exhaustif.
+- **40 lignes métier préservées**, dont 18 mesures ; compteurs, SHA-256 des huit
+  tables et empreintes individuelles inchangés avant/après. Aucune écriture métier.
+  Les 39 lignes antérieures et le capteur fictif UI 6.7 restent intacts.
+- good/suspect/bad/estimated présents en DEV ; missing testé en filtre vide,
+  affichage d'une ligne missing simulé. Offsets non nuls conservés dans les tests
+  simulés, réponses réelles consultées en Z. Pas de charge ou concurrence réelles.
+- Responsive contrôlé aux cinq largeurs exactes 1440/1024/1023/768/320 et à
+  389/391 pour encadrer 390. Captures desktop/mobile examinées ; limites de
+  capture, hover/active maintenus et audit lecteur d'écran non exhaustif conservés.
+
+Ces validations sont historiques, non relancées en UI 7.6. Aucune requête API,
+opération PostgreSQL/Docker ou nouvelle recette navigateur dans cette étape.
+
+### Réserves et dettes Measurements ouvertes
+
+- B-MES-01 : bornes, fuseaux, tris et erreurs incohérents des endpoints temporels
+  spécialisés, non interchangeables avec le paginé et non utilisés dans le MVP.
+- B-MES-02/03/04 : nombres non finis et coercitions, validations Pydantic/SQL,
+  null/omission, IntegrityError, doublons et concurrence non corrigés. Les contrôles
+  Angular ne réparent pas l'API ; aucune écriture manuelle autorisée au MVP.
+- B-MES-05 : authentification et isolation multi-tenant absentes. La cohérence des
+  rattachements est une protection UX, pas une autorisation de ressource.
+- B-MES-06/07 : coût COUNT/offset et pages mouvantes, absence d'unité historique
+  garantie ; mutations directes du Sensor hors UI toujours possibles.
+- B-SEN-02/03 demeurent ouverts. F-MES-01 est traité par les utilitaires de temps
+  Measurements, sans changement du contrat Dashboard ou des dates administratives.
+- Seed check strict non conforme sur Sensor 1 : description `Capteur fictif`,
+  updated_at `2026-10-20 22:11:55.315993`, contre `Capteur fictif.` et
+  `2026-10-16T12:00:00` attendus. Donnée conservée, seed/check inchangés et
+  aucun succès du check strict revendiqué.
+- Dialogue natif d'abandon des modules d'écriture concernés non vérifié
+  manuellement ; Measurements ne porte aucun formulaire métier d'écriture.
+- Budget Angular initial dépassé ; couverture PostgreSQL spécifique incomplète,
+  malgré la recette DEV favorable. Les fixtures synthétiques ne prouvent ni charge,
+  concurrence, cas non finis ni comportement de toutes les contraintes SQL.
+- Secrets historiques suivis déjà signalés côté projet : à externaliser et
+  renouveler séparément. Aucun secret ajouté par cette branche ou UI 7.6.
+
+Le [dossier UI 7.6](ui-7.6-measurements-delivery.md) décrit la comparaison à main,
+le périmètre de fusion et la checklist. Préparation de livraison ne signifie ni
+fusion réalisée ni préparation à une production SaaS multi-tenant.
 
 ## Livraison UI 3 - Companies MVP et finition des dates
 
@@ -757,8 +851,7 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Valider le [bilan UI 6.8 et sa checklist](ui-6.8-sensors-delivery.md), puis
+Valider le [dossier UI 7.6 et sa checklist](ui-7.6-measurements-delivery.md), puis
 faire autoriser séparément le commit documentaire et la fusion vers `main`.
-Aucun commit, push, rebase, merge ou opération PostgreSQL/Docker dans UI 6.8.
-UI 7 non commencée.
-Les prochaines étapes mentionnées dans les rapports historiques restent datées.
+Aucun commit, push, rebase, merge ou opération PostgreSQL/Docker dans UI 7.6.
+UI 8 non commencée. Les prochaines étapes des rapports historiques restent datées.

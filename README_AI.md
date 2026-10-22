@@ -81,10 +81,11 @@ réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
 mais validés par simulation, sans écriture réelle dans PostgreSQL.
 Sites et Équipements sont intégrés dans `main` (référence locale `a76e49c`).
-Sensors MVP est implémenté sur `feature/frontend-sensors` à `a317e22`, en
-préparation documentaire UI 6.8. Mesures, Maintenance, Prédictions et
-Recommandations restent des placeholders. Aucun identifiant d'entreprise
-par défaut, polling ou donnée fictive n'est introduit dans le Dashboard.
+Sensors MVP est intégré dans `main` à `20293a4`. Measurements MVP en lecture
+seule est implémenté sur `feature/frontend-measurements` à `43d12fa`, en
+préparation documentaire UI 7.6. Maintenance, Prédictions et Recommandations
+restent des placeholders. Aucun identifiant d'entreprise par défaut, polling
+ou donnée fictive n'est introduit dans le Dashboard.
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
 `docs/decisions.md` ; le contrat consommé et l'architecture livrée sont décrits
 dans `docs/frontend-architecture.md`. Ne pas étendre le Dashboard V1 aux
@@ -140,7 +141,7 @@ renouveler, absence d'authentification et d'autorisation multi-tenant.
 [UI 5.8](docs/ui-5.8-equipments-delivery.md) a finalisé la documentation,
 enregistrée dans `a76e49c`. Ses résultats restent historiques.
 
-UI 6 - Sensors MVP est implémenté sur `feature/frontend-sensors`, HEAD `a317e22`.
+UI 6 - Sensors MVP est intégré dans `main` à `20293a4`.
 SEN-01 à SEN-10 approuvées : sélection explicite entreprise/site/équipement,
 liste avec recherche/statut/pagination serveur, détail et rattachement réel,
 création, édition différentielle et navigation Equipment <-> Sensors. Code
@@ -148,10 +149,25 @@ unique globalement ; parent, type et unité immuables en édition, aucun DELETE
 frontend ni mesure ou prédiction fictive. B-SEN-01 est corrigé dans `4defbe9`.
 Le [statut Sensors](docs/project-status.md#sensors-mvp---livraison-préparée-ui-68)
 centralise les références 1 179 tests/build/605,24 kB, les preuves réelles et
-les réserves ouvertes. [UI 6.8](docs/ui-6.8-sensors-delivery.md) prépare la
-fusion sans modifier les sources ni relancer les validations. Sensors n'est
-pas encore intégré dans main. Attendre validation avant commit documentaire
-et toute fusion ; UI 7 non commencée.
+les réserves ouvertes. [UI 6.8](docs/ui-6.8-sensors-delivery.md) conserve
+la préparation historique de livraison, enregistrée dans `20293a4`.
+
+UI 7 - Measurements MVP, MES-01 à MES-12 approuvées, couvre liste/historique
+paginés par capteur, quatre choix explicites et rattachements réels, cinq qualités
+déclarées, périodes UTC [début, fin) avec calendrier/heure/fraction et détail
+strictement en lecture seule. Microsecondes et offsets ISO préservés ; unité
+actuelle issue du capteur, sans garantie historique. Navigation Sensor ->
+Measurements et retours contextuels, actions harmonisées Equipment/Sensor/Measurement.
+Le service Angular expose uniquement GET paginé et GET détail, aucun POST,
+PATCH ou DELETE, polling, graphique ou prédiction fictive.
+Le [statut Measurements](docs/project-status.md#measurements-mvp---livraison-préparée-ui-76)
+centralise les références historiques : 1 482 tests, build production réussi,
+bundle initial 605,65 kB, GET réels et SQL concordants, 40 lignes conservées et
+empreintes des huit tables inchangées. Les réserves backend, seed, sécurité,
+budget et couverture PostgreSQL demeurent. [UI 7.6](docs/ui-7.6-measurements-delivery.md)
+prépare la livraison sans nouveau test/build, accès PostgreSQL, commit ou fusion.
+Measurements n'est pas encore intégré dans main. Attendre validation du dossier,
+puis autorisation distincte du commit et de la fusion ; UI 8 non commencée.
 
 ### Machine Learning
 
