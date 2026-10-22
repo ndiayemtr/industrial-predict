@@ -1,0 +1,169 @@
+<app-page-header title="Mesures" description="Consultez l’historique réel d’un capteur, en lecture seule." />
+@if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
+<section class="filters" aria-labelledby="measurement-context-title">
+  <h2 id="measurement-context-title">Entreprise, site, équipement et capteur</h2>
+  <div class="parents">
+    <div>
+      <label for="measurements-company">Entreprise</label>
+      <select id="measurements-company" [formControl]="company" [attr.aria-describedby]="companyVerified() ? null : 'company-help'">
+        <option [ngValue]="null">Sélectionner : entreprise</option>
+        @for (item of companyOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!companyVerified()) { <p id="company-help">Choisissez explicitement une entreprise.</p> }
+      @if (companies().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (companies().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (companies().retryable) { <button type="button" (click)="retryCompanies()">Réessayer : entreprises</button> }
+      }
+      @if (companies().status === 'ready' && companies().total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+      @if (companies().status === 'ready' && companies().page < companies().pages) {
+        <button type="button" (click)="moreCompanies()">Charger plus : entreprises</button>
+      }
+    </div>
+    <div>
+      <label for="measurements-site">Site industriel</label>
+      <select id="measurements-site" [formControl]="site" [attr.aria-describedby]="siteVerified() ? null : 'site-help'">
+        <option [ngValue]="null">Sélectionner : site industriel</option>
+        @for (item of siteOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!siteVerified()) { <p id="site-help">Choisissez un site vérifié de cette entreprise.</p> }
+      @if (sites().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (sites().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (sites().retryable) { <button type="button" (click)="retrySites()">Réessayer : sites</button> }
+      }
+      @if (sites().status === 'ready' && sites().total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+      @if (sites().status === 'ready' && sites().page < sites().pages) {
+        <button type="button" (click)="moreSites()">Charger plus : sites</button>
+      }
+    </div>
+    <div>
+      <label for="measurements-equipment">Équipement industriel</label>
+      <select id="measurements-equipment" [formControl]="equipment" [attr.aria-describedby]="equipmentVerified() ? null : 'equipment-help'">
+        <option [ngValue]="null">Sélectionner : équipement industriel</option>
+        @for (item of equipmentOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!equipmentVerified()) { <p id="equipment-help">Choisissez un équipement vérifié de ce site.</p> }
+      @if (equipments().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (equipments().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (equipments().retryable) { <button type="button" (click)="retryEquipments()">Réessayer : équipements</button> }
+      }
+      @if (equipments().status === 'ready' && equipments().total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+      @if (equipments().status === 'ready' && equipments().page < equipments().pages) {
+        <button type="button" (click)="moreEquipments()">Charger plus : équipements</button>
+      }
+    </div>
+    <div>
+      <label for="measurements-sensor">Capteur</label>
+      <select id="measurements-sensor" [formControl]="sensor" [attr.aria-describedby]="sensorVerified() ? null : 'sensor-help'">
+        <option [ngValue]="null">Sélectionner : capteur</option>
+        @for (item of sensorOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!sensorVerified()) { <p id="sensor-help">Choisissez un capteur vérifié de cet équipement, actif ou inactif.</p> }
+      @if (sensors().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (sensors().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (sensors().retryable) { <button type="button" (click)="retrySensors()">Réessayer : capteurs</button> }
+      }
+      @if (sensors().status === 'ready' && sensors().total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+      @if (sensors().status === 'ready' && sensors().page < sensors().pages) {
+        <button type="button" (click)="moreSensors()">Charger plus : capteurs</button>
+      }
+    </div>
+  </div>
+  <form novalidate (submit)="applyPeriod($event)" aria-label="Période UTC des mesures">
+    <h3>Période UTC facultative</h3>
+    <p id="period-help">Début inclus, fin exclue. Heures en UTC, précision possible jusqu'à 6 décimales.</p>
+    <div class="period-layout">
+      <fieldset class="period-bound">
+        <legend>Début inclus (UTC)</legend>
+        <div class="bound-controls">
+          <div class="bound-date"><label for="measurements-start-date">Date de début</label>
+            <input id="measurements-start-date" type="date" [formControl]="start.controls.date" min="0001-01-01" max="9999-12-31"
+              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+          <div><label for="measurements-start-time">Heure UTC de début</label>
+            <input id="measurements-start-time" type="time" step="1" [formControl]="start.controls.time"
+              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+          <div><label for="measurements-start-fraction">Fraction de début</label>
+            <input id="measurements-start-fraction" type="text" inputmode="numeric" [formControl]="start.controls.fraction" placeholder="Facultative"
+              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" spellcheck="false" /></div>
+        </div>
+      </fieldset>
+      <fieldset class="period-bound">
+        <legend>Fin exclue (UTC)</legend>
+        <div class="bound-controls">
+          <div class="bound-date"><label for="measurements-end-date">Date de fin</label>
+            <input id="measurements-end-date" type="date" [formControl]="end.controls.date" min="0001-01-01" max="9999-12-31"
+              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+          <div><label for="measurements-end-time">Heure UTC de fin</label>
+            <input id="measurements-end-time" type="time" step="1" [formControl]="end.controls.time"
+              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+          <div><label for="measurements-end-fraction">Fraction de fin</label>
+            <input id="measurements-end-fraction" type="text" inputmode="numeric" [formControl]="end.controls.fraction" placeholder="Facultative"
+              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" spellcheck="false" /></div>
+        </div>
+      </fieldset>
+      <button class="primary" type="submit">Appliquer la période</button>
+      <button type="button" (click)="clearFilters()">Effacer les critères</button>
+    </div>
+    @if (periodError()) { <p id="period-error" role="alert">{{ periodError() }}</p> }
+  </form>
+  <div class="criteria">
+    <div><label for="measurements-quality">Qualité déclarée</label>
+      <select id="measurements-quality" [formControl]="quality"><option value="">Toutes</option>
+        @for (value of qualities; track value) { <option [value]="value">{{ qualityLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="measurements-size">Mesures par page</label>
+      <select id="measurements-size" [formControl]="size">
+        @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+      </select>
+    </div>
+  </div>
+</section>
+<section class="results" aria-labelledby="measurement-results-title" [attr.aria-busy]="busy()">
+  <h2 id="measurement-results-title">Historique du capteur</h2>
+  @if (facade.sensor(); as selected) {
+    <p class="context">{{ referenceLabel(facade.company()!) }} / {{ referenceLabel(facade.site()!) }} / {{ referenceLabel(facade.equipment()!) }} / {{ referenceLabel(selected) }}</p>
+    <p>Unité actuelle du capteur : {{ selected.unit || 'Non renseignée' }}. Les qualités sont déclarées, sans certification de fiabilité physique.</p>
+  }
+  @let state = facade.state();
+  @switch (state.status) {
+    @case ('idle') { <app-empty-state title="Sélection attendue" message="Sélectionnez une entreprise, un site, un équipement puis un capteur pour consulter ses mesures." /> }
+    @case ('loading') { <app-loading-state message="Vérification du contexte et chargement des mesures…" /> }
+    @case ('error') { <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" /> }
+    @case ('empty') {
+      <p role="status">0 mesure</p>
+      <app-empty-state [title]="filtered() ? 'Aucun résultat' : 'Aucune mesure'"
+        [message]="filtered() ? 'Aucune mesure ne correspond aux critères de ce capteur.' : 'Ce capteur ne comporte aucune mesure enregistrée.'" />
+    }
+    @case ('success') {
+      @if (state.data.items.length === 0) {
+        <app-empty-state title="Page hors plage" message="Cette page ne contient plus de mesures. Revenez à une page disponible.">
+          <button type="button" (click)="recoverPage()">Revenir aux résultats</button>
+        </app-empty-state>
+      } @else {
+        <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement.</p>
+        <div class="table-scroll" role="region" aria-label="Historique des mesures" tabindex="0">
+          <table>
+            <caption>{{ state.data.total }} {{ state.data.total > 1 ? 'mesures' : 'mesure' }} - Page {{ page() }} sur {{ state.data.pages }}. Les nouveaux relevés peuvent déplacer les pages.</caption>
+            <thead><tr><th scope="col">Horodatage UTC</th><th scope="col">Valeur</th><th scope="col">Unité actuelle</th><th scope="col">Qualité</th><th scope="col">Référence</th></tr></thead>
+            <tbody>@for (item of state.data.items; track item.id) {
+              <tr><td><time [attr.datetime]="item.timestamp" [title]="item.timestamp">{{ formatTime(item.timestamp) }}</time></td>
+                <td>{{ formatValue(item.value) }}</td><td>{{ facade.sensor()!.unit || 'Non renseignée' }}</td>
+                <td><span class="badge">{{ qualityLabels[item.quality] }}</span></td>
+                <td><span [attr.data-detail-url]="detailUrl(item.id)">Mesure #{{ item.id }}</span></td></tr>
+            }</tbody>
+          </table>
+        </div>
+        <p class="detail-notice">La fiche détaillée sera disponible à une prochaine étape.</p>
+      }
+      <nav class="pagination" aria-label="Pagination des mesures">
+        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>
+        <p role="status">Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} {{ state.data.total > 1 ? 'mesures' : 'mesure' }}</p>
+        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">Suivant</button>
+      </nav>
+    }
+  }
+</section>

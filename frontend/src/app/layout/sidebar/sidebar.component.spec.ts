@@ -114,7 +114,7 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/measurements', 'Mesures'], ['/maintenance', 'Maintenance'],
+    ['/maintenance', 'Maintenance'],
     ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {
     const harness = await open(path);
