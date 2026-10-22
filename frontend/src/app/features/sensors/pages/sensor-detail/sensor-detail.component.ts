@@ -72,6 +72,15 @@ export class SensorDetailComponent {
       search: search && search.length <= 100 ? search : undefined,
       status: (Object.keys(this.statusLabels) as SensorRead['status'][]).find(value => value === params.get('status')) };
   });
+  readonly measurementsQuery = computed(() => {
+    const current = this.state();
+    if (current.status !== 'success' || current.equipment.status !== 'success'
+      || current.site.status !== 'success' || current.company.status !== 'success') return null;
+    const sensor = current.data, equipment = current.equipment.data, site = current.site.data, company = current.company.data;
+    if (![sensor.id, equipment.id, site.id, company.id].every(validId) || sensor.equipment_id !== equipment.id
+      || equipment.site_id !== site.id || site.company_id !== company.id) return null;
+    return { company_id: company.id, site_id: site.id, equipment_id: equipment.id, sensor_id: sensor.id, page: 1, page_size: 20 };
+  });
   readonly differentContext = computed(() => {
     const state = this.state(), query = this.listQuery();
     return state.status === 'success' && ((query.equipment_id !== undefined && query.equipment_id !== state.data.equipment_id)

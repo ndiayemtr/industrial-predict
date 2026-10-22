@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter, Router, NavigationEnd } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { MEASUREMENT_ROUTES } from '../../measurements.routes';
 import { MeasurementsListComponent } from './measurements-list.component';
@@ -160,7 +160,10 @@ describe('Measurements list, four selections and applied URL',()=>{
     read('measurements/23').flush(row);chain();await settle();
     const back=root().querySelector<HTMLAnchorElement>('.measurement-back')!;const router=TestBed.inject(Router);const snapshot=router.parseUrl(back.getAttribute('href')!);
     expect(snapshot.queryParams).toMatchObject({company_id:'7',site_id:'9',equipment_id:'12',sensor_id:'17',quality:'missing',page:'2',page_size:'50',start_time:raw,extra:['a','b'],return_sensor_search:'TEMP'});expect(snapshot.fragment).toBe('history');
-    back.click();await settle();read('companies').flush(catalog([company]));chain();await settle();catalogs();const req=read('measurements');
+    expect([...root().querySelectorAll('app-page-header a')].map(link=>link.textContent)).toEqual(['Retour à la liste des mesures']);
+    back.focus();expect(document.activeElement).toBe(back);
+    const navigations:string[]=[];const subscription=router.events.subscribe(event=>{if(event instanceof NavigationEnd)navigations.push(event.urlAfterRedirects);});
+    back.click();await settle();subscription.unsubscribe();expect(navigations).toHaveLength(1);expect(navigations[0]).toBe(router.serializeUrl(snapshot));read('companies').flush(catalog([company]));chain();await settle();catalogs();const req=read('measurements');
     expect(req.request.params.get('page')).toBe('2');expect(req.request.params.get('page_size')).toBe('50');expect(req.request.params.get('quality')).toBe('missing');expect(req.request.params.get('start_time')).toBe(raw);
     expect(req.request.params.has('company_id')).toBe(false);req.flush({...page,page:2,page_size:50});await settle();expect(root().querySelector('time')).not.toBeNull();
   });

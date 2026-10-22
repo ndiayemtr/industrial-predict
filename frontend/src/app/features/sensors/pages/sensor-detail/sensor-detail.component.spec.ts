@@ -66,7 +66,8 @@ describe('Sensor read-only detail and real parent chain', () => {
     expect(values()).toContainEqual(['Statut', 'Actif']); expect(values()).toContainEqual(['Description', sensor.description]);
     expect(values()).toContainEqual(['Création', '31/08/2026 à 14:58']); expect(values()).toContainEqual(['Dernière modification', '16/10/2026 à 11:51 UTC']);
     expect(root().querySelectorAll('form,input,select,button')).toHaveLength(0);
-    expect(root().textContent).not.toMatch(/Supprimer|Mesures|Prédiction|Health Score|RUL/);
+    expect(root().textContent).not.toMatch(/Supprimer|Prédiction|Health Score|RUL/);
+    expect(root().querySelector('.sensor-measurements')?.textContent).toBe('Voir les mesures');
     const link = root().querySelector<HTMLAnchorElement>('.equipment-reference')!; link.focus(); expect(document.activeElement).toBe(link);
     expect(root().querySelector('.context-notice')).toBeNull();
   });
