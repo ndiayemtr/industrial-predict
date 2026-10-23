@@ -3,6 +3,9 @@
   @if (sensorsQuery(); as query) {
     <a class="equipment-sensors" routerLink="/sensors" [queryParams]="query">Voir les capteurs</a>
   }
+  @if (maintenanceQuery(); as query) {
+    <a class="equipment-maintenance" routerLink="/maintenance" [queryParams]="query">Voir les interventions</a>
+  }
   @let detail = state();
   @if (detail.status === 'success') {
     <a class="equipment-edit" [routerLink]="['/equipments', detail.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>

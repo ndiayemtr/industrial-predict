@@ -73,13 +73,15 @@ export class EquipmentDetailComponent {
       status: (Object.keys(this.statusLabels) as EquipmentRead['status'][]).find(value => value === params.get('status')),
       criticality: (Object.keys(this.criticalityLabels) as EquipmentRead['criticality'][]).find(value => value === params.get('criticality')) };
   });
-  readonly sensorsQuery = computed(() => {
+  private readonly industrialQuery = computed(() => {
     const current = this.state();
     if (current.status !== 'success' || current.site.status !== 'success' || current.company.status !== 'success') return null;
     const equipment = current.data, site = current.site.data, company = current.company.data;
     if (![equipment.id, site.id, company.id].every(validId) || equipment.site_id !== site.id || site.company_id !== company.id) return null;
     return { company_id: company.id, site_id: site.id, equipment_id: equipment.id, page: 1, page_size: 20 };
   });
+  readonly sensorsQuery = this.industrialQuery;
+  readonly maintenanceQuery = this.industrialQuery;
   readonly differentContext = computed(() => {
     const state = this.state(), query = this.listQuery();
     return state.status === 'success' && ((query.site_id !== undefined && query.site_id !== state.data.site_id)
