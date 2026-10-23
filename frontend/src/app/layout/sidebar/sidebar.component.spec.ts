@@ -114,7 +114,6 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/maintenance', 'Maintenance'],
     ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {
     const harness = await open(path);
@@ -149,4 +148,13 @@ describe('Sidebar navigation', () => {
     expect(harness.routeNativeElement!.textContent).toContain('Sélectionnez une entreprise puis un site');
     expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Équipements']);
   });
+  it('shows the lazy Maintenance list with explicit context and active Sidebar', async () => {
+    const harness = await open('/maintenance');
+    expect(harness.routeNativeElement!.querySelector('main h1')?.textContent).toBe('Maintenance');
+    expect(harness.routeNativeElement!.querySelector('app-feature-placeholder')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('app-maintenance-list')).not.toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('Sélection attendue');
+    expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Maintenance']);
+  });
+
 });

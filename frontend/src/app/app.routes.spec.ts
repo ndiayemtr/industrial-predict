@@ -76,7 +76,7 @@ describe('Routing configuration invariants', () => {
     const componentRoutes = [routes[0], ...children.filter((route) => route.redirectTo === undefined)];
     for (const route of componentRoutes) {
       expect(route.component).toBeUndefined();
-      if (route.path === 'companies' || route.path === 'sites' || route.path === 'equipments' || route.path === 'sensors' || route.path === 'measurements') {
+      if (route.path === 'companies' || route.path === 'sites' || route.path === 'equipments' || route.path === 'sensors' || route.path === 'measurements' || route.path === 'maintenance') {
         expect(typeof route.loadChildren).toBe('function');
         expect(route.loadComponent).toBeUndefined();
       } else {

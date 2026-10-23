@@ -1,0 +1,185 @@
+<app-page-header title="Maintenance" description="Consultez les interventions réelles d’un équipement, en lecture seule." />
+@if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
+<section class="filters" aria-labelledby="maintenance-context-title">
+  <h2 id="maintenance-context-title">Entreprise, site et équipement</h2>
+  <div class="parents">
+    <div>
+      <label for="maintenance-company">Entreprise</label>
+      <select id="maintenance-company" [formControl]="company" [attr.aria-busy]="companies().status === 'loading'" [attr.aria-describedby]="companyVerified() ? null : 'company-help'">
+        <option [ngValue]="null">Sélectionner : entreprise</option>
+        @for (item of companyOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!companyVerified()) { <p id="company-help">Choisissez explicitement une entreprise.</p> }
+      @if (companies().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (companies().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (companies().retryable) { <button type="button" (click)="retryCompanies()">Réessayer : entreprises</button> }
+      }
+      @if (companies().status === 'ready' && companies().total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+      @if (companies().status === 'ready' && companies().page < companies().pages) {
+        <button type="button" (click)="moreCompanies()">Charger plus : entreprises</button>
+      }
+    </div>
+    <div>
+      <label for="maintenance-site">Site industriel</label>
+      <select id="maintenance-site" [formControl]="site" [attr.aria-busy]="sites().status === 'loading'" [attr.aria-describedby]="siteVerified() ? null : 'site-help'">
+        <option [ngValue]="null">Sélectionner : site industriel</option>
+        @for (item of siteOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!siteVerified()) { <p id="site-help">Choisissez un site vérifié de cette entreprise.</p> }
+      @if (sites().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (sites().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (sites().retryable) { <button type="button" (click)="retrySites()">Réessayer : sites</button> }
+      }
+      @if (sites().status === 'ready' && sites().total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+      @if (sites().status === 'ready' && sites().page < sites().pages) {
+        <button type="button" (click)="moreSites()">Charger plus : sites</button>
+      }
+    </div>
+    <div>
+      <label for="maintenance-equipment">Équipement industriel</label>
+      <select id="maintenance-equipment" [formControl]="equipment" [attr.aria-busy]="equipments().status === 'loading'" [attr.aria-describedby]="equipmentVerified() ? null : 'equipment-help'">
+        <option [ngValue]="null">Sélectionner : équipement industriel</option>
+        @for (item of equipmentOptions(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (!equipmentVerified()) { <p id="equipment-help">Choisissez un équipement vérifié de ce site.</p> }
+      @if (equipments().status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+      @if (equipments().status === 'error') {
+        <p role="alert">Le catalogue ne peut pas être chargé.</p>
+        @if (equipments().retryable) { <button type="button" (click)="retryEquipments()">Réessayer : équipements</button> }
+      }
+      @if (equipments().status === 'ready' && equipments().total === 0) { <p>Aucun équipement disponible pour ce site.</p> }
+      @if (equipments().status === 'ready' && equipments().page < equipments().pages) {
+        <button type="button" (click)="moreEquipments()">Charger plus : équipements</button>
+      }
+    </div>
+  </div>
+  <form novalidate (submit)="applyPeriod($event)" aria-label="Période de création du dossier (UTC)">
+    <h3>Période de création du dossier (UTC)</h3>
+    <p id="period-help">Filtre sur created_at uniquement. Début inclus, fin exclue. Heures en UTC, précision possible jusqu'à 6 décimales.</p>
+    <div class="period-layout">
+      <fieldset class="period-bound">
+        <legend>Début UTC (inclus)</legend>
+        <div class="bound-controls">
+          <div class="bound-date"><label for="maintenance-start-date">Date de début</label>
+            <input id="maintenance-start-date" type="date" [formControl]="start.controls.date" min="0001-01-01" max="9999-12-31"
+              [attr.aria-describedby]="fieldErrors()['start-date'] ? 'period-help start-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-date'] ? 'true' : null" />
+            @if (fieldErrors()['start-date']) { <p class="field-error" id="start-date-error" role="alert">{{ fieldErrors()['start-date'] }}</p> }</div>
+          <div><label for="maintenance-start-time">Heure UTC de début</label>
+            <input id="maintenance-start-time" type="time" step="1" [formControl]="start.controls.time"
+              [attr.aria-describedby]="fieldErrors()['start-time'] ? 'period-help start-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-time'] ? 'true' : null" />
+            @if (fieldErrors()['start-time']) { <p class="field-error" id="start-time-error" role="alert">{{ fieldErrors()['start-time'] }}</p> }</div>
+          <div><label for="maintenance-start-fraction">Fraction de début</label>
+            <input id="maintenance-start-fraction" type="text" inputmode="numeric" [formControl]="start.controls.fraction" placeholder="Facultative"
+              [attr.aria-describedby]="fieldErrors()['start-fraction'] ? 'period-help start-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-fraction'] ? 'true' : null" spellcheck="false" />
+            @if (fieldErrors()['start-fraction']) { <p class="field-error" id="start-fraction-error" role="alert">{{ fieldErrors()['start-fraction'] }}</p> }</div>
+        </div>
+      </fieldset>
+      <fieldset class="period-bound">
+        <legend>Fin UTC (exclue)</legend>
+        <div class="bound-controls">
+          <div class="bound-date"><label for="maintenance-end-date">Date de fin</label>
+            <input id="maintenance-end-date" type="date" [formControl]="end.controls.date" min="0001-01-01" max="9999-12-31"
+              [attr.aria-describedby]="fieldErrors()['end-date'] ? 'period-help end-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-date'] ? 'true' : null" />
+            @if (fieldErrors()['end-date']) { <p class="field-error" id="end-date-error" role="alert">{{ fieldErrors()['end-date'] }}</p> }</div>
+          <div><label for="maintenance-end-time">Heure UTC de fin</label>
+            <input id="maintenance-end-time" type="time" step="1" [formControl]="end.controls.time"
+              [attr.aria-describedby]="fieldErrors()['end-time'] ? 'period-help end-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-time'] ? 'true' : null" />
+            @if (fieldErrors()['end-time']) { <p class="field-error" id="end-time-error" role="alert">{{ fieldErrors()['end-time'] }}</p> }</div>
+          <div><label for="maintenance-end-fraction">Fraction de fin</label>
+            <input id="maintenance-end-fraction" type="text" inputmode="numeric" [formControl]="end.controls.fraction" placeholder="Facultative"
+              [attr.aria-describedby]="fieldErrors()['end-fraction'] ? 'period-help end-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-fraction'] ? 'true' : null" spellcheck="false" />
+            @if (fieldErrors()['end-fraction']) { <p class="field-error" id="end-fraction-error" role="alert">{{ fieldErrors()['end-fraction'] }}</p> }</div>
+        </div>
+      </fieldset>
+      <div class="period-actions">
+        <button class="primary" type="submit">Appliquer la période</button>
+        <button type="button" (click)="clearPeriod()">Effacer la période</button>
+      </div>
+    </div>
+    @if (periodDraft()) { <p class="draft-notice" role="status">Brouillon de période non appliqué. La liste conserve sa période appliquée jusqu’à validation.</p> }
+    @if (facade.state().status === 'success' || facade.state().status === 'empty') {
+      <p class="applied-period">Période appliquée à la liste : début {{ facade.query()?.start_time ?? 'sans borne' }} ; fin {{ facade.query()?.end_time ?? 'sans borne' }}.</p>
+    }
+    @if (periodError()) { <p id="period-error" role="alert">{{ periodError() }}</p> }
+  </form>
+  <div class="criteria">
+    <div><label for="maintenance-type">Type déclaré</label>
+      <select id="maintenance-type" [formControl]="maintenanceType"><option value="">Tous</option>
+        @for (value of types; track value) { <option [value]="value">{{ typeLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="maintenance-status">Statut</label>
+      <select id="maintenance-status" [formControl]="status"><option value="">Tous</option>
+        @for (value of statuses; track value) { <option [value]="value">{{ statusLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="maintenance-priority">Priorité</label>
+      <select id="maintenance-priority" [formControl]="priority"><option value="">Toutes</option>
+        @for (value of priorities; track value) { <option [value]="value">{{ priorityLabels[value] }}</option> }
+      </select>
+    </div>
+    <div><label for="maintenance-size">Interventions par page</label>
+      <select id="maintenance-size" [formControl]="size">
+        @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+      </select>
+    </div>
+  </div>
+  <form class="search-form" novalidate (submit)="applySearch($event)" aria-label="Recherche d’interventions">
+    <div class="search-field"><label for="maintenance-search">Rechercher dans les informations du dossier</label>
+    <p id="search-help">Titre, description, code de panne, cause, action ou technicien. Au plus 100 caractères bruts.</p>
+    <input id="maintenance-search" type="search" [formControl]="search" [attr.aria-describedby]="searchError() ? 'search-help search-error' : 'search-help'" [attr.aria-invalid]="searchError() ? 'true' : null" />
+    @if (searchError()) { <p class="field-error" id="search-error" role="alert">{{ searchError() }}</p> }
+    </div>
+    <button class="primary" type="submit" [disabled]="!canFilter()">Rechercher</button>
+    @if (searchDraft()) { <p class="draft-notice" role="status">Brouillon de recherche non appliqué. Validez avec Rechercher.</p> }
+    @if (facade.state().status === 'success' || facade.state().status === 'empty') {
+      <p class="applied-search">Recherche appliquée : {{ facade.query()?.search ?? 'aucune' }}.</p>
+    }
+  </form>
+</section>
+<section class="results" aria-labelledby="maintenance-results-title" [attr.aria-busy]="busy()">
+  <h2 id="maintenance-results-title">Interventions de l’équipement</h2>
+  @if (canFilter()) {
+    <p class="context">{{ referenceLabel(facade.company()!) }} / {{ referenceLabel(facade.site()!) }} / {{ referenceLabel(facade.equipment()!) }}</p>
+    <button type="button" (click)="refresh()" [disabled]="busy()">Actualiser</button>
+  }
+  @let state = facade.state();
+  @switch (state.status) {
+    @case ('idle') { <app-empty-state title="Sélection attendue" message="Sélectionnez une entreprise, un site, un équipement pour consulter ses interventions." /> }
+    @case ('loading') { <app-loading-state message="Vérification du contexte et chargement des interventions…" /> }
+    @case ('error') { <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" /> }
+    @case ('empty') {
+      <p role="status">0 intervention</p>
+      <app-empty-state [title]="filtered() ? 'Aucun résultat' : 'Aucune intervention'"
+        [message]="filtered() ? 'Aucune intervention ne correspond aux critères de cet équipement.' : 'Cet équipement ne comporte aucune intervention enregistrée.'" />
+    }
+    @case ('success') {
+      @if (state.data.items.length === 0) {
+        <app-empty-state title="Page hors plage" message="Cette page ne contient plus d’interventions. Revenez à une page disponible.">
+          <button type="button" (click)="recoverPage()">Revenir aux résultats</button>
+        </app-empty-state>
+      } @else {
+        <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement.</p>
+        <div class="table-scroll" role="region" aria-label="Historique des interventions" tabindex="0">
+          <table>
+            <caption>{{ state.data.total }} {{ state.data.total > 1 ? 'interventions' : 'intervention' }} - Page {{ page() }} sur {{ state.data.pages }}. Tri : création décroissante, puis identifiant décroissant. Les nouveaux dossiers peuvent déplacer les pages.</caption>
+            <thead><tr><th scope="col">#ID</th><th scope="col">Titre</th><th scope="col">Type</th><th scope="col">Statut</th><th scope="col">Priorité</th><th scope="col">Date planifiée</th><th scope="col">Date de création</th></tr></thead>
+            <tbody>@for (item of state.data.items; track item.id) {
+              <tr><td>#{{ item.id }}</td><td class="record-title">{{ item.title === '' ? 'Titre vide' : item.title }}</td>
+                <td>{{ typeLabels[item.maintenance_type] }}</td><td><span class="badge status-badge">{{ statusLabels[item.status] }}</span></td><td><span class="badge priority-badge">{{ priorityLabels[item.priority] }}</span></td>
+                <td><time [attr.datetime]="item.planned_at">{{ formatTime(item.planned_at) }}</time></td>
+                <td><time [attr.datetime]="item.created_at">{{ formatTime(item.created_at) }}</time></td></tr>
+            }</tbody>
+          </table>
+        </div>
+      }
+      <nav class="pagination" aria-label="Pagination des interventions">
+        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>
+        <p role="status">Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} {{ state.data.total > 1 ? 'interventions' : 'intervention' }}</p>
+        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">Suivant</button>
+      </nav>
+    }
+  }
+</section>

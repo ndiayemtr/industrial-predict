@@ -31,6 +31,8 @@ export const routes: Routes = [
           ? { loadChildren: () => import('./features/sensors/sensors.routes').then(m => m.SENSOR_ROUTES) }
           : item.id === 'measurements'
           ? { loadChildren: () => import('./features/measurements/measurements.routes').then(m => m.MEASUREMENT_ROUTES) }
+          : item.id === 'maintenance'
+          ? { loadChildren: () => import('./features/maintenance/maintenance.routes').then(m => m.MAINTENANCE_ROUTES) }
           : { loadComponent: item.id === 'dashboard'
           ? () => import('./features/dashboard/pages/dashboard/dashboard.component').then(
               (m) => m.DashboardComponent
