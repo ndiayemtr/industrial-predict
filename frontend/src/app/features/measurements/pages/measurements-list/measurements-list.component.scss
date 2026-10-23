@@ -38,6 +38,7 @@ time { font-variant-numeric: tabular-nums; }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; gap: tokens.$space-sm; margin-top: tokens.$space-lg; }
 .pagination p { flex: 1 1 10rem; }
 .period-layout, .bound-controls { align-items: end; }
+.period-actions { display: flex; flex-wrap: wrap; gap: tokens.$space-sm; }
 .period-bound { min-width: 0; margin: 0; padding: 0; border: 0; }
 .period-bound legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
 .bound-controls { gap: tokens.$space-sm; }
@@ -55,11 +56,11 @@ time { font-variant-numeric: tabular-nums; }
 @media (min-width: 75rem) { .parents { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 @media (min-width: 48rem) {
-  .period-layout > button { justify-self: start; }
+  .period-actions { grid-column: 1 / -1; }
   .bound-date { grid-column: 1 / -1; }
 }
 @media (min-width: 75rem) {
-  .period-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; gap: tokens.$space-sm; }
+  .period-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: tokens.$space-sm; }
   .bound-controls { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); }
   .bound-date { grid-column: auto; }
 }

@@ -104,8 +104,10 @@
               [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" spellcheck="false" /></div>
         </div>
       </fieldset>
-      <button class="primary" type="submit">Appliquer la période</button>
-      <button type="button" (click)="clearFilters()">Effacer les critères</button>
+      <div class="period-actions">
+        <button class="primary" type="submit">Appliquer la période</button>
+        <button type="button" (click)="clearFilters()">Effacer les critères</button>
+      </div>
     </div>
     @if (periodError()) { <p id="period-error" role="alert">{{ periodError() }}</p> }
   </form>

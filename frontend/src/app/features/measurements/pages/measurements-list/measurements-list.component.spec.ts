@@ -168,4 +168,17 @@ describe('Measurements list, four selections and applied URL',()=>{
     expect(req.request.params.has('company_id')).toBe(false);req.flush({...page,page:2,page_size:50});await settle();expect(root().querySelector('time')).not.toBeNull();
   });
 
+  it('places the two temporal actions after the six controls in a dedicated row without changing their semantics',async()=>{
+    await ready();const layout=root().querySelector('.period-layout')!;
+    expect([...layout.children].map(el=>el.tagName)).toEqual(['FIELDSET','FIELDSET','DIV']);
+    expect(layout.querySelectorAll('.period-bound input')).toHaveLength(6);
+    const actions=layout.querySelector('.period-actions')!;
+    expect(actions.previousElementSibling?.tagName).toBe('FIELDSET');expect(actions.querySelector('input')).toBeNull();
+    const buttons=[...actions.querySelectorAll<HTMLButtonElement>('button')];
+    expect(buttons.map(el=>el.textContent?.trim())).toEqual(['Appliquer la période','Effacer les critères']);
+    expect(buttons[0].type).toBe('submit');expect(buttons[0].classList.contains('primary')).toBe(true);
+    expect(buttons[1].type).toBe('button');expect(buttons[1].classList.contains('primary')).toBe(false);
+    expect([...layout.querySelectorAll('legend')].map(el=>el.textContent)).toEqual(['Début inclus (UTC)','Fin exclue (UTC)']);
+  });
+
 });
