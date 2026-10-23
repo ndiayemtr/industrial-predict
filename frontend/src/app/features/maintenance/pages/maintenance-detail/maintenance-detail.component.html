@@ -1,0 +1,99 @@
+<app-page-header title="Détail intervention" description="Dossier de maintenance en consultation uniquement.">
+  <a class="maintenance-back" routerLink="/maintenance" [queryParams]="listQuery()" [fragment]="fragment() ?? undefined">Retour à la liste des interventions</a>
+</app-page-header>
+@let current = state();
+@if (current.status === 'loading') {
+  <app-loading-state message="Chargement de l’intervention…" />
+} @else if (current.status === 'error') {
+  <app-error-state [title]="current.title" [message]="current.message" [retryable]="current.retryable" (retry)="retry()" />
+} @else {
+  @if (differentContext()) {
+    <p class="context-notice" role="status">Le rattachement réel de cette intervention diffère du contexte de retour. Celui-ci est conservé pour revenir à la liste.</p>
+  }
+  <section class="maintenance-detail" aria-labelledby="intervention-title">
+    <dl>
+      <div class="intervention-title" data-field="title"><dt>Titre de l’intervention</dt><dd><h2 id="intervention-title">{{ display(current.data.title) }}</h2></dd></div>
+      <div data-field="id"><dt>Identifiant de l’intervention</dt><dd>{{ current.data.id }}</dd></div>
+      <div data-field="maintenance_type"><dt>Type déclaré</dt><dd>{{ typeLabels[current.data.maintenance_type] }}</dd></div>
+      <div data-field="status"><dt>Statut</dt><dd><span class="badge status-badge">{{ statusLabels[current.data.status] }}</span></dd></div>
+      <div data-field="priority"><dt>Priorité</dt><dd><span class="badge priority-badge">{{ priorityLabels[current.data.priority] }}</span></dd></div>
+    </dl>
+    <p class="note">Le type « Prédictive » est une classification déclarée, pas la preuve d’une prédiction IA.</p>
+  </section>
+  <section class="maintenance-detail" aria-labelledby="diagnostic-title">
+    <h2 id="diagnostic-title">Description et diagnostic</h2>
+    <dl>@for (field of diagnosticFields; track field.key) {
+      <div [attr.data-field]="field.key"><dt>{{ field.label }}</dt><dd class="text-value">{{ display(current.data[field.key]) }}</dd></div>
+    }</dl>
+  </section>
+  <section class="maintenance-detail" aria-labelledby="business-dates-title">
+    <h2 id="business-dates-title">Dates métier</h2>
+    <dl>@for (field of businessDates; track field.key) {
+      <div class="timestamp" [attr.data-field]="field.key"><dt>{{ field.label }}</dt><dd>
+        @if (current.data[field.key]; as raw) {
+          <time [attr.datetime]="raw">{{ formatTime(raw) }}</time><code class="source-timestamp">{{ raw }}</code>
+        } @else { Non renseignée }
+      </dd></div>
+    }</dl>
+    <p class="note">Affichage UTC à partir de l’offset fourni. La chaîne ISO source et ses fractions sont conservées.</p>
+  </section>
+  <section class="maintenance-detail" aria-labelledby="resources-title">
+    <h2 id="resources-title">Coût et indisponibilité déclarés</h2>
+    <dl>
+      <div data-field="cost"><dt>Coût déclaré</dt><dd>{{ display(current.data.cost) }}</dd></div>
+      <div data-field="downtime_minutes"><dt>Indisponibilité déclarée (minutes)</dt><dd>{{ display(current.data.downtime_minutes) }}</dd></div>
+    </dl>
+    <p class="note">Aucune devise n’est fournie par l’API. Les minutes déclarées ne sont pas une durée calculée à partir des dates.</p>
+  </section>
+  <section class="maintenance-detail" aria-labelledby="tracking-title">
+    <h2 id="tracking-title">Informations de suivi</h2>
+    <dl>
+      <div data-field="technician"><dt>Technicien</dt><dd class="text-value">{{ display(current.data.technician) }}</dd></div>
+      @for (field of administrativeDates; track field.key) {
+      @let raw = current.data[field.key];
+      <div class="timestamp" [attr.data-field]="field.key"><dt>{{ field.label }}</dt><dd>
+        <time [attr.datetime]="raw">{{ formatTime(raw) }}</time><code class="source-timestamp">{{ raw }}</code>
+        @if (!hasOffset(raw)) { <p class="note">Fuseau non fourni par la source. Aucune conversion UTC ni ajout de Z.</p> }
+      </dd></div>
+    }</dl>
+  </section>
+  <section class="maintenance-detail" aria-labelledby="references-title">
+    <h2 id="references-title">Rattachement industriel réel</h2>
+    <dl>
+      <div data-field="equipment_id"><dt>Identifiant de l’équipement</dt><dd>{{ current.data.equipment_id }}</dd></div>
+      <div><dt>Équipement</dt><dd [attr.aria-busy]="current.references.equipment.status === 'loading'">
+        @let equipment = current.references.equipment;
+        @switch (equipment.status) {
+          @case ('waiting') { <p>Référence non résolue : l’intervention est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement de la référence réelle…" /> }
+          @case ('error') { <app-error-state [title]="equipment.title" [message]="equipment.message" [retryable]="equipment.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <a class="equipment-reference" [routerLink]="['/equipments', equipment.data.id]" [queryParams]="equipmentQuery()">{{ referenceLabel(equipment.data) }}</a>
+          }
+        }
+      </dd></div>
+      <div><dt>Site industriel</dt><dd [attr.aria-busy]="current.references.site.status === 'loading'">
+        @let site = current.references.site;
+        @switch (site.status) {
+          @case ('waiting') { <p>Référence non résolue : l’équipement est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement de la référence réelle…" /> }
+          @case ('error') { <app-error-state [title]="site.title" [message]="site.message" [retryable]="site.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <p>{{ referenceLabel(site.data) }}</p>
+          }
+        }
+      </dd></div>
+      <div><dt>Entreprise</dt><dd [attr.aria-busy]="current.references.company.status === 'loading'">
+        @let company = current.references.company;
+        @switch (company.status) {
+          @case ('waiting') { <p>Référence non résolue : le site est nécessaire.</p> }
+          @case ('loading') { <app-loading-state message="Chargement de la référence réelle…" /> }
+          @case ('error') { <app-error-state [title]="company.title" [message]="company.message" [retryable]="company.retryable" (retry)="retryReferences()" /> }
+          @case ('success') {
+            <p>{{ referenceLabel(company.data) }}</p>
+          }
+        }
+      </dd></div>
+    </dl>
+  </section>
+}

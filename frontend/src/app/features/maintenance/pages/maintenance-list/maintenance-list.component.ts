@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EMPTY, Observable, Subject, catchError, merge, switchMap, tap } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { Page } from '../../../../core/models/page.model';
@@ -29,12 +29,15 @@ const same = (a: Readonly<MaintenanceQuery> | null, b: MaintenanceQuery) => a !=
 
 @Component({
   selector: 'app-maintenance-list', standalone: true,
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [RouterLink, ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
   providers: [MaintenanceListFacade], templateUrl: './maintenance-list.component.html',
   styleUrl: './maintenance-list.component.scss', changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MaintenanceListComponent {
   readonly facade = inject(MaintenanceListFacade);
+  get detailQuery() { return Object.fromEntries(keys.filter(key => this.route.snapshot.queryParamMap.has(key))
+    .map(key => [key, this.route.snapshot.queryParamMap.getAll(key)])); }
+  get detailFragment() { return this.route.snapshot.fragment ?? undefined; }
   readonly start = this.boundForm();
   readonly end = this.boundForm();
   private startBaseline = restoreMeasurementBound();

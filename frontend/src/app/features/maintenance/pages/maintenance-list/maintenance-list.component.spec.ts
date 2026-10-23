@@ -37,10 +37,28 @@ describe('Maintenance list and applied context', () => {
   c.site.setValue(9); await settle(); req('sites/9').flush(site); req('companies/7').flush(company); await settle(); req('equipments').flush({ ...catalog, items: [equipment] }); await settle();
   expect(c.equipment.value).toBeNull(); http.expectNone(() => true); c.equipment.setValue(12); await settle(); await reload(); expect(root().querySelector('#equipment-help')).toBeNull();
  });
- it('renders seven real columns, null and naive dates without adding UTC or links', async () => {
-  await ready(); expect([...root().querySelectorAll('thead th')].map(e => e.textContent)).toEqual(['#ID', 'Titre', 'Type', 'Statut', 'Priorité', 'Date planifiée', 'Date de création']);
+ it('renders six real columns, null and naive dates without adding UTC, with an explicit detail action', async () => {
+  await ready(); expect([...root().querySelectorAll('thead th')].map(e => e.textContent)).toEqual(['Titre', 'Type', 'Statut', 'Priorité', 'Date planifiée', 'Date de création']);
   expect(root().textContent).toContain('Prédictive'); expect(root().textContent).toContain('Non renseignée'); expect(root().textContent).toContain(record.created_at + ' (fuseau non fourni)');
-  expect(root().querySelector('time[datetime="' + record.created_at + '"]')?.textContent).not.toContain('Z'); expect(root().querySelectorAll('a')).toHaveLength(0);
+  expect(root().querySelector('time[datetime="' + record.created_at + '"]')?.textContent).not.toContain('Z'); expect(root().querySelectorAll('a')).toHaveLength(1);
+ });
+ it('opens the actual id through the accessible title without an ID or Actions column', async () => {
+  await ready(); const link = root().querySelector<HTMLAnchorElement>('.record-title a')!;
+  expect(link.textContent).toBe(record.title); expect(link.getAttribute('aria-label')).toBe('Consulter l’intervention : ' + record.title);
+  expect(link.getAttribute('href')).toContain('/maintenance/17?'); expect(root().querySelectorAll('tbody td')).toHaveLength(6);
+  expect(root().querySelector('thead')?.textContent).not.toMatch(/#ID|Actions/); link.focus(); expect(document.activeElement).toBe(link);
+ });
+ it('navigates list to detail and back with applied filters, raw periods, repeats, fragment and pagination', async () => {
+  const params = '&maintenance_type=predictive&status=planned&priority=critical&search=Inspection&search=second&start_time=2026-10-23T12%3A00%3A00.123456%2B02%3A00&end_time=2026-10-24T00%3A00%3A00.000001Z&page=2&page_size=20#history';
+  await ready(base + params); c.search.setValue('Brouillon non appliqué'); await settle();
+  const link = root().querySelector<HTMLAnchorElement>('tbody a')!; const router = TestBed.inject(Router);
+  const target = router.parseUrl(link.getAttribute('href')!); expect(target.queryParams['search']).toEqual(['Inspection', 'second']); expect(target.queryParams['page']).toBe('2'); expect(target.fragment).toBe('history');
+  link.click(); await settle(); req('maintenance/17').flush(record); parents(); await settle();
+  const back = root().querySelector<HTMLAnchorElement>('.maintenance-back')!; expect(router.parseUrl(back.getAttribute('href')!).queryParams).toEqual(target.queryParams); expect(back.getAttribute('href')).not.toContain('Brouillon');
+  back.click(); await settle(); req('companies').flush(catalog); parents(); await settle(); catalogs(); const request = list();
+  expect(request.request.params.get('equipment_id')).toBe('12'); expect(request.request.params.get('page')).toBe('2'); expect(request.request.params.get('start_time')).toBe('2026-10-23T12:00:00.123456+02:00');
+  expect(request.request.params.has('company_id')).toBe(false); expect(request.request.params.has('site_id')).toBe(false);
+  request.flush({ ...page, page: 2 }); await settle(); expect(router.parseUrl(router.url).fragment).toBe('history');
  });
  it('restores references outside first catalog pages and offers more for all three catalogs', async () => {
   await open(base + '&page=2&page_size=37'); req('companies').flush({ ...catalog, items: [], total: 51, pages: 2 }); parents(); await settle();
@@ -151,7 +169,7 @@ describe('Maintenance list and applied context', () => {
  it('removes a draft notice when initial values are restored and renders textual badges', async () => {
   await ready(); c.start.controls.fraction.setValue('1'); c.start.controls.fraction.setValue(''); c.search.setValue('draft'); c.search.setValue(''); await settle();
   expect(c.periodDraft()).toBe(false); expect(c.searchDraft()).toBe(false); expect(root().querySelector('.status-badge')?.textContent).toBe('Planifiée'); expect(root().querySelector('.priority-badge')?.textContent).toBe('Critique');
-  expect(root().querySelector('.record-title')?.textContent).toBe(record.title); expect(root().querySelectorAll('a')).toHaveLength(0); http.expectNone(() => true);
+  expect(root().querySelector('.record-title')?.textContent).toBe(record.title); expect(root().querySelectorAll('a')).toHaveLength(1); http.expectNone(() => true);
  });
 
  it('does not discard an invalid unrelated URL filter when clearing the period', async () => {

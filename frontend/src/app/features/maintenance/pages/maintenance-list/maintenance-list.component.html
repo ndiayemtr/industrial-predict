@@ -165,9 +165,10 @@
         <div class="table-scroll" role="region" aria-label="Historique des interventions" tabindex="0">
           <table>
             <caption>{{ state.data.total }} {{ state.data.total > 1 ? 'interventions' : 'intervention' }} - Page {{ page() }} sur {{ state.data.pages }}. Tri : création décroissante, puis identifiant décroissant. Les nouveaux dossiers peuvent déplacer les pages.</caption>
-            <thead><tr><th scope="col">#ID</th><th scope="col">Titre</th><th scope="col">Type</th><th scope="col">Statut</th><th scope="col">Priorité</th><th scope="col">Date planifiée</th><th scope="col">Date de création</th></tr></thead>
+            <thead><tr><th scope="col">Titre</th><th scope="col">Type</th><th scope="col">Statut</th><th scope="col">Priorité</th><th scope="col">Date planifiée</th><th scope="col">Date de création</th></tr></thead>
             <tbody>@for (item of state.data.items; track item.id) {
-              <tr><td>#{{ item.id }}</td><td class="record-title">{{ item.title === '' ? 'Titre vide' : item.title }}</td>
+              <tr><td class="record-title"><a [routerLink]="['/maintenance', item.id]" [queryParams]="detailQuery" [fragment]="detailFragment"
+                  [attr.aria-label]="'Consulter l’intervention : ' + (item.title === '' ? 'Titre vide' : item.title)">{{ item.title === '' ? 'Titre vide' : item.title }}</a></td>
                 <td>{{ typeLabels[item.maintenance_type] }}</td><td><span class="badge status-badge">{{ statusLabels[item.status] }}</span></td><td><span class="badge priority-badge">{{ priorityLabels[item.priority] }}</span></td>
                 <td><time [attr.datetime]="item.planned_at">{{ formatTime(item.planned_at) }}</time></td>
                 <td><time [attr.datetime]="item.created_at">{{ formatTime(item.created_at) }}</time></td></tr>

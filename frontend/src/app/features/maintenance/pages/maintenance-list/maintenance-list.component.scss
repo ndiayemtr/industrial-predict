@@ -28,7 +28,7 @@ button.primary {
 }
 button:disabled, select:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:disabled { opacity: .65; }
-input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 
@@ -68,8 +68,7 @@ time { font-variant-numeric: tabular-nums; }
 .filters .field-error, #period-error { color: #9b1c1c; font-weight: 600; }
 .filters .draft-notice { color: tokens.$text-primary; border-left: 3px solid tokens.$navigation-active; padding-left: tokens.$space-sm; }
 .record-title { font-weight: 600; }
-th:first-child { width: 5%; }
-th:nth-child(2) { width: 22%; }
+th:first-child { width: 27%; }
 .status-badge { color: tokens.$text-primary; }
 .priority-badge { color: tokens.$sidebar-background; }
 @container maintenance-filters (min-width: 34rem) {

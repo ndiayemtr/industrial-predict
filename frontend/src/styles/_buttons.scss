@@ -3,7 +3,7 @@
 // Action controls only: ordinary links, fields and the drawer backdrop keep their styles.
 .shell-layout {
   :is(main button, .sidebar-toggle, .drawer-close,
-      .new-company, .company-back, .company-edit, .new-site, .site-back, .new-equipment, .new-sensor, .sensor-edit, .equipment-back, .sensor-back, .measurement-back, .equipment-sensors, .sensor-measurements, .equipment-edit, .dashboard-link) {
+      .new-company, .company-back, .company-edit, .new-site, .site-back, .new-equipment, .new-sensor, .sensor-edit, .equipment-back, .sensor-back, .measurement-back, .maintenance-back, .equipment-sensors, .sensor-measurements, .equipment-edit, .dashboard-link) {
     cursor: pointer;
     transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 
@@ -42,7 +42,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .shell-layout :is(main button, .sidebar-toggle, .drawer-close,
-      .new-company, .company-back, .company-edit, .new-site, .site-back, .new-equipment, .new-sensor, .sensor-edit, .equipment-back, .sensor-back, .measurement-back, .equipment-sensors, .sensor-measurements, .equipment-edit, .dashboard-link) {
+      .new-company, .company-back, .company-edit, .new-site, .site-back, .new-equipment, .new-sensor, .sensor-edit, .equipment-back, .sensor-back, .measurement-back, .maintenance-back, .equipment-sensors, .sensor-measurements, .equipment-edit, .dashboard-link) {
     transition: none;
   }
 }
