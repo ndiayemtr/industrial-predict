@@ -81,11 +81,12 @@ réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
 mais validés par simulation, sans écriture réelle dans PostgreSQL.
 Sites et Équipements sont intégrés dans `main` (référence locale `a76e49c`).
-Sensors MVP est intégré dans `main` à `20293a4`. Measurements MVP en lecture
-seule est implémenté sur `feature/frontend-measurements` à `43d12fa`, en
-préparation documentaire UI 7.6. Maintenance, Prédictions et Recommandations
-restent des placeholders. Aucun identifiant d'entreprise par défaut, polling
-ou donnée fictive n'est introduit dans le Dashboard.
+Sensors et Measurements MVP sont intégrés dans main local. Maintenance MVP de
+consultation est implémenté sur feature/frontend-maintenance à d71774c et sa
+livraison documentaire UI 8.7 est préparée. main local est à 74a24e4, origin/main
+local à 15c956b, sans fetch. Prédictions et Recommandations restent des placeholders.
+Aucun identifiant d'entreprise par défaut, polling ou donnée fictive n'est introduit.
+
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
 `docs/decisions.md` ; le contrat consommé et l'architecture livrée sont décrits
 dans `docs/frontend-architecture.md`. Ne pas étendre le Dashboard V1 aux
@@ -165,9 +166,26 @@ centralise les références historiques : 1 482 tests, build production réussi,
 bundle initial 605,65 kB, GET réels et SQL concordants, 40 lignes conservées et
 empreintes des huit tables inchangées. Les réserves backend, seed, sécurité,
 budget et couverture PostgreSQL demeurent. [UI 7.6](docs/ui-7.6-measurements-delivery.md)
-prépare la livraison sans nouveau test/build, accès PostgreSQL, commit ou fusion.
-Measurements n'est pas encore intégré dans main. Attendre validation du dossier,
-puis autorisation distincte du commit et de la fusion ; UI 8 non commencée.
+conserve la préparation historique de livraison. Measurements et sa documentation
+sont intégrés dans main local (15c956b), avant la conception Maintenance (74a24e4).
+
+## UI 8 - Maintenance MVP de consultation, livraison préparée
+
+MAIN-01 à MAIN-16 validées, lecture seule. Liste lazy, sélection explicite
+Entreprise -> Site -> Équipement et rattachements vérifiés ; recherche, filtres,
+période created_at [début, fin), microsecondes/offsets et pagination serveur.
+Détail de 18 champs, coût sans devise supposée, indisponibilité déclarée et dates
+administratives naïves sans Z ajouté. Navigation Equipment <-> Maintenance,
+actions harmonisées et retour contextuel. Aucun POST/PATCH/DELETE ni transition ;
+predictive n'est pas une preuve de prédiction IA.
+Le [statut Maintenance](docs/project-status.md#maintenance-mvp---livraison-préparée-ui-87)
+centralise 741 tests ciblés/1 899 tests Angular/build/606,00 kB historiques,
+validation utilisateur 9/9 et recette UI 8.6 : 36 GET indépendants, 27 listes SQL,
+30 états Angular, trois dossiers et 40 lignes préservées. B-MAIN-01 à 09, sécurité,
+seed strict, budget et limites de preuve restent ouverts. Le
+[dossier UI 8.7](docs/ui-8.7-maintenance-delivery.md) prépare la livraison en DEV,
+sans aptitude déclarée à la production SaaS. Aucun test/build ou accès DEV relancé.
+Commit et fusion attendent des autorisations distinctes ; UI 9 non commencée.
 
 ### Machine Learning
 

@@ -14,15 +14,16 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé en UI 7.6 le 22 octobre 2026 sur
-`feature/frontend-measurements`, HEAD de référence `43d12fa`. Le socle, Dashboard,
-Companies, Sites, Équipements et Sensors sont intégrés dans `main` à `20293a4`.
-Measurements MVP en lecture seule est implémenté sur sa branche, avant fusion.
-Les sections datées conservent leurs validations historiques ; le [statut courant](project-status.md#measurements-mvp---livraison-préparée-ui-76)
-centralise les références et réserves. Aucun test/build relancé en UI 7.6.
+État documentaire synchronisé en UI 8.7 le 24 octobre 2026 sur
+feature/frontend-maintenance à d71774c. main local est à 74a24e4, incluant
+Measurements (15c956b) et la conception Maintenance ; origin/main local est à
+15c956b, sans fetch. Maintenance MVP est implémenté sur sa branche, avant fusion.
+Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée-ui-87)
+centralise preuves et réserves. Aucun test/build ni accès DEV relancé en UI 8.7.
+
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle et modules MVP jusqu'à Measurements
+## Structure réellement présente - socle et modules MVP jusqu'à Maintenance
 
 ```text
 frontend/
@@ -60,6 +61,10 @@ interactions communs sont dans src/styles/_actions.scss et _buttons.scss.
 `features/measurements/` contient models/, data-access/, measurements-list.facade.*,
 measurements.routes.*, pages/measurements-list/, pages/measurement-detail/ et
 utils/ pour temps précis, brouillons et présentation. Aucun formulaire d'écriture.
+
+`features/maintenance/` contient models/, data-access/, maintenance-list.facade.*,
+maintenance.routes.*, pages/maintenance-list/ et pages/maintenance-detail/.
+Aucun composant de formulaire ni DTO d'écriture.
 
 `AppComponent` contient le Router Outlet racine. `ShellComponent` contient
 un seul `nb-layout`, un `nb-sidebar`, un `nb-layout-header subheader`
@@ -163,7 +168,8 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | `/sensors/:sensorId` | Détail capteur | SensorDetailComponent | Capteurs |
 | `/measurements` | Mesures | MeasurementsListComponent | Mesures |
 | `/measurements/:measurementId` | Détail mesure | MeasurementDetailComponent | Mesures |
-| `/maintenance` | Maintenance | FeaturePlaceholderComponent | Maintenance |
+| `/maintenance` | Maintenance | MaintenanceListComponent | Maintenance |
+| `/maintenance/:maintenanceId` | Détail intervention | MaintenanceDetailComponent | Maintenance |
 | `/predictions` | Prédictions | FeaturePlaceholderComponent | Prédictions |
 | `/recommendations` | Recommandations | FeaturePlaceholderComponent | Recommandations |
 | `**` (dernière route) | Page introuvable | NotFoundComponent, `data.isNotFound: true` | Aucune sélection trompeuse |
@@ -181,14 +187,14 @@ exacte des liens et évite une sélection Équipements incorrecte ; le détail
 valide `/equipments/42` conserve la sélection de section.
 
 Le Shell, DashboardComponent, le placeholder commun et la 404 utilisent
-`loadComponent` avec import dynamique. Companies, Sites, Équipements, Sensors
-et Measurements utilisent `loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES`,
-`EQUIPMENT_ROUTES`, `SENSOR_ROUTES` et `MEASUREMENT_ROUTES`, puis
+`loadComponent` avec import dynamique. Companies, Sites, Équipements, Sensors,
+Measurements et Maintenance utilisent `loadChildren` vers `COMPANY_ROUTES`, `SITE_ROUTES`,
+`EQUIPMENT_ROUTES`, `SENSOR_ROUTES`, `MEASUREMENT_ROUTES` et `MAINTENANCE_ROUTES`, puis
 `loadComponent` pour leurs pages,
 sans préchargement configuré. Dans chaque feature, `new` puis la route d'édition
 précèdent l'identifiant dynamique lorsque ces formulaires existent. Measurements
-expose uniquement liste et détail, sans new/edit. Les trois destinations
-Maintenance, Prédictions et Recommandations conservent le placeholder.
+expose uniquement liste et détail, comme Maintenance, sans new/edit.
+Prédictions et Recommandations conservent le placeholder.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -233,9 +239,9 @@ src/app/
 
 ## Pages prioritaires à implémenter
 
-Dashboard V1, Companies, Sites, Équipements, Sensors et Measurements MVP sont implémentés.
+Dashboard V1, Companies, Sites, Équipements, Sensors, Measurements et Maintenance MVP sont implémentés.
 Les listes ci-dessous distinguent les fonctions livrées des intentions futures ;
-Maintenance, Prédictions et Recommandations rendent des placeholders.
+Prédictions et Recommandations rendent des placeholders.
 
 ### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
 
@@ -256,8 +262,10 @@ détail des données réelles, création et modification différentielle sont li
 Voir l'[architecture implémentée](#équipements-mvp---architecture-implémentée-ui-5).
 Health Score, Failure Risk, RUL et dernière maintenance ne sont pas affichés.
 L'action Voir les capteurs ouvre la liste Sensors contextualisée avec les parents
-réels, page 1 et taille 20. Les onglets Mesures, Prédictions, Recommandations,
-Maintenance et Documents restent futurs, sans compteurs fictifs ni calcul ML.
+réels, page 1 et taille 20. Voir les interventions ouvre Maintenance avec les
+mêmes parents vérifiés et pagination initiale, sans filtres Equipment transférés.
+Les onglets Mesures, Prédictions, Recommandations et Documents restent futurs,
+sans compteurs fictifs ni calcul ML.
 
 ### Prédictions
 
@@ -304,7 +312,7 @@ Exemples :
 - SitesApiService (implémenté)
 - PredictionApiService
 - RecommendationApiService
-- MaintenanceApiService
+- MaintenanceApiService (implémenté, deux GET uniquement)
 
 ## États UI
 
@@ -1087,6 +1095,55 @@ et réserves d'accessibilité/390 px. F-MES-01 est traité dans cette feature.
 Aucune donnée temps réel, graphique ou prédiction fictive. UI 7.6 documentaire
 ne relance aucune validation applicative ou opération de base.
 
+## Maintenance MVP - architecture implémentée UI 8
+
+[MAIN-01 à MAIN-16](etape-ui-8.1-maintenance.md) validées pour la consultation.
+MAINTENANCE_ROUTES charge liste puis :maintenanceId en lazy sous le Shell.
+MaintenanceRead garde les 18 champs exacts et nullables ; Page<T> partagé,
+MaintenancePageQuery et unions preventive/corrective/predictive,
+planned/in_progress/completed/cancelled, low/medium/high/critical.
+MaintenanceApiService expose list et getById seulement, validations défensives
+des pages, ids/FK, enums, nombres finis, coût et minutes, dates sources.
+Aucun DTO d'écriture, GET global, GET non paginé par équipement ou transition.
+
+MaintenanceListFacade locale utilise signals, switchMap et nettoyage ; services
+de référence paginés, suite explicite, aucun choix automatique. Equipment -> Site
+-> Company vérifié avant GET ; contradiction bloque, aucune identité remplacée.
+Whitelist equipment_id/page/page_size/maintenance_type/status/priority/search/
+start_time/end_time, jamais company_id/site_id. Recherche appliquée explicitement,
+filtres et brouillons distincts, période created_at [début, fin), tri backend fixe
+created_at DESC/id DESC. Période avec offset et jusqu'à six décimales, comparaison
+précise réutilisant les fonctions de measurement-time, sans Date ni conversion
+implicite. Page hors plage récupérable manuellement ; erreurs distinctes du vide.
+
+Titre de liste cliquable, six colonnes sans colonne ID/Actions. Détail : 18 champs,
+titre renforcé, badges textuels statut/priorité identiques à la liste, sections
+regroupées sans perte, coût sans devise, downtime_minutes déclaré sans durée
+calculée. Dates métier aware ; created_at/updated_at potentiellement naïfs restent
+sans Z ajouté ni UTC supposé, avec explication et ISO sources.
+Dossier conservé sur erreur parent, lectures tardives annulées, références réelles
+indépendantes du retour URL. Le retour local /maintenance conserve contexte,
+filtres appliqués, page, taille, offsets, fractions, paramètres répétés et fragment,
+sans history.back() obligatoire ni returnUrl externe suivi.
+
+Equipment Detail partage industrialQuery entre Sensors et Maintenance ; l'action
+Voir les interventions attend la chaîne cohérente et initialise page=1/page_size=20.
+Le lien inverse part de Maintenance.equipment_id effectivement lu ; seuls les
+parents réellement résolus complètent son contexte minimal, jamais les filtres
+Maintenance. PageHeader et les quatre composants shared sont réutilisés.
+_actions.scss fournit navigation-action de 44 px ; _buttons.scss ajoute seulement
+maintenance-back/equipment-maintenance aux transitions/focus/mouvement réduit.
+Aucun contrat shared ou budget changé. La finition Measurements 161bf88 place
+ses actions UTC sous les six champs, sans changement de logique ou contrat.
+
+Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée-ui-87)
+centralise 741/1 899 tests, build/606,00 kB historiques, validation utilisateur 9/9,
+36 GET indépendants/27 listes SQL/30 états Angular et intégrité des 40 lignes.
+[UI 8.6](ui-8.6-maintenance-integration.md) garde les limites de preuve XHR,
+multiligne, dates naïves et fractions absentes en DEV ; B-MAIN-01 à 09 restent
+ouverts. Responsive 390 encadré à 389/391, audit accessibilité non exhaustif.
+Aucune prédiction IA déduite du type predictive, aucune écriture frontend.
+
 ## Autres composants partagés envisagés
 
 La liste suivante décrit des besoins ultérieurs, sans engagement d'implémentation
@@ -1114,9 +1171,10 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout, Dashboard, Companies, Sites, Équipements et Sensors sont intégrés
-dans `main` (`20293a4`). Measurements MVP est implémenté sur
-feature/frontend-measurements (`43d12fa`). UI 7.6 prépare le [dossier documentaire](ui-7.6-measurements-delivery.md),
-avant validation du commit puis autorisation de fusion. Les rapports historiques
-restent conservés ; Maintenance et les fonctions prédictives futures nécessitent
-une conception et une autorisation distinctes. UI 8 non commencée.
+Le layout, Dashboard, Companies, Sites, Équipements, Sensors et Measurements
+sont intégrés dans main local. UI 8.1 est déjà dans main à 74a24e4 ; UI 8.2 à
+UI 8.6 sont implémentées sur feature/frontend-maintenance à d71774c.
+UI 8.7 prépare le [dossier de livraison](ui-8.7-maintenance-delivery.md), avant
+validation puis commit et fusion séparément autorisés. Les écritures Maintenance
+nécessitent arbitrage métier et sécurisation backend dans un chantier distinct.
+Prédictions et Recommandations restent futures. UI 9 non commencée.

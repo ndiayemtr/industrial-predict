@@ -77,7 +77,7 @@ PATCH différentiel limité à name/code/status/description. Code unique
 globalement ; parent, type et unité immuables en édition. Navigation
 Equipment <-> Sensors et retours conservant le contexte URL. Aucun DELETE
 frontend, mesure temps réel ou prédiction fictive. Sensors est intégré dans main
-à `20293a4` ; Measurements est livré sur sa branche dédiée, décrit ci-dessous.
+à `20293a4` ; Measurements est intégré dans main local, décrit ci-dessous.
 
 Référence UI 6.7.2 : **1 179 tests Angular réussis dans 58 fichiers**, build
 production réussi, initial **605,24 kB**, soit 105,24 kB au-dessus du budget
@@ -91,7 +91,7 @@ dialogue natif non vérifié manuellement et absence d'authentification/isolatio
 multi-tenant restent ouverts. Voir le [statut courant](../docs/project-status.md#sensors-mvp---livraison-préparée-ui-68)
 et la [checklist de fusion](../docs/ui-6.8-sensors-delivery.md).
 
-## Measurements MVP - livraison préparée UI 7.6
+## Measurements MVP - intégré dans main local
 
 Routes lazy `/measurements` et `/measurements/:measurementId`, en lecture seule.
 Sélection explicite Entreprise -> Site -> Équipement -> Capteur, catalogues
@@ -122,10 +122,32 @@ porte les GET réels Angular -> FastAPI -> PostgreSQL, SQL concordants, 40 ligne
 préservées et compteurs/empreintes des huit tables inchangés. Erreurs défensives
 et offsets non nuls restent couverts par simulation ; ces preuves sont distinctes.
 Aucune relance en UI 7.6 documentaire. Voir le [statut et les réserves](../docs/project-status.md#measurements-mvp---livraison-préparée-ui-76)
-et le [dossier de livraison](../docs/ui-7.6-measurements-delivery.md), avant commit
-et fusion séparément autorisés. Authentification/isolation tenant absentes,
+et le [dossier de livraison](../docs/ui-7.6-measurements-delivery.md)
+historique, intégré dans main local à `15c956b`. Authentification/isolation tenant absentes,
 seed strict non conforme et couverture PostgreSQL incomplète : aucune aptitude
 à la production SaaS n'est déclarée.
+
+## Maintenance MVP - livraison préparée UI 8.7
+
+Routes lazy `/maintenance` et `/maintenance/:maintenanceId`, lecture seule.
+Trois choix explicites et chaîne Equipment -> Site -> Company vérifiée. Recherche
+explicite, filtres maintenance_type/status/priority, brouillons distincts des
+filtres appliqués, période created_at [début, fin), tri created_at DESC/id DESC,
+pagination serveur. Fractions et offsets conservés, dates administratives naïves
+sans UTC supposé. Titres cliquables, détail de 18 champs, coût sans devise,
+indisponibilité déclarée, badges, actions et retours contextuels harmonisés.
+Equipment <-> Maintenance utilise les références réelles, sans recycler ses filtres.
+MaintenanceApiService expose seulement GET paginé `/api/v1/maintenance`,
+equipment_id requis, et GET `/api/v1/maintenance/{id}`. Whitelist : equipment_id,
+page, page_size, maintenance_type, status, priority, search, start_time, end_time.
+Aucun company_id/site_id, POST/PATCH/DELETE ou transition. predictive est un type
+déclaré, sans prédiction IA démontrée.
+Voir le [statut Maintenance](../docs/project-status.md#maintenance-mvp---livraison-préparée-ui-87)
+pour 741/1 899 tests, build/606,00 kB historiques, validation utilisateur 9/9,
+recette de lecture UI 8.6 et réserves B-MAIN, seed, sécurité, budget, XHR,
+pagination multiligne, fractions stockées et responsive 389/391 pour 390 px.
+Le [dossier UI 8.7](../docs/ui-8.7-maintenance-delivery.md) prépare la fusion.
+Aucune validation relancée ici ; aucune aptitude déclarée à la production SaaS.
 
 ## Additional Resources
 

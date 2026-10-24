@@ -43,8 +43,8 @@
 
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
-Companies, Sites, Équipements, Sensors et Measurements les réutilisent également ;
-Maintenance, Prédictions et Recommandations restent des placeholders.
+Companies, Sites, Équipements, Sensors, Measurements et Maintenance les réutilisent
+également ; Prédictions et Recommandations restent des placeholders.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
@@ -230,17 +230,17 @@ centralise les limites : B-SEN-02/03, seed strict non conforme, sécurité, budg
 dialogue natif et couverture PostgreSQL incomplète. Aucun test/build relancé
 en UI 6.8 documentaire ; ces rapports restent historiques.
 
-### UI 7 - Measurements MVP lecture seule, livraison préparée
+### UI 7 - Measurements MVP lecture seule intégré dans main local
 
 - [x] UI 7.1 - [Conception MES-01 à MES-12 validée](etape-ui-7.1-measurements.md), `19b64e2`
 - [x] UI 7.2 - [Modèles stricts et API GET](ui-7.2-measurements-data-access.md), `4b34f67`
 - [x] UI 7.3 / UI 7.3.1 - [Historique et contrôles UTC précis](ui-7.3-measurements-list.md), `bbd18d6`
 - [x] UI 7.4 - [Fiche détail et retour contextuel](ui-7.4-measurement-detail.md), `7b1265a`
 - [x] UI 7.5 / UI 7.5.1 / UI 7.5.2 - [Intégration DEV, navigation Sensor et actions harmonisées](ui-7.5-measurements-integration.md), `43d12fa`
-- [ ] UI 7.6 - [Documentation et checklist préparées](ui-7.6-measurements-delivery.md), validation puis commit attendus
-- [ ] Fusion Measurements vers main, sur autorisation distincte après contrôles finaux
+- [x] UI 7.6 - [Documentation de livraison](ui-7.6-measurements-delivery.md), `15c956b`
+- [x] Measurements et sa documentation intégrés dans main local à `15c956b`
 
-Livré sur feature/frontend-measurements : quatre sélections explicites et
+Livré et intégré dans main local : quatre sélections explicites et
 rattachements vérifiés, historique paginé, cinq qualités déclarées, calendrier/
 heure/fraction UTC [début, fin), microsecondes et offsets conservés, détail et
 unité actuelle non historique. Navigation Sensor -> Measurements et retours
@@ -253,13 +253,33 @@ compteurs/empreintes des huit tables inchangés. Le [statut Measurements](projec
 centralise les réserves backend, seed, sécurité, dialogue natif, budget et
 couverture PostgreSQL. Aucune validation relancée en UI 7.6 documentaire.
 
-### Maintenance et fonctions IA futures
+### UI 8 - Maintenance MVP de consultation, livraison préparée
 
-Maintenance, Prédictions et Recommandations restent des placeholders ; leurs
-parcours nécessitent conception et validation distinctes. Le backend ML et les
-agrégats Dashboard ne constituent pas des écrans prédictifs Measurements livrés.
-Aucune acquisition temps réel, graphique, prédiction, Health Score ou RUL n'est
-ajouté au module Measurements. UI 8 non commencée.
+- [x] UI 8.1 - [Conception MAIN-01 à MAIN-16](etape-ui-8.1-maintenance.md), `74a24e4`, déjà dans main local
+- [x] UI 8.2 - [Modèles et GET](ui-8.2-maintenance-data-access.md), `740a947`
+- [x] UI 8.3 / UI 8.3.1 / UI 8.3.2 - [Liste et filtres](ui-8.3-maintenance-list.md), `d74a3e6`
+- [x] Finition UX Measurements - [Actions temporelles](ux-measurements-period-actions.md), `161bf88`
+- [x] UI 8.4 / UI 8.4.1 - [Détail et titres cliquables](ui-8.4-maintenance-detail.md), `c66e7f3`
+- [x] UI 8.5 - [Navigation Equipment et finitions](ui-8.5-maintenance-navigation.md), `b51d20e`
+- [x] UI 8.6 - [Recette DEV en lecture seule](ui-8.6-maintenance-integration.md), `d71774c`
+- [ ] UI 8.7 - [Dossier de livraison](ui-8.7-maintenance-delivery.md) préparé, validation puis commit attendus
+- [ ] Fusion fast-forward vers main, sur autorisation distincte
+
+Livré : trois choix explicites et références vérifiées, liste/historique paginé,
+recherche, filtres et période created_at [début, fin), microsecondes/offsets,
+détail des 18 champs, coût sans devise et dates naïves sans UTC supposé.
+Equipment <-> Maintenance, titres cliquables, badges et retours harmonisés.
+Aucun POST/PATCH/DELETE ni transition de statut frontend.
+Références historiques : 741 tests ciblés, 1 899 tests Angular, build réussi,
+606,00 kB, validation utilisateur 9/9. UI 8.6 : 36 GET indépendants dont 27 listes
+SQL, 30 états Angular, trois dossiers, 40 lignes et empreintes huit tables/par
+ligne préservées. Aucune validation relancée en UI 8.7.
+
+Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée-ui-87)
+centralise les limites. Écritures et transitions exigent un chantier distinct après
+arbitrage métier et sécurisation backend. Prédictions et Recommandations restent
+des placeholders ; aucune fonction IA n'est livrée par le type predictive.
+UI 9 non commencée.
 
 ### Écrans métier restant à implémenter
 

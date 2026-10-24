@@ -24,16 +24,16 @@ Le socle Angular standalone UI 1.1 à UI 1.8 est livré et fusionné dans `main`
 Sidebar, Header global, routing avec chargement différé, page 404 et gestion
 accessible du focus. Dashboard V1 et Companies MVP sont livrés dans `main`.
 Sites et Équipements MVP sont intégrés dans `main` (référence locale `a76e49c`).
-Sensors MVP est intégré dans `main` à `20293a4`. Measurements MVP en lecture
-seule est implémenté sur `feature/frontend-measurements` à `43d12fa`, en préparation
-de livraison UI 7.6. Maintenance, Prédictions et Recommandations restent des
-placeholders, distincts des agrégats Dashboard et du ML backend.
+Sensors et Measurements MVP sont intégrés dans main local, ce dernier à `15c956b`.
+Maintenance MVP de consultation est implémenté sur feature/frontend-maintenance
+à `d71774c`, livraison UI 8.7 préparée. main local contient déjà UI 8.1 à `74a24e4`.
+Prédictions et Recommandations restent des placeholders, distincts du ML backend.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
 est implémenté ; `features/dashboard`, `features/companies`, `features/sites`, `features/equipments`
-ainsi que `features/sensors` et `features/measurements` existent.
+ainsi que `features/sensors`, `features/measurements` et `features/maintenance` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -144,8 +144,31 @@ détaille les flux ; le [statut Measurements](project-status.md#measurements-mvp
 centralise les preuves historiques et dettes : 1 482 tests/build/605,65 kB, GET
 réels et SQL concordants, 40 lignes conservées, empreintes des huit tables
 inchangées. Ni la chaîne UI ni la recette DEV ne fournissent une autorisation
-multi-tenant. [UI 7.6](ui-7.6-measurements-delivery.md) prépare la livraison sans
-nouveau test, build, accès PostgreSQL ou changement backend.
+multi-tenant. [UI 7.6](ui-7.6-measurements-delivery.md) conserve la préparation
+historique ; Measurements et sa documentation sont intégrés dans main local à
+15c956b. Aucun résultat historique n'est requalifié en nouvelle validation.
+
+### Maintenance MVP de consultation
+
+Liste lazy et façade locale -> MaintenanceApiService -> FastAPI -> service ->
+repository -> PostgreSQL, sans changement backend. Le détail utilise ses états
+locaux et résout Maintenance -> Equipment -> Site -> Company ; une référence
+indisponible ne masque pas les données du dossier. Page<T>, services de référence,
+composants shared et styles d'actions existants sont réutilisés.
+Deux GET seulement : `/api/v1/maintenance` paginé, equipment_id obligatoire côté
+Angular, et `/api/v1/maintenance/{id}`. Whitelist equipment_id, maintenance_type,
+status, priority, search, start_time, end_time, page, page_size ; aucun filtre
+company_id/site_id.
+Période sur created_at [début, fin), tri created_at DESC/id DESC. Chaînes ISO
+précises, offsets préservés ; dates administratives naïves sans UTC supposé.
+18 champs réels, coût sans devise garantie et indisponibilité déclarée.
+Aucun POST/PATCH/DELETE ou transition frontend ; predictive ne prouve aucune IA.
+Navigation Equipment <-> Maintenance par références vérifiées, retour contextuel.
+
+Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée-ui-87)
+centralise validations historiques, recette de lecture et réserves B-MAIN-01 à 09.
+Le [dossier UI 8.7](ui-8.7-maintenance-delivery.md) prépare la fusion sans nouvelle
+recette ni changement exécutable. Le MVP DEV ne garantit aucune sécurité SaaS.
 
 ## Backend
 

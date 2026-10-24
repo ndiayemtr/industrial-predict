@@ -6,12 +6,11 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-measurements`, HEAD de référence `43d12fa`, contrôlé le
-22 octobre 2026, dépôt propre avant UI 7.6. `main` et la référence locale
-`origin/main` sont à `20293a4` (Sensors intégré). Cinq commits Measurements en
-avance, aucun retard. Aucun fetch ici ; l'état distant reste à revérifier avant
-fusion autorisée. UI 7.6 modifie uniquement la documentation, sans commit ni
-fusion. Voir le [bilan de livraison Measurements](ui-7.6-measurements-delivery.md).
+`feature/frontend-maintenance`, HEAD `d71774c`, contrôlé le 24 octobre 2026,
+dépôt propre avant UI 8.7. main local : `74a24e4` ; origin/main local : `15c956b`.
+Six commits à intégrer à main ; sept par rapport à origin/main, dont UI 8.1 déjà
+dans main. Aucun fetch. UI 8.7 modifie six documents de suivi et crée le
+[dossier de livraison](ui-8.7-maintenance-delivery.md), sans commit ni fusion.
 
 À mettre à jour à chaque changement de branche.
 
@@ -333,11 +332,20 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 7.3 / UI 7.3.1 | Historique paginé et contrôles UTC précis (`bbd18d6`) |
 | UI 7.4 | Fiche détail et retours contextuels (`7b1265a`) |
 | UI 7.5 / UI 7.5.1 / UI 7.5.2 | Recette DEV, navigation Sensor et finition des actions (`43d12fa`) |
-| UI 7.6 | Documentation et checklist Measurements préparées, validation attendue |
+| UI 7.6 | Documentation Measurements intégrée dans main local (`15c956b`) |
+| UI 8.1 | Conception MAIN-01 à MAIN-16 intégrée dans main local (`74a24e4`) |
+| UI 8.2 | Modèles et deux GET Maintenance (`740a947`) |
+| UI 8.3 / UI 8.3.1 / UI 8.3.2 | Liste, filtres, UTC et optimisation SCSS (`d74a3e6`) |
+| Finition Measurements | Actions de période alignées (`161bf88`), sans changement métier |
+| UI 8.4 / UI 8.4.1 | Détail et navigation par titre (`c66e7f3`) |
+| UI 8.5 | Navigation Equipment et actions harmonisées (`b51d20e`) |
+| UI 8.6 | Recette DEV de consultation (`d71774c`) |
+| UI 8.7 | Documentation de livraison préparée, validation attendue |
 
 Dashboard V1, Companies, Sites, Équipements et Sensors MVP sont intégrés dans `main`.
-Measurements MVP en lecture seule est implémenté sur feature/frontend-measurements,
-pas encore fusionné. Maintenance, Prédictions et Recommandations restent des placeholders.
+Measurements MVP est également intégré dans main local. Maintenance MVP de
+consultation est implémenté sur sa branche ; Prédictions et Recommandations
+restent des placeholders.
 Rapports et Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
 production SaaS multi-tenant faute d'autorisation multi-entreprises démontrée.
@@ -556,7 +564,8 @@ Cette préparation ne vaut ni fusion effectuée ni validation de production SaaS
 ## Measurements MVP - livraison préparée UI 7.6
 
 La [conception UI 7.1](etape-ui-7.1-measurements.md), MES-01 à MES-12 validées,
-est implémentée dans les cinq commits de 19b64e2 à 43d12fa sur la branche dédiée.
+est implémentée de 19b64e2 à 43d12fa, documentation intégrée dans main local
+à 15c956b. Le dossier UI 7.6 reste un rapport historique.
 Liste/historique et détail sont strictement en lecture seule. Les rapports datés
 UI 7.1 à UI 7.5 sont préservés, y compris UI 7.3.1 et UI 7.5.1/7.5.2.
 
@@ -639,6 +648,47 @@ opération PostgreSQL/Docker ou nouvelle recette navigateur dans cette étape.
 Le [dossier UI 7.6](ui-7.6-measurements-delivery.md) décrit la comparaison à main,
 le périmètre de fusion et la checklist. Préparation de livraison ne signifie ni
 fusion réalisée ni préparation à une production SaaS multi-tenant.
+
+## Maintenance MVP - livraison préparée UI 8.7
+
+MAIN-01 à MAIN-16 validées pour la consultation uniquement. Routes lazy
+`/maintenance` et `/maintenance/:maintenanceId`, sélection explicite Entreprise ->
+Site -> Équipement, références réelles vérifiées avant GET liste. Filtres type,
+statut, priorité, recherche explicite et période de création sur created_at
+[début, fin), pagination serveur et tri created_at DESC puis id DESC.
+Brouillons distincts des filtres appliqués ; offsets et microsecondes conservés.
+Navigation par titre, détail des 18 champs réels, coût sans devise supposée,
+indisponibilité déclarée distincte d'une durée calculée. Dates administratives
+naïves conservées sans ajout de Z ni hypothèse UTC. Navigation Equipment <->
+Maintenance, actions harmonisées et retour liste contextuel. Aucun POST, PATCH,
+DELETE, formulaire ou transition de statut ; predictive est un type déclaré,
+pas une preuve de prédiction IA.
+
+Références historiques UI 8.5 : **741 tests ciblés**, **1 899 tests Angular**,
+**build production réussi**, initial **606,00 kB**, budget historique dépassé ;
+validation manuelle utilisateur **9/9**. UI 8.6 distingue **36 GET HTTP indépendants**,
+dont **27 listes comparées à SQL**, **30 états Angular**, trois interventions et
+leurs 18 champs, **40 lignes préservées** et empreintes des huit tables et par
+ligne identiques. Aucune nouvelle exécution en UI 8.7.
+
+B-MAIN-01 à B-MAIN-09 restent ouverts : PATCH sans revalidation du dossier
+fusionné, divergences Pydantic/SQL, valeurs numériques, transactions/concurrence,
+workflow, dates administratives, sécurité, volumes et coût/devise/audit.
+Authentification, autorisation par ressource et isolation multi-tenant absentes.
+Trace XHR brute absente, pagination multiligne non représentée, fractions stockées
+non nulles absentes des cas Maintenance disponibles. Seed strict non conforme sur
+Sensor ID 1, budget initial dépassé et cible responsive 390 px vérifiée à 389/391 px.
+Dialogue natif d'abandon des modules concernés non revalidé ; couverture PostgreSQL
+spécifique incomplète. Livraison de consultation en DEV, aucune aptitude déclarée
+à la production SaaS multi-entreprise.
+
+La [conception](etape-ui-8.1-maintenance.md) et les rapports
+[UI 8.2](ui-8.2-maintenance-data-access.md), [UI 8.3](ui-8.3-maintenance-list.md),
+[UI 8.4](ui-8.4-maintenance-detail.md), [UI 8.5](ui-8.5-maintenance-navigation.md)
+et [UI 8.6](ui-8.6-maintenance-integration.md) restent inchangés.
+Le [dossier UI 8.7](ui-8.7-maintenance-delivery.md) inventorie commits, fichiers
+et conditions de fusion. Les cinq GET UI 8.5 ne sont pas des captures XHR ;
+la validation utilisateur 9/9 est distincte de la recette SQL UI 8.6.
 
 ## Livraison UI 3 - Companies MVP et finition des dates
 
@@ -851,7 +901,8 @@ réel non testé et autorisation multi-entreprises à renforcer avant production
 
 ## Prochaine action
 
-Valider le [dossier UI 7.6 et sa checklist](ui-7.6-measurements-delivery.md), puis
-faire autoriser séparément le commit documentaire et la fusion vers `main`.
-Aucun commit, push, rebase, merge ou opération PostgreSQL/Docker dans UI 7.6.
-UI 8 non commencée. Les prochaines étapes des rapports historiques restent datées.
+Valider le [dossier UI 8.7 et sa checklist](ui-8.7-maintenance-delivery.md), puis
+faire autoriser le commit documentaire et séparément la fusion fast-forward.
+Aucun test, build, accès PostgreSQL/Docker, commit, push, rebase ou merge en UI 8.7.
+
+UI 9 non commencée. Les prochaines étapes des rapports historiques restent datées.
