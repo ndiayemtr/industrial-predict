@@ -50,15 +50,39 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     c.equipment.setValue(12); await settle(); parents(); await settle(); list().flush(page); await settle();
     expect(c.facade.state().status).toBe('success'); expect(root().querySelector('.context')?.textContent).toContain('POMPE');
   });
-  it('renders five accessible columns, precise source timestamp and raw scores without details or probabilities', async () => {
+  it('renders six accessible columns, precise source timestamp and declared values with details initially closed', async () => {
     await ready();
-    expect(root().querySelectorAll('thead th[scope="col"]')).toHaveLength(5);
+    expect(root().querySelectorAll('thead th[scope="col"]')).toHaveLength(6);
     expect(root().querySelector('table caption')?.textContent).toContain('Tri serveur');
     expect(root().querySelector('time')?.textContent).toBe(row.predicted_at);
     expect(root().querySelector('time')?.getAttribute('datetime')).toBe(row.predicted_at);
     expect(root().querySelector('tbody')?.textContent).toContain('0.85'); expect(root().querySelector('tbody')?.textContent).toContain('Non renseignée');
     expect(root().querySelector('tbody')?.textContent).not.toMatch(/%|probabilité|\/100/);
     expect(root().querySelector('details,a,pre')).toBeNull(); expect(root().querySelectorAll('h1')).toHaveLength(1);
+  });
+  it('opens and closes a labelled detail panel without HTTP, navigation or filter changes', async () => {
+    await ready(); c.level.setValue('unapplied'); await settle();
+    const beforeUrl = TestBed.inject(Router).url, query = c.facade.query(), state = c.facade.state();
+    const button = root().querySelector<HTMLButtonElement>('#prediction-toggle-17')!;
+    expect(button.type).toBe('button'); expect(button.getAttribute('aria-expanded')).toBe('false');
+    button.focus(); button.click(); await settle();
+    expect(button.getAttribute('aria-expanded')).toBe('true'); expect(button.getAttribute('aria-controls')).toBe('prediction-panel-17');
+    expect(root().querySelector('#prediction-panel-17')?.getAttribute('aria-labelledby')).toBe(button.id);
+    expect(root().querySelector('.detail-row td')?.getAttribute('colspan')).toBe('6');
+    expect(document.activeElement).toBe(button); expect(root().querySelectorAll('tbody tr')).toHaveLength(2);
+    button.click(); await settle(); expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(root().querySelector('#prediction-panel-17')).toBeNull(); expect(document.activeElement).toBe(button);
+    expect(TestBed.inject(Router).url).toBe(beforeUrl); expect(c.facade.query()).toBe(query); expect(c.facade.state()).toBe(state);
+    expect(c.draft()).toBe(true); expect(c.level.value).toBe('unapplied'); http.expectNone(() => true);
+  });
+  it('keeps independent panel states and clears them when leaving loaded results', async () => {
+    await open(base); req('companies').flush(catalog); parents(); await settle(); catalogs();
+    list().flush({ ...page, items: [row, { ...row, id: 18 }] }); await settle();
+    root().querySelector<HTMLButtonElement>('#prediction-toggle-17')!.click();
+    root().querySelector<HTMLButtonElement>('#prediction-toggle-18')!.click(); await settle();
+    expect(root().querySelectorAll('app-prediction-details')).toHaveLength(2); http.expectNone(() => true);
+    c.changePage(2); await settle(); expect(root().querySelector('app-prediction-details')).toBeNull();
+    await reload(); expect(c.openDetails().size).toBe(0);
   });
   it('paginates all three catalogs, merges a selection outside page one and preserves arbitrary URL sizes', async () => {
     await open(base + '&page_size=37'); req('companies').flush({ ...catalog, items: [], total: 51, pages: 2 }); parents(); await settle();

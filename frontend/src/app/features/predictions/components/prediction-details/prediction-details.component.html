@@ -1,0 +1,25 @@
+@let item = prediction();
+@let details = view();
+<h3>Détails de la prédiction enregistrée</h3>
+<dl class="metadata">
+  <div><dt>Modèle déclaré</dt><dd>{{ item.model_name === null ? 'Non renseigné' : item.model_name === '' ? 'Nom vide' : item.model_name }}</dd></div>
+  <div><dt>Version déclarée</dt><dd>{{ item.model_version === null ? 'Non renseignée' : item.model_version === '' ? 'Version vide' : item.model_version }}</dd></div>
+  <div><dt>Horizon déclaré</dt><dd>{{ item.horizon_hours === null ? 'Non renseigné' : item.horizon_hours + ' h' }}</dd></div>
+  <div><dt>Date d’enregistrement</dt><dd><time [attr.datetime]="item.created_at">{{ item.created_at }}</time></dd></div>
+  <div><dt>Référence capteur déclarée</dt><dd>{{ item.sensor_id === null ? 'Non renseignée' : item.sensor_id }}</dd></div>
+  <div><dt>Référence mesure déclarée</dt><dd>{{ item.measurement_id === null ? 'Non renseignée' : item.measurement_id }}</dd></div>
+</dl>
+@if (details.reason !== null) { <h4>Motif fourni</h4><p class="reason">{{ details.reason === '' ? 'Motif vide' : details.reason }}</p> }
+@if (details.probability !== null) { <p class="probability">Probabilité de panne fournie : {{ details.probability }} (échelle 0 à 1).</p> }
+@if (details.components; as components) {
+  <h4>Composantes santé fournies</h4>
+  <dl class="components">@for (component of components; track component.label) { <div><dt>{{ component.label }}</dt><dd>{{ component.value }}{{ details.componentScaleConfirmed ? ' / 100' : '' }}</dd></div> }</dl>
+}
+@if (details.rul !== null) { <p class="rul-detail">Durée RUL fournie dans les détails : {{ details.rul }} h.</p> }
+@for (notice of details.notices; track notice) { <p class="notice">{{ notice }}</p> }
+<h4>Données JSON fournies</h4>
+@if (item.details === null) { <p>Aucun détail JSON fourni.</p> }
+@else {
+  @if (preview().truncated) { <p class="json-warning">Aperçu tronqué : au plus 10 000 caractères et six niveaux de présentation. Les données reçues ne sont pas modifiées. Cette limite visuelle ne réduit ni le volume réseau ni les risques backend.</p> }
+  <pre class="json-preview" tabindex="0" role="region" aria-label="Aperçu JSON fourni">{{ preview().text }}</pre>
+}

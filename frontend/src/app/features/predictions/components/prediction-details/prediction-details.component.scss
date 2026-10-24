@@ -1,0 +1,13 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; overflow-wrap: anywhere; }
+h3 { margin: 0 0 tokens.$space-md; font-size: 1.125rem; }
+h4 { margin: tokens.$space-md 0 tokens.$space-sm; font-size: 1rem; }
+.metadata, .components { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; margin: 0; }
+dt { font-weight: 600; }
+dd { margin: tokens.$space-xs 0 0; }
+.notice, .json-warning { padding: tokens.$space-sm; border-left: 3px solid tokens.$navigation-active; background: tokens.$content-background; }
+.reason { white-space: pre-wrap; }
+.json-preview { max-height: 20rem; max-width: 100%; margin: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .875rem; padding: tokens.$space-sm; border: 1px solid tokens.$border-color; }
+.json-preview:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+@media (min-width: 48rem) { .metadata, .components { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

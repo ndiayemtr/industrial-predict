@@ -16,12 +16,14 @@ import { PredictionsListFacade } from '../../predictions-list.facade';
 import { predictionPeriodDraft } from '../../utils/prediction-period-draft';
 import { predictionQueryKeys, predictionTypes, readPredictionQuery } from '../../utils/prediction-query';
 import { PredictionReferenceCatalog } from '../../utils/prediction-reference-catalog';
+import { PredictionDetailsComponent } from '../../components/prediction-details/prediction-details.component';
+import { predictionPresentation } from '../../utils/prediction-display';
 
 type ScopeKey = 'company_id' | 'site_id' | 'equipment_id';
 
 @Component({
   selector: 'app-predictions-list', standalone: true,
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PredictionDetailsComponent],
   providers: [PredictionsListFacade], changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './predictions-list.component.html', styleUrl: './predictions-list.component.scss'
 })
@@ -48,6 +50,8 @@ export class PredictionsListComponent {
   private filterUrlBaseline = '';
   private contextBaseline = '';
   readonly draft = signal(false);
+  readonly openDetails = signal<ReadonlySet<number>>(new Set());
+  readonly presentation = predictionPresentation;
   readonly fieldErrors = signal<Readonly<Record<string, string>>>({});
   readonly feedback = signal('');
   readonly urlNotice = signal('');
@@ -79,6 +83,7 @@ export class PredictionsListComponent {
   readonly canNext = computed(() => { const state = this.facade.state(); return state.status === 'success' && this.page() < state.data.pages; });
 
   constructor() {
+    effect(() => { if (this.facade.state().status !== 'success') this.openDetails.set(new Set()); });
     this.companies.load(null);
     for (const selector of this.selectors) selector.control.valueChanges.pipe(takeUntilDestroyed(this.destroy)).subscribe(id => this.changeScope(selector.key, id));
     merge(this.start.valueChanges, this.end.valueChanges, this.predictionType.valueChanges, this.level.valueChanges, this.alert.valueChanges)
@@ -124,6 +129,13 @@ export class PredictionsListComponent {
   options(key: ScopeKey, catalog: PredictionReferenceCatalog): CompanyRead[] {
     const selected = key === 'company_id' ? this.facade.company() : key === 'site_id' ? this.facade.site() : this.facade.equipment();
     return [...new Map([...catalog.state().items, ...(selected ? [selected] : [])].map(item => [item.id, item])).values()];
+  }
+  toggleDetails(id: number): void {
+    this.openDetails.update(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
   private changeScope(key: ScopeKey, id: number | null): void {
     const query: PredictionsQuery = { company_id: this.company.value ?? undefined, site_id: this.site.value ?? undefined,

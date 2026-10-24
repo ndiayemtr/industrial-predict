@@ -120,11 +120,22 @@
       <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement. Le score brut ne constitue pas une probabilité universelle.</p>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Historique des prédictions de l’équipement">
         <table><caption>{{ state.data.total }} prédictions - Page {{ page() }} sur {{ state.data.pages }}. Tri serveur : date de prédiction décroissante, puis identifiant décroissant. De nouvelles lignes peuvent déplacer les pages.</caption>
-          <thead><tr><th scope="col">Date de prédiction (offset fourni)</th><th scope="col">Type</th><th scope="col">Score brut déclaré</th><th scope="col">Niveau déclaré</th><th scope="col">Alerte déclarée</th></tr></thead>
+          <thead><tr><th scope="col">Date de prédiction (offset fourni)</th><th scope="col">Type</th><th scope="col">Valeur déclarée</th><th scope="col">Niveau déclaré</th><th scope="col">Alerte déclarée</th><th scope="col">Détails</th></tr></thead>
           <tbody>@for (item of state.data.items; track item.id) {
+            @let view = presentation(item);
             <tr><td><time [attr.datetime]="item.predicted_at">{{ item.predicted_at }}</time></td><td>{{ typeLabels[item.prediction_type] }}</td>
-              <td>{{ item.score }}</td><td>{{ item.level === null ? 'Non renseigné' : item.level === '' ? 'Niveau vide' : item.level }}</td>
-              <td>{{ item.is_alert === null ? 'Non renseignée' : item.is_alert ? 'Oui' : 'Non' }}</td></tr>
+              <td><span class="value-label">{{ view.label }}</span><strong>{{ view.value }}</strong>
+                @for (warning of view.warnings; track warning) { <p class="value-warning">{{ warning }}</p> }
+              </td><td>{{ view.level }}</td><td>{{ view.alert }}</td>
+              <td><button type="button" [id]="'prediction-toggle-' + item.id" [attr.aria-expanded]="openDetails().has(item.id)"
+                [attr.aria-controls]="openDetails().has(item.id) ? 'prediction-panel-' + item.id : null"
+                [attr.aria-label]="'Détails de la prédiction ' + item.id + ' : ' + typeLabels[item.prediction_type]"
+                (click)="toggleDetails(item.id)">Détails</button></td></tr>
+            @if (openDetails().has(item.id)) {
+              <tr class="detail-row"><td colspan="6"><section [id]="'prediction-panel-' + item.id" [attr.aria-labelledby]="'prediction-toggle-' + item.id">
+                <app-prediction-details [prediction]="item" />
+              </section></td></tr>
+            }
           }</tbody>
         </table>
       </div>

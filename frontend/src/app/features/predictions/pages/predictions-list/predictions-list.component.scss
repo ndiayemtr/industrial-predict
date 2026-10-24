@@ -30,10 +30,14 @@ legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
 .draft-notice { border-left: 3px solid tokens.$navigation-active; padding-left: tokens.$space-sm; }
 .size-control { max-width: 20rem; margin-top: tokens.$space-lg; }
 .table-scroll { overflow-x: auto; max-width: 100%; }
-table { width: 100%; min-width: 52rem; border-collapse: collapse; table-layout: fixed; }
+table { width: 100%; min-width: 60rem; border-collapse: collapse; table-layout: fixed; }
 caption { text-align: left; padding-block: tokens.$space-md; }
 th, td { text-align: left; vertical-align: top; padding: tokens.$space-sm; border-bottom: 1px solid tokens.$border-color; overflow-wrap: anywhere; }
-th:first-child { width: 30%; }
+th:first-child { width: 24%; }
+th:nth-child(3) { width: 23%; }
+.value-label { display: block; font-size: tokens.$font-size-small; margin-bottom: tokens.$space-xs; }
+.value-warning { font-size: tokens.$font-size-small; margin: tokens.$space-sm 0 0; }
+.detail-row > td { padding: tokens.$space-md; background: tokens.$content-background; }
 time { font-variant-numeric: tabular-nums; }
 .filters { container: prediction-filters / inline-size; }
 @container prediction-filters (min-width: 34rem) { .bound-controls { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); } }
