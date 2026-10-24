@@ -16,7 +16,7 @@ import { SensorRead } from '../../../sensors/models/sensor.model';
 import { SensorsApiService } from '../../../sensors/data-access/sensors-api.service';
 import { MeasurementQuality } from '../../models/measurement.model';
 import { formatMeasurementUtc, validateMeasurementPeriod } from '../../utils/measurement-time';
-import { restoreMeasurementBound, serializeMeasurementBound } from '../../utils/measurement-period-draft';
+import { restoreMeasurementBound, validateMeasurementPeriodDraft } from '../../utils/measurement-period-draft';
 import { formatMeasurementValue, measurementQualityLabels } from '../../utils/measurement-display';
 import { MeasurementsQuery } from '../../models/measurements-state.model';
 import { MeasurementsListFacade } from '../../measurements-list.facade';
@@ -48,6 +48,8 @@ export class MeasurementsListComponent {
   private endBaseline = restoreMeasurementBound();
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly periodError = signal('');
+  readonly fieldErrors = signal<Readonly<Record<string, string>>>({});
+  readonly errorFields = computed(() => Object.keys(this.fieldErrors()));
   readonly formatTime = formatMeasurementUtc;
   private readonly references = inject(ReferenceDataApiService);
   private readonly router = inject(Router);
@@ -81,6 +83,9 @@ export class MeasurementsListComponent {
   readonly canNext = computed(() => { const state = this.facade.state(); return state.status === 'success' && this.page() < state.data.pages; });
 
   constructor() {
+    merge(this.start.valueChanges, this.end.valueChanges).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.periodError()) this.validatePeriodDraft();
+    });
     this.connectCatalog(this.sensorRequests, this.sensors, (scope, page) => this.sensorsApi.list({ equipment_id: scope!, page, page_size: 50 }).pipe(tap(data => {
       if (data.items.some(item => item.equipment_id !== scope)) throw new Error('Incoherent sensor catalog');
     })));
@@ -122,7 +127,7 @@ export class MeasurementsListComponent {
         this.facade.load(null); this.urlNotice.set('La qualité de l’URL est invalide. Choisissez une qualité reconnue.'); return;
       }
       try { validateMeasurementPeriod(query.start_time, query.end_time); } catch {
-        this.periodError.set('Période invalide : vérifiez les dates et heures UTC, puis le début strictement antérieur à la fin.');
+        this.validatePeriodDraft();
         this.facade.load(query); return;
       }
       this.periodError.set('');
@@ -197,26 +202,29 @@ export class MeasurementsListComponent {
   }
   applyPeriod(event?: Event): void {
     event?.preventDefault();
-    try {
-      // A partially entered native date/time can have an empty value but badInput=true.
-      if ([...this.element.nativeElement.querySelectorAll<HTMLInputElement>('.period-bound input')].some(input => !input.validity.valid))
-        throw new TypeError('Invalid native date or time input.');
-      const start = serializeMeasurementBound(this.start.getRawValue(), this.startBaseline);
-      const end = serializeMeasurementBound(this.end.getRawValue(), this.endBaseline);
-      validateMeasurementPeriod(start, end);
-      this.periodError.set(''); const query = this.facade.query();
-      if (query) void this.navigate({ ...query, start_time: start, end_time: end, page: 1 });
-    } catch {
-      this.periodError.set('Période invalide : renseignez une date et une heure UTC par borne, 0 à 6 chiffres de fraction, et un début strictement antérieur à la fin.');
-      // Focus an existing control immediately; aria-invalid is updated in the same rendering turn.
-      this.element.nativeElement.querySelector<HTMLInputElement>('#measurements-start-date')?.focus();
+    const period = this.validatePeriodDraft();
+    if (!period) {
+      const field = Object.keys(this.fieldErrors())[0];
+      this.element.nativeElement.querySelector<HTMLInputElement>('#measurements-' + field)?.focus();
+      return;
     }
+    const query = this.facade.query();
+    if (query) void this.navigate({ ...query, ...period, page: 1 });
+  }
+  private validatePeriodDraft(): { start_time: string | undefined; end_time: string | undefined } | null {
+    const invalid = [...this.element.nativeElement.querySelectorAll<HTMLInputElement>('.period-bound input')]
+      .filter(input => !input.validity.valid).map(input => input.id.slice('measurements-'.length));
+    const result = validateMeasurementPeriodDraft(this.start.getRawValue(), this.startBaseline,
+      this.end.getRawValue(), this.endBaseline, invalid);
+    this.fieldErrors.set(result.fieldErrors); this.periodError.set(result.message);
+    return result.period;
   }
   private boundForm() {
     return new FormGroup({ date: new FormControl('', { nonNullable: true }),
       time: new FormControl('', { nonNullable: true }), fraction: new FormControl('', { nonNullable: true }) });
   }
   private restorePeriod(start?: string, end?: string): void {
+    this.periodError.set(''); this.fieldErrors.set({});
     this.startBaseline = restoreMeasurementBound(start); this.endBaseline = restoreMeasurementBound(end);
     this.start.setValue(this.startBaseline.parts, { emitEvent: false }); this.end.setValue(this.endBaseline.parts, { emitEvent: false });
   }

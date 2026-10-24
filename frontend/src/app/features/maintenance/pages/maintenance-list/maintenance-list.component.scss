@@ -14,9 +14,10 @@
 label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
 form, .criteria { margin-top: tokens.$space-lg; }
 h3 { font-size: 1rem; margin: tokens.$space-lg 0 tokens.$space-sm; }
-input, select { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+// Border-box is already supplied by the application-wide reset.
+input, select { display: block; width: 100%; min-width: 0; }
 input, select {
-  min-height: 2.75rem; max-width: 100%; padding: tokens.$space-sm tokens.$space-md;
+  min-height: 2.75rem; padding: tokens.$space-sm tokens.$space-md;
   border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius;
   font: inherit; background: tokens.$surface-background; color: tokens.$text-primary;
 }
@@ -24,7 +25,6 @@ button { @include actions.navigation-action(); cursor: pointer; white-space: nor
 // The shared mixin supplies geometry and focus once; the primary variant changes colors only.
 button.primary {
   background: tokens.$navigation-active; border-color: tokens.$navigation-active; color: tokens.$sidebar-text;
-  &:hover { background: tokens.$sidebar-background; border-color: tokens.$sidebar-background; }
 }
 button:disabled, select:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:disabled { opacity: .65; }
@@ -64,8 +64,8 @@ time { font-variant-numeric: tabular-nums; }
 .search-form { display: grid; gap: tokens.$space-sm; align-items: end; }
 .search-field { min-width: 0; }
 .search-form > p { grid-column: 1 / -1; }
-.search-form p, .field-error { margin: tokens.$space-xs 0; }
-.filters .field-error, #period-error { color: #9b1c1c; font-weight: 600; }
+.search-form p { margin: tokens.$space-xs 0; }
+.filters .field-error { color: #9b1c1c; }
 .filters .draft-notice { color: tokens.$text-primary; border-left: 3px solid tokens.$navigation-active; padding-left: tokens.$space-sm; }
 .record-title { font-weight: 600; }
 th:first-child { width: 27%; }
@@ -81,3 +81,9 @@ th:first-child { width: 27%; }
   .period-actions button { flex: 0 1 auto; }
 }
 @media (min-width: 75rem) { .parents { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.period-feedback { grid-column: 1 / -1; min-height: 2.75rem; }
+.period-feedback:empty { display: none; }
+.bound-controls [aria-invalid='true'] { border-color: #9b1c1c; }
+
+.period-feedback p { margin: 0; }

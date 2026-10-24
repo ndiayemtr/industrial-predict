@@ -183,4 +183,20 @@ describe('Sensor read-only detail and real parent chain', () => {
     expect(root().querySelector('.sensor-edit')).toBeNull(); expect(root().textContent).not.toContain('Capteur modifié avec succès.');
   });
 
+  it('keeps named keyboard actions without an inherited native title or redundant tooltip', async () => {
+    await loaded('/sensors/17?' + context);
+    const header = root().querySelector('app-page-header')!;
+    expect(header.getAttribute('title')).toBeNull(); expect(header.querySelector('h1')?.textContent).toBe('Détail capteur');
+    const actions = [...header.querySelectorAll<HTMLAnchorElement>('a')];
+    expect(actions.map(a => a.className)).toEqual(['sensor-back', 'sensor-measurements', 'sensor-edit']);
+    expect(actions.map(a => a.textContent?.trim())).toEqual(['Retour à la liste des capteurs', 'Voir les mesures', 'Modifier']);
+    for (const action of actions) {
+      expect(action.closest('[title]')).toBeNull(); expect(action.hasAttribute('nbTooltip')).toBe(false);
+      expect(action.getAttribute('aria-label')).toBeNull(); action.focus(); expect(document.activeElement).toBe(action);
+    }
+    expect(actions[0].getAttribute('href')).toBe('/sensors?' + context);
+    expect(actions[1].getAttribute('href')).toBe('/measurements?company_id=7&site_id=9&equipment_id=12&sensor_id=17&page=1&page_size=20');
+    expect(actions[2].getAttribute('href')).toBe('/sensors/17/edit?' + context); http.expectNone(() => true);
+  });
+
 });

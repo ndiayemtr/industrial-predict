@@ -72,7 +72,7 @@
       }
     </div>
   </div>
-  <form novalidate (submit)="applyPeriod($event)" aria-label="Période UTC des mesures">
+  <form novalidate (submit)="$event.preventDefault()" aria-label="Période UTC des mesures">
     <h3>Période UTC facultative</h3>
     <p id="period-help">Début inclus, fin exclue. Heures en UTC, précision possible jusqu'à 6 décimales.</p>
     <div class="period-layout">
@@ -81,13 +81,13 @@
         <div class="bound-controls">
           <div class="bound-date"><label for="measurements-start-date">Date de début</label>
             <input id="measurements-start-date" type="date" [formControl]="start.controls.date" min="0001-01-01" max="9999-12-31"
-              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+              [attr.aria-describedby]="fieldErrors()['start-date'] ? 'period-help start-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-date'] ? 'true' : null" /></div>
           <div><label for="measurements-start-time">Heure UTC de début</label>
             <input id="measurements-start-time" type="time" step="1" [formControl]="start.controls.time"
-              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+              [attr.aria-describedby]="fieldErrors()['start-time'] ? 'period-help start-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-time'] ? 'true' : null" /></div>
           <div><label for="measurements-start-fraction">Fraction de début</label>
             <input id="measurements-start-fraction" type="text" inputmode="numeric" [formControl]="start.controls.fraction" placeholder="Facultative"
-              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" spellcheck="false" /></div>
+              [attr.aria-describedby]="fieldErrors()['start-fraction'] ? 'period-help start-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-fraction'] ? 'true' : null" spellcheck="false" /></div>
         </div>
       </fieldset>
       <fieldset class="period-bound">
@@ -95,21 +95,25 @@
         <div class="bound-controls">
           <div class="bound-date"><label for="measurements-end-date">Date de fin</label>
             <input id="measurements-end-date" type="date" [formControl]="end.controls.date" min="0001-01-01" max="9999-12-31"
-              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+              [attr.aria-describedby]="fieldErrors()['end-date'] ? 'period-help end-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-date'] ? 'true' : null" /></div>
           <div><label for="measurements-end-time">Heure UTC de fin</label>
             <input id="measurements-end-time" type="time" step="1" [formControl]="end.controls.time"
-              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" /></div>
+              [attr.aria-describedby]="fieldErrors()['end-time'] ? 'period-help end-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-time'] ? 'true' : null" /></div>
           <div><label for="measurements-end-fraction">Fraction de fin</label>
             <input id="measurements-end-fraction" type="text" inputmode="numeric" [formControl]="end.controls.fraction" placeholder="Facultative"
-              [attr.aria-describedby]="periodError() ? 'period-help period-error' : 'period-help'" [attr.aria-invalid]="periodError() ? 'true' : null" spellcheck="false" /></div>
+              [attr.aria-describedby]="fieldErrors()['end-fraction'] ? 'period-help end-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-fraction'] ? 'true' : null" spellcheck="false" /></div>
         </div>
       </fieldset>
+      <div class="period-feedback" role="alert" aria-atomic="true">
+        @for (field of errorFields(); track field) {
+          <p class="field-error" [id]="field + '-error'">{{ field.startsWith('start-') ? 'Début' : 'Fin' }} : {{ fieldErrors()[field] }}</p>
+        }
+      </div>
       <div class="period-actions">
-        <button class="primary" type="submit">Appliquer la période</button>
+        <button class="primary" type="button" (click)="applyPeriod()">Appliquer la période</button>
         <button type="button" (click)="clearFilters()">Effacer les critères</button>
       </div>
     </div>
-    @if (periodError()) { <p id="period-error" role="alert">{{ periodError() }}</p> }
   </form>
   <div class="criteria">
     <div><label for="measurements-quality">Qualité déclarée</label>

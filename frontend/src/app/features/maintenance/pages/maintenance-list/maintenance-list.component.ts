@@ -14,7 +14,7 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { businessReferenceLabel } from '../../../../shared/utils/business-reference-label';
 import { MaintenancePriority, MaintenanceStatus, MaintenanceType } from '../../models/maintenance.model';
 import { validateMeasurementPeriod } from '../../../measurements/utils/measurement-time';
-import { restoreMeasurementBound, serializeMeasurementBound } from '../../../measurements/utils/measurement-period-draft';
+import { restoreMeasurementBound, validateMeasurementPeriodDraft } from '../../../measurements/utils/measurement-period-draft';
 import { MaintenanceQuery } from '../../models/maintenance-state.model';
 import { MaintenanceListFacade } from '../../maintenance-list.facade';
 
@@ -45,6 +45,7 @@ export class MaintenanceListComponent {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly periodError = signal('');
   readonly fieldErrors = signal<Readonly<Record<string, string>>>({});
+  readonly errorFields = computed(() => Object.keys(this.fieldErrors()));
   readonly periodDraft = signal(false);
   readonly searchDraft = signal(false);
   private searchBaseline = '';
@@ -215,34 +216,12 @@ export class MaintenanceListComponent {
     if (query) void this.navigate({ ...query, ...period, page: 1 });
   }
   private validatePeriodDraft(): { start_time: string | undefined; end_time: string | undefined } | null {
-    const errors: Record<string, string> = {};
-    const read = (key: 'start' | 'end', form: typeof this.start, baseline: typeof this.startBaseline): string | undefined => {
-      const parts = form.getRawValue();
-      for (const field of ['date', 'time', 'fraction'] as const) {
-        const input = this.element.nativeElement.querySelector<HTMLInputElement>('#maintenance-' + key + '-' + field);
-        if (input && !input.validity.valid) errors[key + '-' + field] = 'Valeur de ' + (field === 'date' ? 'date' : 'l’heure') + ' incomplète ou invalide.';
-      }
-      if (parts.date && !parts.time) errors[key + '-time'] = 'Renseignez l’heure UTC avec la date, sans heure par défaut.';
-      if ((parts.time || parts.fraction) && !parts.date) errors[key + '-date'] = 'Renseignez la date de cette borne.';
-      if (parts.fraction && !parts.time) errors[key + '-time'] = 'Renseignez l’heure UTC de cette fraction.';
-      if (!/^\d{0,6}$/.test(parts.fraction)) errors[key + '-fraction'] = 'Utilisez de 0 à 6 chiffres pour la fraction.';
-      if (parts.time && !/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(parts.time)) errors[key + '-time'] = 'Heure UTC invalide : heures, minutes et secondes valides requises.';
-      if (Object.keys(errors).some(field => field.startsWith(key + '-'))) return undefined;
-      try {
-        const value = serializeMeasurementBound(parts, baseline);
-        validateMeasurementPeriod(value, undefined);
-        return value;
-      } catch { errors[key + '-date'] = 'Borne invalide : date réelle et horodatage avec offset requis, sans fuseau supposé.'; return undefined; }
-    };
-    const start_time = read('start', this.start, this.startBaseline), end_time = read('end', this.end, this.endBaseline);
-    let message = Object.keys(errors).length ? 'La période n’est pas appliquée. Corrigez les champs indiqués.' : '';
-    if (!message) {
-      try { validateMeasurementPeriod(start_time, end_time); }
-      catch { message = 'Le début doit être strictement antérieur à la fin (début inclus, fin exclue).';
-        errors['end-date'] = message; }
-    }
-    this.fieldErrors.set(errors); this.periodError.set(message);
-    return message ? null : { start_time, end_time };
+    const invalid = [...this.element.nativeElement.querySelectorAll<HTMLInputElement>('.period-bound input')]
+      .filter(input => !input.validity.valid).map(input => input.id.slice('maintenance-'.length));
+    const result = validateMeasurementPeriodDraft(this.start.getRawValue(), this.startBaseline,
+      this.end.getRawValue(), this.endBaseline, invalid);
+    this.fieldErrors.set(result.fieldErrors); this.periodError.set(result.message);
+    return result.period;
   }
   private boundForm() {
     return new FormGroup({ date: new FormControl('', { nonNullable: true }),

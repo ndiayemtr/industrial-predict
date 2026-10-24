@@ -1,4 +1,4 @@
-<app-page-header title="Détail intervention" description="Dossier de maintenance en consultation uniquement.">
+<app-page-header [title]="'Détail intervention'" description="Dossier de maintenance en consultation uniquement.">
   <a class="maintenance-back" routerLink="/maintenance" [queryParams]="listQuery()" [fragment]="fragment() ?? undefined">Retour à la liste des interventions</a>
 </app-page-header>
 @let current = state();

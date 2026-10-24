@@ -55,7 +55,7 @@
       }
     </div>
   </div>
-  <form novalidate (submit)="applyPeriod($event)" aria-label="Période de création du dossier (UTC)">
+  <form novalidate (submit)="$event.preventDefault()" aria-label="Période de création du dossier (UTC)">
     <h3>Période de création du dossier (UTC)</h3>
     <p id="period-help">Filtre sur created_at uniquement. Début inclus, fin exclue. Heures en UTC, précision possible jusqu'à 6 décimales.</p>
     <div class="period-layout">
@@ -64,16 +64,13 @@
         <div class="bound-controls">
           <div class="bound-date"><label for="maintenance-start-date">Date de début</label>
             <input id="maintenance-start-date" type="date" [formControl]="start.controls.date" min="0001-01-01" max="9999-12-31"
-              [attr.aria-describedby]="fieldErrors()['start-date'] ? 'period-help start-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-date'] ? 'true' : null" />
-            @if (fieldErrors()['start-date']) { <p class="field-error" id="start-date-error" role="alert">{{ fieldErrors()['start-date'] }}</p> }</div>
+              [attr.aria-describedby]="fieldErrors()['start-date'] ? 'period-help start-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-date'] ? 'true' : null" /></div>
           <div><label for="maintenance-start-time">Heure UTC de début</label>
             <input id="maintenance-start-time" type="time" step="1" [formControl]="start.controls.time"
-              [attr.aria-describedby]="fieldErrors()['start-time'] ? 'period-help start-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-time'] ? 'true' : null" />
-            @if (fieldErrors()['start-time']) { <p class="field-error" id="start-time-error" role="alert">{{ fieldErrors()['start-time'] }}</p> }</div>
+              [attr.aria-describedby]="fieldErrors()['start-time'] ? 'period-help start-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-time'] ? 'true' : null" /></div>
           <div><label for="maintenance-start-fraction">Fraction de début</label>
             <input id="maintenance-start-fraction" type="text" inputmode="numeric" [formControl]="start.controls.fraction" placeholder="Facultative"
-              [attr.aria-describedby]="fieldErrors()['start-fraction'] ? 'period-help start-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-fraction'] ? 'true' : null" spellcheck="false" />
-            @if (fieldErrors()['start-fraction']) { <p class="field-error" id="start-fraction-error" role="alert">{{ fieldErrors()['start-fraction'] }}</p> }</div>
+              [attr.aria-describedby]="fieldErrors()['start-fraction'] ? 'period-help start-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-fraction'] ? 'true' : null" spellcheck="false" /></div>
         </div>
       </fieldset>
       <fieldset class="period-bound">
@@ -81,20 +78,22 @@
         <div class="bound-controls">
           <div class="bound-date"><label for="maintenance-end-date">Date de fin</label>
             <input id="maintenance-end-date" type="date" [formControl]="end.controls.date" min="0001-01-01" max="9999-12-31"
-              [attr.aria-describedby]="fieldErrors()['end-date'] ? 'period-help end-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-date'] ? 'true' : null" />
-            @if (fieldErrors()['end-date']) { <p class="field-error" id="end-date-error" role="alert">{{ fieldErrors()['end-date'] }}</p> }</div>
+              [attr.aria-describedby]="fieldErrors()['end-date'] ? 'period-help end-date-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-date'] ? 'true' : null" /></div>
           <div><label for="maintenance-end-time">Heure UTC de fin</label>
             <input id="maintenance-end-time" type="time" step="1" [formControl]="end.controls.time"
-              [attr.aria-describedby]="fieldErrors()['end-time'] ? 'period-help end-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-time'] ? 'true' : null" />
-            @if (fieldErrors()['end-time']) { <p class="field-error" id="end-time-error" role="alert">{{ fieldErrors()['end-time'] }}</p> }</div>
+              [attr.aria-describedby]="fieldErrors()['end-time'] ? 'period-help end-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-time'] ? 'true' : null" /></div>
           <div><label for="maintenance-end-fraction">Fraction de fin</label>
             <input id="maintenance-end-fraction" type="text" inputmode="numeric" [formControl]="end.controls.fraction" placeholder="Facultative"
-              [attr.aria-describedby]="fieldErrors()['end-fraction'] ? 'period-help end-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-fraction'] ? 'true' : null" spellcheck="false" />
-            @if (fieldErrors()['end-fraction']) { <p class="field-error" id="end-fraction-error" role="alert">{{ fieldErrors()['end-fraction'] }}</p> }</div>
+              [attr.aria-describedby]="fieldErrors()['end-fraction'] ? 'period-help end-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-fraction'] ? 'true' : null" spellcheck="false" /></div>
         </div>
       </fieldset>
+      <div class="period-feedback" role="alert" aria-atomic="true">
+        @for (field of errorFields(); track field) {
+          <p class="field-error" [id]="field + '-error'">{{ field.startsWith('start-') ? 'Début' : 'Fin' }} : {{ fieldErrors()[field] }}</p>
+        }
+      </div>
       <div class="period-actions">
-        <button class="primary" type="submit">Appliquer la période</button>
+        <button class="primary" type="button" (click)="applyPeriod()">Appliquer la période</button>
         <button type="button" (click)="clearPeriod()">Effacer la période</button>
       </div>
     </div>
@@ -102,7 +101,6 @@
     @if (facade.state().status === 'success' || facade.state().status === 'empty') {
       <p class="applied-period">Période appliquée à la liste : début {{ facade.query()?.start_time ?? 'sans borne' }} ; fin {{ facade.query()?.end_time ?? 'sans borne' }}.</p>
     }
-    @if (periodError()) { <p id="period-error" role="alert">{{ periodError() }}</p> }
   </form>
   <div class="criteria">
     <div><label for="maintenance-type">Type déclaré</label>

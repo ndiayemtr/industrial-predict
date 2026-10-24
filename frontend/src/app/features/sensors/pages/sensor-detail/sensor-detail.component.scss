@@ -2,7 +2,7 @@
 @use '../../../../../styles/tokens' as tokens;
 
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
-.sensor-back { @include actions.navigation-action(); }
+.sensor-back, .sensor-measurements { @include actions.navigation-action(); }
 
 a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 .sensor-detail { margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
@@ -22,4 +22,5 @@ dd p { margin: 0; }
 
 .sensor-edit { @include actions.navigation-action($primary: true); }
 
-.sensor-measurements { @include actions.navigation-action(); }
+
+@media (min-width: 48rem) { .sensor-back, .sensor-measurements, .sensor-edit { white-space: nowrap; } }

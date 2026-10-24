@@ -1,4 +1,4 @@
-import { restoreMeasurementBound, serializeMeasurementBound } from './measurement-period-draft';
+import { restoreMeasurementBound, serializeMeasurementBound, validateMeasurementPeriodDraft } from './measurement-period-draft';
 import { validateMeasurementPeriod } from './measurement-time';
 
 describe('UTC period controls with exact original URL baseline',()=>{
@@ -30,4 +30,20 @@ describe('UTC period controls with exact original URL baseline',()=>{
   it.each(['1234567','-1','1.2',' 1','1 ','a','١'])('rejects invalid fraction %s rather than truncating it',fraction=>{
     expect(()=>serializeMeasurementBound({date:'2026-01-01',time:'12:00:00',fraction},baseline)).toThrow();
   });
+  it('shares field errors without completing an absent hour or widening invalid native input', () => {
+    const result = validateMeasurementPeriodDraft({ date: '2026-10-24', time: '', fraction: '' }, baseline, baseline.parts, baseline);
+    expect(result.period).toBeNull(); expect(Object.keys(result.fieldErrors)).toEqual(['start-time']);
+    expect(result.fieldErrors['start-time']).toContain('heure UTC');
+    const native = validateMeasurementPeriodDraft(baseline.parts, baseline, baseline.parts, baseline, ['end-date']);
+    expect(native.period).toBeNull(); expect(native.fieldErrors['end-date']).toBeTruthy();
+  });
+  it('keeps the source offset while comparing and applying microsecond bounds', () => {
+    const start = restoreMeasurementBound('2026-10-24T14:00:00.000001+02:00');
+    const end = { date: '2026-10-24', time: '12:00:00', fraction: '000002' };
+    expect(validateMeasurementPeriodDraft(start.parts, start, end, baseline).period).toEqual({ start_time: start.raw, end_time: '2026-10-24T12:00:00.000002Z' });
+    expect(validateMeasurementPeriodDraft(start.parts, start, { ...end, fraction: '000001' }, baseline).period).toBeNull();
+    const naive = restoreMeasurementBound('2026-10-24T12:00:00.000001');
+    expect(validateMeasurementPeriodDraft(naive.parts, naive, baseline.parts, baseline).period).toBeNull();
+  });
+
 });

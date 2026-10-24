@@ -132,4 +132,15 @@ describe('Maintenance read-only detail', () => {
     read('maintenance/18').flush({ ...record, id: 18 }); const parent = read('equipments/12'); await h.navigateByUrl('/maintenance/19', MaintenanceDetailComponent); await settle(); expect(parent.cancelled).toBe(true); expect(root().querySelector('[data-field]')).toBeNull();
     read('maintenance/19').flush({}, { status: 404, statusText: 'Missing' }); await settle(); c.retryReferences(); http.expectNone(() => true);
   });
+  it('keeps the visible title and keyboard actions without an inherited native title or tooltip component', async () => {
+    await loaded(); const header = root().querySelector('app-page-header')!;
+    expect(header.getAttribute('title')).toBeNull(); expect(header.querySelector('h1')?.textContent).toBe('Détail intervention');
+    const actions = [...header.querySelectorAll<HTMLAnchorElement>('a')]; expect(actions).toHaveLength(1);
+    for (const action of actions) {
+      expect(action.closest('[title]')).toBeNull(); expect(action.hasAttribute('nbTooltip')).toBe(false);
+      expect(action.getAttribute('href')).toBeTruthy(); action.focus(); expect(document.activeElement).toBe(action);
+    }
+    expect(root().querySelector('nb-tooltip,[role="tooltip"]')).toBeNull();
+  });
+
 });

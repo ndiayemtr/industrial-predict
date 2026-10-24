@@ -1,4 +1,4 @@
-<app-page-header title="Détail capteur" description="Informations du capteur industriel en lecture seule.">
+<app-page-header [title]="'Détail capteur'" description="Informations du capteur industriel en lecture seule.">
   <a class="sensor-back" routerLink="/sensors" [queryParams]="listQuery()">Retour à la liste des capteurs</a>
   @if (measurementsQuery(); as query) {
     <a class="sensor-measurements" routerLink="/measurements" [queryParams]="query">Voir les mesures</a>

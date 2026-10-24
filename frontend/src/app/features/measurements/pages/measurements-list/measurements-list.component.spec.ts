@@ -74,7 +74,7 @@ describe('Measurements list, four selections and applied URL',()=>{
   it('rejects equal instants and retains applied results without HTTP',async()=>{
     await ready();c.start.setValue({date:'2026-01-01',time:'00:00:00',fraction:''});c.end.setValue(c.start.getRawValue());c.applyPeriod();await settle();
     expect(c.periodError()).toContain('Période invalide');expect(params()['start_time']).toBeUndefined();expect(c.facade.state().status).toBe('success');http.expectNone(()=>true);
-    expect(root().querySelector('#measurements-start-date')?.getAttribute('aria-invalid')).toBe('true');
+    expect(root().querySelector('#measurements-end-date')?.getAttribute('aria-invalid')).toBe('true');
   });
   it.each(['good','suspect','bad','missing','estimated'] as const)('sends exact quality %s and starts at page 1',async quality=>{
     await ready('&page=2');c.quality.setValue(quality);await settle();const req=read('measurements');expect(req.request.params.get('quality')).toBe(quality);expect(req.request.params.get('page')).toBe('1');req.flush(page);await settle();
@@ -123,7 +123,7 @@ describe('Measurements list, four selections and applied URL',()=>{
     expect(root().querySelector('#measurements-start-date')?.getAttribute('type')).toBe('date');
     expect(root().querySelector('#measurements-start-time')?.getAttribute('step')).toBe('1');
     edit('measurements-start-date','2026-02-28');edit('measurements-start-time','23:59:59');edit('measurements-start-fraction','000001');
-    root().querySelector('form')!.dispatchEvent(new Event('submit',{cancelable:true}));await settle();
+    root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click();await settle();
     const req=read('measurements');expect(req.request.params.get('start_time')).toBe('2026-02-28T23:59:59.000001Z');req.flush(page);await settle();
     expect(c.start.controls.fraction.value).toBe('000001');
     for(const label of root().querySelectorAll('label[for]'))expect(root().querySelector('#'+label.getAttribute('for'))).not.toBeNull();
@@ -170,15 +170,65 @@ describe('Measurements list, four selections and applied URL',()=>{
 
   it('places the two temporal actions after the six controls in a dedicated row without changing their semantics',async()=>{
     await ready();const layout=root().querySelector('.period-layout')!;
-    expect([...layout.children].map(el=>el.tagName)).toEqual(['FIELDSET','FIELDSET','DIV']);
+    expect([...layout.children].map(el=>el.tagName)).toEqual(['FIELDSET','FIELDSET','DIV','DIV']);
     expect(layout.querySelectorAll('.period-bound input')).toHaveLength(6);
     const actions=layout.querySelector('.period-actions')!;
-    expect(actions.previousElementSibling?.tagName).toBe('FIELDSET');expect(actions.querySelector('input')).toBeNull();
+    expect(actions.previousElementSibling?.classList.contains('period-feedback')).toBe(true);expect(actions.querySelector('input')).toBeNull();
     const buttons=[...actions.querySelectorAll<HTMLButtonElement>('button')];
     expect(buttons.map(el=>el.textContent?.trim())).toEqual(['Appliquer la période','Effacer les critères']);
-    expect(buttons[0].type).toBe('submit');expect(buttons[0].classList.contains('primary')).toBe(true);
+    expect(buttons[0].type).toBe('button');expect(buttons[0].classList.contains('primary')).toBe(true);
     expect(buttons[1].type).toBe('button');expect(buttons[1].classList.contains('primary')).toBe(false);
     expect([...layout.querySelectorAll('legend')].map(el=>el.textContent)).toEqual(['Début inclus (UTC)','Fin exclue (UTC)']);
   });
+
+ it('keeps incomplete initial input and implicit submission silent until Apply is activated', async () => {
+  await ready('&page=2&quality=suspect');
+  c.start.controls.date.setValue('2026-10-24'); await settle();
+  const form = root().querySelector<HTMLFormElement>('form')!;
+  const event = new Event('submit', { bubbles: true, cancelable: true }); form.dispatchEvent(event); await settle();
+  expect(event.defaultPrevented).toBe(true); expect(c.periodError()).toBe('');
+  expect(root().querySelectorAll('[aria-invalid="true"]')).toHaveLength(0);
+  expect(params()['page']).toBe('2'); http.expectNone(() => true);
+  root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click(); await settle();
+  expect(root().querySelectorAll('form [role="alert"]')).toHaveLength(1);
+  expect(c.fieldErrors()['start-time']).toContain('heure UTC');
+  expect(root().querySelector('#measurements-start-date')?.getAttribute('aria-invalid')).toBeNull();
+  expect(document.activeElement?.id).toBe('measurements-start-time');
+  expect(params()['page']).toBe('2'); expect(c.start.controls.time.value).toBe(''); http.expectNone(() => true);
+ });
+ it('clears the relevant error after correction without applying the draft or sending GET', async () => {
+  await ready('&page=2&quality=suspect'); c.start.controls.date.setValue('2026-10-24'); c.applyPeriod(); await settle();
+  c.end.controls.fraction.setValue(''); await settle(); expect(c.periodError()).not.toBe('');
+  c.start.controls.time.setValue('12:34:56'); c.start.controls.fraction.setValue('000001'); await settle();
+  expect(c.periodError()).toBe(''); expect(c.fieldErrors()).toEqual({}); expect(params()['page']).toBe('2');
+  expect(params()['start_time']).toBeUndefined(); http.expectNone(() => true);
+  root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click(); await settle();
+  const request = read('measurements'); expect(request.request.params.get('start_time')).toBe('2026-10-24T12:34:56.000001Z');
+  expect(request.request.params.get('page')).toBe('1'); request.flush(page); await settle();
+ });
+ it('clears failed draft errors using the existing Clear action', async () => {
+  await ready(); c.end.controls.fraction.setValue('123'); c.applyPeriod(); await settle();
+  c.clearFilters(); await settle(); expect(c.periodError()).toBe(''); expect(c.fieldErrors()).toEqual({});
+  expect(c.end.getRawValue()).toEqual({ date: '', time: '', fraction: '' }); http.expectNone(() => true);
+ });
+
+ it('reserves one feedback row outside the six fields and displays precise errors without a duplicate summary', async () => {
+  await ready(); const feedback = root().querySelector('.period-feedback')!;
+  expect(feedback.parentElement?.classList.contains('period-layout')).toBe(true);
+  expect(feedback.textContent?.trim()).toBe(''); expect(root().querySelectorAll('.period-bound input')).toHaveLength(6);
+  c.start.controls.date.setValue('2026-10-24'); await settle();
+  expect(feedback.textContent?.trim()).toBe(''); http.expectNone(() => true);
+  c.applyPeriod(); await settle();
+  const error = root().querySelector('#start-time-error')!;
+  expect(error.closest('.period-feedback')).toBe(feedback); expect(error.closest('.bound-controls')).toBeNull();
+  expect(error.textContent).toContain('Début :'); expect(error.textContent).toContain('heure UTC');
+  expect(root().querySelectorAll('form [role="alert"]')).toHaveLength(1);
+  expect(root().querySelector('#period-error')).toBeNull();
+  expect(root().querySelectorAll('.period-bound .field-error')).toHaveLength(0);
+  expect(root().querySelectorAll('[aria-invalid="true"]')).toHaveLength(1);
+  c.start.controls.time.setValue('12:00:00'); await settle();
+  expect(feedback.textContent?.trim()).toBe(''); expect(root().querySelectorAll('[aria-invalid="true"]')).toHaveLength(0);
+  http.expectNone(() => true);
+ });
 
 });

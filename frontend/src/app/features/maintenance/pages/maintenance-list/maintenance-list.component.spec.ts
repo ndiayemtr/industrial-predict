@@ -141,12 +141,12 @@ describe('Maintenance list and applied context', () => {
   [{ date: '2026-10-23', time: '12:00:60', fraction: '' }, 'start-time']
  ] as const)('places precise invalid draft %s error at %s without HTTP', async (parts, field) => {
   await ready(); c.start.setValue({ ...parts }); c.applyPeriod(); await settle(); expect(c.fieldErrors()[field]).toBeTruthy();
-  expect(root().querySelector('#' + field + '-error')?.getAttribute('role')).toBe('alert');
+  expect(root().querySelector('#' + field + '-error')?.getAttribute('role')).toBeNull();
   expect(root().querySelector('#maintenance-' + field)?.getAttribute('aria-describedby')).toContain(field + '-error'); http.expectNone(() => true);
  });
  it.each(['12:00:00','11:59:59'])('rejects end %s equal or before start next to the end fields', async time => {
   await ready(); c.start.setValue({ date: '2026-10-23', time: '12:00:00', fraction: '' }); c.end.setValue({ date: '2026-10-23', time, fraction: '' }); c.applyPeriod(); await settle();
-  expect(root().querySelector('#end-date-error')?.textContent).toContain('strictement antérieur'); http.expectNone(() => true);
+  expect(root().querySelector('#end-date-error')?.textContent).toContain('strictement postérieure'); http.expectNone(() => true);
  });
  it('shows the error of a naive restored bound next to its date without inventing UTC', async () => {
   await open(base + '&end_time=2026-10-23T12:00:00'); req('companies').flush(catalog); await settle();
@@ -175,6 +175,56 @@ describe('Maintenance list and applied context', () => {
  it('does not discard an invalid unrelated URL filter when clearing the period', async () => {
   await open(base + '&status=unknown&start_time=invalid'); req('companies').flush(catalog); await settle(); c.clearPeriod(); await settle();
   expect(url()['status']).toBe('unknown'); expect(url()['start_time']).toBeUndefined(); expect(c.urlNotice()).not.toBe(''); http.expectNone(() => true);
+ });
+
+ it('keeps incomplete initial input and implicit submission silent until Apply is activated', async () => {
+  await ready(base + '&page=2&priority=high');
+  c.start.controls.date.setValue('2026-10-24'); await settle();
+  const form = root().querySelector<HTMLFormElement>('form')!;
+  const event = new Event('submit', { bubbles: true, cancelable: true }); form.dispatchEvent(event); await settle();
+  expect(event.defaultPrevented).toBe(true); expect(c.periodError()).toBe('');
+  expect(root().querySelectorAll('[aria-invalid="true"]')).toHaveLength(0);
+  expect(url()['page']).toBe('2'); http.expectNone(() => true);
+  root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click(); await settle();
+  expect(root().querySelectorAll('form [role="alert"]')).toHaveLength(1);
+  expect(c.fieldErrors()['start-time']).toContain('heure UTC');
+  expect(root().querySelector('#maintenance-start-date')?.getAttribute('aria-invalid')).toBeNull();
+  expect(document.activeElement?.id).toBe('maintenance-start-time');
+  expect(url()['page']).toBe('2'); expect(c.start.controls.time.value).toBe(''); http.expectNone(() => true);
+ });
+ it('clears the relevant error after correction without applying the draft or sending GET', async () => {
+  await ready(base + '&page=2&priority=high'); c.start.controls.date.setValue('2026-10-24'); c.applyPeriod(); await settle();
+  c.end.controls.fraction.setValue(''); await settle(); expect(c.periodError()).not.toBe('');
+  c.start.controls.time.setValue('12:34:56'); c.start.controls.fraction.setValue('000001'); await settle();
+  expect(c.periodError()).toBe(''); expect(c.fieldErrors()).toEqual({}); expect(url()['page']).toBe('2');
+  expect(url()['start_time']).toBeUndefined(); http.expectNone(() => true);
+  root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click(); await settle(); parents();
+  const request = list(); expect(request.request.params.get('start_time')).toBe('2026-10-24T12:34:56.000001Z');
+  expect(request.request.params.get('page')).toBe('1'); request.flush(page); await settle();
+ });
+ it('clears failed draft errors using the existing Clear action', async () => {
+  await ready(); c.end.controls.fraction.setValue('123'); c.applyPeriod(); await settle();
+  c.clearPeriod(); await settle(); expect(c.periodError()).toBe(''); expect(c.fieldErrors()).toEqual({});
+  expect(c.end.getRawValue()).toEqual({ date: '', time: '', fraction: '' }); http.expectNone(() => true);
+ });
+
+ it('reserves one feedback row outside the six fields and displays precise errors without a duplicate summary', async () => {
+  await ready(); const feedback = root().querySelector('.period-feedback')!;
+  expect(feedback.parentElement?.classList.contains('period-layout')).toBe(true);
+  expect(feedback.textContent?.trim()).toBe(''); expect(root().querySelectorAll('.period-bound input')).toHaveLength(6);
+  c.start.controls.date.setValue('2026-10-24'); await settle();
+  expect(feedback.textContent?.trim()).toBe(''); http.expectNone(() => true);
+  c.applyPeriod(); await settle();
+  const error = root().querySelector('#start-time-error')!;
+  expect(error.closest('.period-feedback')).toBe(feedback); expect(error.closest('.bound-controls')).toBeNull();
+  expect(error.textContent).toContain('Début :'); expect(error.textContent).toContain('heure UTC');
+  expect(root().querySelectorAll('form [role="alert"]')).toHaveLength(1);
+  expect(root().querySelector('#period-error')).toBeNull();
+  expect(root().querySelectorAll('.period-bound .field-error')).toHaveLength(0);
+  expect(root().querySelectorAll('[aria-invalid="true"]')).toHaveLength(1);
+  c.start.controls.time.setValue('12:00:00'); await settle();
+  expect(feedback.textContent?.trim()).toBe(''); expect(root().querySelectorAll('[aria-invalid="true"]')).toHaveLength(0);
+  http.expectNone(() => true);
  });
 
 });
