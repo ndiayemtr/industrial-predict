@@ -1,0 +1,138 @@
+<app-page-header title="Prédictions" description="Consultez les prédictions enregistrées d’un équipement, en lecture seule." />
+@if (urlNotice()) { <p class="url-notice" role="status">{{ urlNotice() }}</p> }
+<section class="filters" aria-labelledby="predictions-context-title">
+  <h2 id="predictions-context-title">Entreprise, site et équipement</h2>
+  <div class="parents">
+    @for (selector of selectors; track selector.key) {
+      <div>
+        <label [for]="'predictions-' + selector.key">{{ selector.name }}</label>
+        <select [id]="'predictions-' + selector.key" [formControl]="selector.control"
+          [attr.aria-describedby]="'predictions-help-' + selector.key" [attr.aria-busy]="selector.catalog.state().status === 'loading'">
+          <option [ngValue]="null">Sélectionner : {{ selector.name }}</option>
+          @for (item of options(selector.key, selector.catalog); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+        </select>
+        <p [id]="'predictions-help-' + selector.key">Choix explicite ; rattachement vérifié avant lecture de l’historique.</p>
+        @let catalog = selector.catalog.state();
+        @if (catalog.status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+        @if (catalog.status === 'error') {
+          <p role="status">Le catalogue ne peut pas être chargé ou son contenu est incohérent.</p>
+          @if (catalog.retryable) { <button type="button" (click)="selector.catalog.retry()">Réessayer : {{ selector.plural }}</button> }
+        }
+        @if (catalog.status === 'ready' && catalog.total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
+        @if (catalog.status === 'ready' && catalog.page < catalog.pages) { <button type="button" (click)="selector.catalog.more()">Charger plus : {{ selector.plural }}</button> }
+      </div>
+    }
+  </div>
+  <button type="button" (click)="resetSelection()">Recommencer la sélection</button>
+  <form novalidate (submit)="$event.preventDefault()" aria-label="Filtres des prédictions">
+    <h3>Filtres de l’historique</h3>
+    <div class="criteria">
+      <div><label for="predictions-type">Type de prédiction</label>
+        <select id="predictions-type" [formControl]="predictionType" [attr.aria-invalid]="fieldErrors()['type'] ? 'true' : null" [attr.aria-describedby]="fieldErrors()['type'] ? 'predictions-error-type' : null">
+          <option value="">Tous</option>
+          @for (type of types; track type) { <option [value]="type">{{ typeLabels[type] }}</option> }
+        </select>
+      </div>
+      <div><label for="predictions-level">Niveau déclaré exact</label>
+        <input id="predictions-level" type="text" [formControl]="level" [attr.aria-invalid]="fieldErrors()['level'] ? 'true' : null"
+          [attr.aria-describedby]="fieldErrors()['level'] ? 'predictions-level-help predictions-error-level' : 'predictions-level-help'" />
+        <p id="predictions-level-help">Facultatif : 1 à 50 caractères bruts, espaces conservés. Les niveaux dépendent du producteur.</p>
+      </div>
+      <div><label for="predictions-alert">Alerte déclarée</label>
+        <select id="predictions-alert" [formControl]="alert" [attr.aria-invalid]="fieldErrors()['alert'] ? 'true' : null" [attr.aria-describedby]="fieldErrors()['alert'] ? 'predictions-error-alert' : null">
+          <option value="">Tous</option><option value="true">Oui</option><option value="false">Non</option>
+        </select>
+      </div>
+    </div>
+    <h3>Période de prédiction (UTC)</h3>
+    <p id="predictions-period-help">Début inclus, fin incluse ; égalité permise. Saisissez la date et l’heure UTC, avec les secondes et jusqu’à six décimales facultatives. Aucun horaire par défaut ; les offsets des sources inchangées sont conservés.</p>
+    <div class="period-layout">
+      @for (bound of bounds; track bound.key) {
+        <fieldset class="period-bound"><legend>{{ bound.label }}</legend>
+          <div class="bound-controls">
+            <div><label [for]="'predictions-' + bound.key + '-date'">Date</label>
+              <input [id]="'predictions-' + bound.key + '-date'" type="date" min="0001-01-01" max="9999-12-31" [formControl]="bound.form.controls.date"
+                [attr.aria-invalid]="fieldErrors()[bound.key + '-date'] ? 'true' : null"
+                [attr.aria-describedby]="'predictions-period-help' + (fieldErrors()[bound.key + '-date'] ? ' predictions-error-' + bound.key + '-date' : '')" />
+            </div>
+            <div><label [for]="'predictions-' + bound.key + '-time'">Heure UTC</label>
+              <input [id]="'predictions-' + bound.key + '-time'" type="time" step="1" [formControl]="bound.form.controls.time"
+                [attr.aria-invalid]="fieldErrors()[bound.key + '-time'] ? 'true' : null"
+                [attr.aria-describedby]="'predictions-period-help' + (fieldErrors()[bound.key + '-time'] ? ' predictions-error-' + bound.key + '-time' : '')" />
+            </div>
+            <div><label [for]="'predictions-' + bound.key + '-fraction'">Fraction (0 à 6 chiffres)</label>
+              <input [id]="'predictions-' + bound.key + '-fraction'" type="text" inputmode="numeric" placeholder="Facultative" spellcheck="false" [formControl]="bound.form.controls.fraction"
+                [attr.aria-invalid]="fieldErrors()[bound.key + '-fraction'] ? 'true' : null"
+                [attr.aria-describedby]="'predictions-period-help' + (fieldErrors()[bound.key + '-fraction'] ? ' predictions-error-' + bound.key + '-fraction' : '')" />
+            </div>
+          </div>
+        </fieldset>
+      }
+    </div>
+    <div id="predictions-feedback" tabindex="-1" role="alert" aria-atomic="true">
+      @if (feedback()) {
+        <p>{{ feedback() }}</p>
+        @for (field of ['type', 'level', 'alert', 'start-date', 'start-time', 'start-fraction', 'end-date', 'end-time', 'end-fraction']; track field) {
+          @if (fieldErrors()[field]) { <p class="field-error" [id]="'predictions-error-' + field">{{ field.startsWith('start-') ? 'Début : ' : field.startsWith('end-') ? 'Fin : ' : '' }}{{ fieldErrors()[field] }}</p> }
+        }
+      }
+    </div>
+    <div class="actions">
+      <button class="primary" type="button" (click)="applyFilters()">Appliquer les filtres</button>
+      <button type="button" (click)="clearPeriod()">Effacer la période</button>
+      <button type="button" (click)="clearFilters()">Réinitialiser les filtres et la pagination</button>
+    </div>
+    @if (draft()) { <p class="draft-notice" role="status">Brouillon de filtres non appliqué. La liste conserve les critères appliqués.</p> }
+    @if (facade.query(); as query) {
+      <p class="applied-filters">Filtres appliqués : type {{ query.prediction_type ?? 'tous' }} ; niveau {{ query.level ?? 'tous' }} ; alerte {{ query.is_alert === undefined ? 'tous' : query.is_alert ? 'oui' : 'non' }}.</p>
+      <p class="applied-period">Période appliquée : début inclus {{ query.start_time ?? 'sans borne' }} ; fin incluse {{ query.end_time ?? 'sans borne' }}.</p>
+    }
+  </form>
+  <div class="size-control"><label for="predictions-size">Prédictions par page</label>
+    <select id="predictions-size" [formControl]="size">
+      @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+    </select>
+  </div>
+</section>
+<section class="results" aria-labelledby="predictions-results-title" [attr.aria-busy]="busy()">
+  <h2 id="predictions-results-title">Historique des prédictions</h2>
+  @if (canFilter()) {
+    <p class="context">{{ referenceLabel(facade.company()!) }} / {{ referenceLabel(facade.site()!) }} / {{ referenceLabel(facade.equipment()!) }}</p>
+    <button type="button" (click)="refresh()" [disabled]="busy()">Actualiser</button>
+  }
+  @let state = facade.state();
+  @switch (state.status) {
+    @case ('idle') { <app-empty-state title="Sélection attendue" message="Sélectionnez explicitement une entreprise, un site et un équipement pour consulter ses prédictions enregistrées." /> }
+    @case ('loading') { <app-loading-state message="Vérification du contexte et chargement des prédictions…" /> }
+    @case ('error') { <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" /> }
+    @case ('empty') {
+      <p role="status">0 prédiction</p>
+      <app-empty-state [title]="filtered() ? 'Aucun résultat' : 'Aucune prédiction enregistrée'"
+        [message]="filtered() ? 'Aucune prédiction ne correspond aux filtres de cet équipement.' : 'Aucune prédiction enregistrée pour cet équipement.'" />
+      @if (filtered()) { <button type="button" (click)="clearFilters()">Effacer les filtres</button> }
+    }
+    @case ('out-of-range') {
+      <app-empty-state title="Page hors plage" message="Cette page ne contient plus de prédictions. Le total reste disponible." />
+      <p role="status">{{ state.data.total }} prédictions au total ; page demandée {{ page() }}.</p>
+      <button type="button" (click)="recoverPage()">Revenir à la page 1</button>
+    }
+    @case ('success') {
+      <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement. Le score brut ne constitue pas une probabilité universelle.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Historique des prédictions de l’équipement">
+        <table><caption>{{ state.data.total }} prédictions - Page {{ page() }} sur {{ state.data.pages }}. Tri serveur : date de prédiction décroissante, puis identifiant décroissant. De nouvelles lignes peuvent déplacer les pages.</caption>
+          <thead><tr><th scope="col">Date de prédiction (offset fourni)</th><th scope="col">Type</th><th scope="col">Score brut déclaré</th><th scope="col">Niveau déclaré</th><th scope="col">Alerte déclarée</th></tr></thead>
+          <tbody>@for (item of state.data.items; track item.id) {
+            <tr><td><time [attr.datetime]="item.predicted_at">{{ item.predicted_at }}</time></td><td>{{ typeLabels[item.prediction_type] }}</td>
+              <td>{{ item.score }}</td><td>{{ item.level === null ? 'Non renseigné' : item.level === '' ? 'Niveau vide' : item.level }}</td>
+              <td>{{ item.is_alert === null ? 'Non renseignée' : item.is_alert ? 'Oui' : 'Non' }}</td></tr>
+          }</tbody>
+        </table>
+      </div>
+      <nav class="pagination" aria-label="Pagination des prédictions">
+        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>
+        <p role="status">Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} prédictions</p>
+        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">Suivant</button>
+      </nav>
+    }
+  }
+</section>
