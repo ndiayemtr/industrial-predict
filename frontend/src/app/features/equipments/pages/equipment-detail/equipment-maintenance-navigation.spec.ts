@@ -45,7 +45,7 @@ describe('Equipment detail to scoped Maintenance navigation', () => {
   });
   it('retains relative order and destinations of existing actions', async () => {
     await loaded('/equipments/12?' + context);
-    expect([...root().querySelectorAll('app-page-header a')].map(e => e.textContent)).toEqual(['Retour à la liste des équipements', 'Voir les capteurs', 'Voir les interventions', 'Modifier']);
+    expect([...root().querySelectorAll('app-page-header a')].map(e => e.textContent)).toEqual(['Retour à la liste des équipements', 'Voir les capteurs', 'Voir les interventions', 'Voir les prédictions', 'Modifier']);
     expect(root().querySelector('.equipment-sensors')?.getAttribute('href')).toBe('/sensors?company_id=7&site_id=9&equipment_id=12&page=1&page_size=20');
     expect(root().querySelector('.equipment-edit')?.getAttribute('href')).toContain('/equipments/12/edit?company_id=99&site_id=88');
     expect(TestBed.inject(Router).parseUrl(TestBed.inject(Router).url).queryParams).toEqual(TestBed.inject(Router).parseUrl('/equipments/12?' + context).queryParams);

@@ -114,7 +114,7 @@ describe('Sidebar navigation', () => {
   });
 
   it.each([
-    ['/predictions', 'Prédictions'], ['/recommendations', 'Recommandations']
+    ['/recommendations', 'Recommandations']
   ])('should provide an explicit minimal placeholder for %s', async (path, title) => {
     const harness = await open(path);
     const main = harness.routeNativeElement!.querySelector('main')!;
@@ -155,6 +155,16 @@ describe('Sidebar navigation', () => {
     expect(harness.routeNativeElement!.querySelector('app-maintenance-list')).not.toBeNull();
     expect(harness.routeNativeElement!.textContent).toContain('Sélection attendue');
     expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Maintenance']);
+  });
+  it('opens the real Predictions list from the existing Sidebar entry', async () => {
+    const harness = await open('/recommendations');
+    harness.routeNativeElement!.querySelector<HTMLAnchorElement>('app-sidebar a[href="/predictions"]')!.click();
+    await harness.fixture.whenStable(); harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('app-predictions-list')).not.toBeNull();
+    expect(harness.routeNativeElement!.querySelector('app-feature-placeholder')).toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('Sélection attendue');
+    expect(activeLinks(harness).map(link => link.textContent!.trim())).toEqual(['Prédictions']);
+    expect(harness.routeNativeElement!.querySelectorAll('app-sidebar a[href="/predictions"]')).toHaveLength(1);
   });
 
 });

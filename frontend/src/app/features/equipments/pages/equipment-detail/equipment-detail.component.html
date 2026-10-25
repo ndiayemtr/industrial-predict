@@ -6,6 +6,11 @@
   @if (maintenanceQuery(); as query) {
     <a class="equipment-maintenance" routerLink="/maintenance" [queryParams]="query">Voir les interventions</a>
   }
+  @if (predictionsReturn(); as destination) {
+    <a class="predictions-return" [routerLink]="destination">Retour aux prédictions</a>
+  } @else if (predictionsQuery(); as query) {
+    <a class="equipment-predictions" routerLink="/predictions" [queryParams]="query">Voir les prédictions</a>
+  }
   @let detail = state();
   @if (detail.status === 'success') {
     <a class="equipment-edit" [routerLink]="['/equipments', detail.data.id, 'edit']" [queryParams]="listQuery()">Modifier</a>

@@ -1,4 +1,6 @@
-<app-page-header title="Prédictions" description="Consultez les prédictions enregistrées d’un équipement, en lecture seule." />
+<app-page-header title="Prédictions" description="Consultez les prédictions enregistrées d’un équipement, en lecture seule.">
+  @if (equipmentDestination(); as destination) { <a class="predictions-equipment" [routerLink]="destination">Voir la fiche équipement</a> }
+</app-page-header>
 @if (urlNotice()) { <p class="url-notice" role="status">{{ urlNotice() }}</p> }
 <section class="filters" aria-labelledby="predictions-context-title">
   <h2 id="predictions-context-title">Entreprise, site et équipement</h2>

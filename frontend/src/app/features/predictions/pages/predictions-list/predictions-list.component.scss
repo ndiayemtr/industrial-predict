@@ -10,6 +10,7 @@ h3 { font-size: 1rem; }
 label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
 input, select { display: block; box-sizing: border-box; width: 100%; min-width: 0; min-height: 2.75rem; padding: tokens.$space-sm; border: 1px solid tokens.$text-secondary; border-radius: tokens.$border-radius; font: inherit; color: tokens.$text-primary; background: tokens.$surface-background; }
 button { @include actions.navigation-action(); cursor: pointer; }
+.predictions-equipment { @include actions.navigation-action(); }
 button.primary { background: tokens.$navigation-active; color: tokens.$sidebar-text; border-color: tokens.$navigation-active; }
 button:not(:disabled):hover { background: tokens.$content-background; color: tokens.$text-primary; }
 button:not(:disabled):active { background: tokens.$border-color; }

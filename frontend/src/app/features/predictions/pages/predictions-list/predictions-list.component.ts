@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { merge, tap } from 'rxjs';
 import { ReferenceDataApiService } from '../../../../core/api/reference-data-api.service';
 import { CompanyRead } from '../../../../core/models/reference-data.model';
@@ -18,12 +18,13 @@ import { predictionQueryKeys, predictionTypes, readPredictionQuery } from '../..
 import { PredictionReferenceCatalog } from '../../utils/prediction-reference-catalog';
 import { PredictionDetailsComponent } from '../../components/prediction-details/prediction-details.component';
 import { predictionPresentation } from '../../utils/prediction-display';
+import { predictionNavigationParams } from '../../utils/prediction-navigation';
 
 type ScopeKey = 'company_id' | 'site_id' | 'equipment_id';
 
 @Component({
   selector: 'app-predictions-list', standalone: true,
-  imports: [ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PredictionDetailsComponent],
+  imports: [RouterLink, ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PredictionDetailsComponent],
   providers: [PredictionsListFacade], changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './predictions-list.component.html', styleUrl: './predictions-list.component.scss'
 })
@@ -73,6 +74,12 @@ export class PredictionsListComponent {
   readonly bounds = [{ key: 'start', label: 'Début UTC (inclus)', form: this.start }, { key: 'end', label: 'Fin UTC (incluse)', form: this.end }];
   readonly busy = computed(() => this.facade.state().status === 'loading');
   readonly canFilter = computed(() => !!(this.facade.company() && this.facade.site() && this.facade.equipment()));
+  readonly equipmentDestination = computed(() => {
+    const query = this.facade.query(), equipment = this.facade.equipment(), site = this.facade.site(), company = this.facade.company();
+    if (!query || !equipment || !site || !company || query.equipment_id !== equipment.id || query.site_id !== site.id
+      || query.company_id !== company.id || equipment.site_id !== site.id || site.company_id !== company.id) return null;
+    return this.router.createUrlTree(['/equipments', equipment.id], { queryParams: predictionNavigationParams(query) });
+  });
   readonly page = computed(() => this.facade.query()?.page ?? 1);
   readonly pageSize = computed(() => this.facade.query()?.page_size ?? 20);
   readonly sizes = computed(() => [...new Set([20, 50, 100, this.pageSize()])].sort((a, b) => a - b));

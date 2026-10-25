@@ -33,6 +33,8 @@ export const routes: Routes = [
           ? { loadChildren: () => import('./features/measurements/measurements.routes').then(m => m.MEASUREMENT_ROUTES) }
           : item.id === 'maintenance'
           ? { loadChildren: () => import('./features/maintenance/maintenance.routes').then(m => m.MAINTENANCE_ROUTES) }
+          : item.id === 'predictions'
+          ? { loadChildren: () => import('./features/predictions/predictions.routes').then(m => m.PREDICTION_ROUTES) }
           : { loadComponent: item.id === 'dashboard'
           ? () => import('./features/dashboard/pages/dashboard/dashboard.component').then(
               (m) => m.DashboardComponent

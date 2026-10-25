@@ -58,7 +58,7 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     expect(root().querySelector('time')?.getAttribute('datetime')).toBe(row.predicted_at);
     expect(root().querySelector('tbody')?.textContent).toContain('0.85'); expect(root().querySelector('tbody')?.textContent).toContain('Non renseignée');
     expect(root().querySelector('tbody')?.textContent).not.toMatch(/%|probabilité|\/100/);
-    expect(root().querySelector('details,a,pre')).toBeNull(); expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('tbody details,tbody a,tbody pre')).toBeNull(); expect(root().querySelectorAll('h1')).toHaveLength(1);
   });
   it('opens and closes a labelled detail panel without HTTP, navigation or filter changes', async () => {
     await ready(); c.level.setValue('unapplied'); await settle();

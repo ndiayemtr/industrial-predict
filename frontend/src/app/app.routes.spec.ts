@@ -76,7 +76,7 @@ describe('Routing configuration invariants', () => {
     const componentRoutes = [routes[0], ...children.filter((route) => route.redirectTo === undefined)];
     for (const route of componentRoutes) {
       expect(route.component).toBeUndefined();
-      if (route.path === 'companies' || route.path === 'sites' || route.path === 'equipments' || route.path === 'sensors' || route.path === 'measurements' || route.path === 'maintenance') {
+      if (route.path === 'companies' || route.path === 'sites' || route.path === 'equipments' || route.path === 'sensors' || route.path === 'measurements' || route.path === 'maintenance' || route.path === 'predictions') {
         expect(typeof route.loadChildren).toBe('function');
         expect(route.loadComponent).toBeUndefined();
       } else {
@@ -167,7 +167,7 @@ describe('Routing integration gaps', () => {
     expect(harness.routeNativeElement!.querySelector('app-sidebar a.is-active')?.getAttribute('href')).toBe('/equipments');
     expect(harness.routeNativeElement!.querySelector('app-header .header-title')?.textContent).toBe('Modifier l’équipement');
   });
-  it.each(['/equipments/12/extra', '/equipments/12/edit/extra'])(
+  it.each(['/equipments/12/extra', '/equipments/12/edit/extra', '/predictions/17', '/predictions/new'])(
     'keeps future or unknown Equipment path %s on the global 404', async path => {
       const harness = await RouterTestingHarness.create(path); await settle(harness);
       expect(TestBed.inject(Title).getTitle()).toBe('Page introuvable | Industrial Predict AI');

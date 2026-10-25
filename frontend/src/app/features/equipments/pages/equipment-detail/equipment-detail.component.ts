@@ -13,6 +13,7 @@ import { businessReferenceLabel } from '../../../../shared/utils/business-refere
 import { EquipmentsApiService } from '../../data-access/equipments-api.service';
 import { equipmentCriticalityLabels, equipmentStatusLabels } from '../../models/equipment-labels';
 import { EquipmentsQuery } from '../../models/equipments-state.model';
+import { readPredictionNavigationContext } from '../../../predictions/utils/prediction-navigation';
 
 type ReadError = { status: 'error'; title: string; message: string; retryable: boolean };
 type ReadState<T> = { status: 'loading' } | { status: 'success'; data: T } | ReadError;
@@ -39,6 +40,8 @@ export class EquipmentDetailComponent {
   readonly creationConfirmed = toSignal(inject(ActivatedRoute).paramMap.pipe(map(params => this.createdEquipmentId != null
     && params.get('equipmentId') === String(this.createdEquipmentId))), { requireSync: true });
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly detailId = toSignal(this.route.paramMap.pipe(map(params => positive(params.get('equipmentId')))), { requireSync: true });
   private readonly api = inject(EquipmentsApiService);
   private readonly references = inject(ReferenceDataApiService);
   private readonly refresh = new Subject<void>();
@@ -82,6 +85,11 @@ export class EquipmentDetailComponent {
   });
   readonly sensorsQuery = this.industrialQuery;
   readonly maintenanceQuery = this.industrialQuery;
+  readonly predictionsReturn = computed(() => {
+    const context = readPredictionNavigationContext(this.params(), this.detailId());
+    return context ? this.router.createUrlTree(['/predictions'], { queryParams: context.query }) : null;
+  });
+  readonly predictionsQuery = computed(() => this.predictionsReturn() ? null : this.industrialQuery());
   readonly differentContext = computed(() => {
     const state = this.state(), query = this.listQuery();
     return state.status === 'success' && ((query.site_id !== undefined && query.site_id !== state.data.site_id)

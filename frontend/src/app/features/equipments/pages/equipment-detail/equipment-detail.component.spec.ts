@@ -196,7 +196,7 @@ describe('Equipment read-only detail and real parent chain', () => {
   it('keeps the visible title and keyboard actions without an inherited native title or tooltip component', async () => {
     await loaded(); const header = root().querySelector('app-page-header')!;
     expect(header.getAttribute('title')).toBeNull(); expect(header.querySelector('h1')?.textContent).toBe('Détail équipement');
-    const actions = [...header.querySelectorAll<HTMLAnchorElement>('a')]; expect(actions).toHaveLength(4);
+    const actions = [...header.querySelectorAll<HTMLAnchorElement>('a')]; expect(actions).toHaveLength(5);
     for (const action of actions) {
       expect(action.closest('[title]')).toBeNull(); expect(action.hasAttribute('nbTooltip')).toBe(false);
       expect(action.getAttribute('href')).toBeTruthy(); action.focus(); expect(document.activeElement).toBe(action);

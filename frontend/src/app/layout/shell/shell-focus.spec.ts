@@ -42,7 +42,7 @@ describe('Shell navigation focus', () => {
     return harness;
   }
 
-  it.each(['/dashboard', '/equipments', '/equipments/42', '/inconnu'])
+  it.each(['/dashboard', '/equipments', '/equipments/42', '/predictions', '/inconnu'])
     ('skip link focuses main on %s without navigation or URL changes', async (path) => {
       const url = `${path}?source=test#existing-fragment`;
       const harness = await open(url);
@@ -68,7 +68,7 @@ describe('Shell navigation focus', () => {
       subscription.unsubscribe();
     });
 
-  it.each(['/equipments', '/equipments/42', '/inconnu', '/dashboard'])
+  it.each(['/equipments', '/equipments/42', '/predictions', '/inconnu', '/dashboard'])
     ('focuses the rendered main after a page change to %s', async (url) => {
       const harness = await open(url === '/dashboard' ? '/equipments' : '/dashboard');
       harness.routeNativeElement!.querySelector<HTMLButtonElement>('.sidebar-toggle')!.focus();

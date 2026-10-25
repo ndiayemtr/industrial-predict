@@ -139,7 +139,7 @@ describe('Shell responsive navigation', () => {
     expect(toggle(h).getAttribute('aria-expanded')).toBe('true');
   });
 
-  it.each(['/equipments', '/equipments/42', '/inconnu'])
+  it.each(['/equipments', '/equipments/42', '/predictions', '/inconnu'])
     ('closes after navigation to %s and retains the main focus policy', async (url) => {
       width = 390;
       const h = await open();
