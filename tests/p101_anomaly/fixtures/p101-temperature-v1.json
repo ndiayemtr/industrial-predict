@@ -1,0 +1,245 @@
+{
+  "schema_version": "p101-temperature-fixture-v1",
+  "dataset_id": "p101-temp-synthetic-v1",
+  "synthetic": true,
+  "asset": {
+    "company_id": "DEMO-COMP-001",
+    "company_code": "MLDEMO-COMP-P101",
+    "site_id": "DEMO-SITE-001",
+    "site_code": "MLDEMO-SITE-P101",
+    "equipment_id": "DEMO-EQ-001",
+    "equipment_code": "MLDEMO-EQ-P101",
+    "sensor_id": "DEMO-SEN-001",
+    "sensor_code": "MLDEMO-SEN-P101-TEMP"
+  },
+  "observations": [
+    {
+      "fixture_id": "DEMO-M-001",
+      "timestamp": "2026-01-01T08:00:00Z",
+      "available_at": "2026-01-01T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65
+    },
+    {
+      "fixture_id": "DEMO-M-002",
+      "timestamp": "2026-01-02T08:00:00Z",
+      "available_at": "2026-01-02T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 63
+    },
+    {
+      "fixture_id": "DEMO-M-003",
+      "timestamp": "2026-01-03T08:00:00Z",
+      "available_at": "2026-01-03T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 67
+    },
+    {
+      "fixture_id": "DEMO-M-004",
+      "timestamp": "2026-01-04T08:00:00Z",
+      "available_at": "2026-01-04T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 64.5
+    },
+    {
+      "fixture_id": "DEMO-M-005",
+      "timestamp": "2026-01-05T08:00:00Z",
+      "available_at": "2026-01-05T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65.5
+    },
+    {
+      "fixture_id": "DEMO-M-006",
+      "timestamp": "2026-01-06T08:00:00Z",
+      "available_at": "2026-01-06T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 64.5
+    },
+    {
+      "fixture_id": "DEMO-M-007",
+      "timestamp": "2026-01-07T08:00:00Z",
+      "available_at": "2026-01-07T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65.5
+    },
+    {
+      "fixture_id": "DEMO-M-008",
+      "timestamp": "2026-01-08T08:00:00Z",
+      "available_at": "2026-01-08T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65
+    },
+    {
+      "fixture_id": "DEMO-M-009",
+      "timestamp": "2026-01-09T08:00:00Z",
+      "available_at": "2026-01-09T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65
+    },
+    {
+      "fixture_id": "DEMO-M-010",
+      "timestamp": "2026-01-10T08:00:00Z",
+      "available_at": "2026-01-10T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65
+    },
+    {
+      "fixture_id": "DEMO-M-011",
+      "timestamp": "2026-01-11T08:00:00Z",
+      "available_at": "2026-01-11T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 65
+    },
+    {
+      "fixture_id": "DEMO-M-012",
+      "timestamp": "2026-01-12T08:00:00Z",
+      "available_at": "2026-01-12T08:01:00Z",
+      "asset": {
+        "company_id": "DEMO-COMP-001",
+        "company_code": "MLDEMO-COMP-P101",
+        "site_id": "DEMO-SITE-001",
+        "site_code": "MLDEMO-SITE-P101",
+        "equipment_id": "DEMO-EQ-001",
+        "equipment_code": "MLDEMO-EQ-P101",
+        "sensor_id": "DEMO-SEN-001",
+        "sensor_code": "MLDEMO-SEN-P101-TEMP"
+      },
+      "synthetic": true,
+      "unit": "°C",
+      "quality": "good",
+      "value": 70
+    }
+  ]
+}
