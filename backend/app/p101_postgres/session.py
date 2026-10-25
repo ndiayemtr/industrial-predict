@@ -5,7 +5,7 @@ import json
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.p101_postgres.runtime import SandboxConfig
+from app.p101_postgres.runtime import SandboxConfig, verify_ca
 
 
 def create_session_factory(config: SandboxConfig):
@@ -15,6 +15,7 @@ def create_session_factory(config: SandboxConfig):
     no DATABASE_URL, .env, passfile or service name is accepted as configuration.
     """
     config.validate()
+    verify_ca(config)
     if any(name.startswith("PG") for name in os.environ):
         raise ValueError("Implicit libpq environment configuration is forbidden")
     url = URL.create("postgresql+psycopg", username=config.destination.role,

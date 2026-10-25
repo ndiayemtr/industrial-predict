@@ -9,6 +9,9 @@ import socket
 from pathlib import Path
 
 import pytest
+import psycopg
+from alembic import command
+from alembic.operations import Operations
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session
 
@@ -26,9 +29,13 @@ def no_real_database_or_network(monkeypatch):
     def forbidden(*args, **kwargs):
         raise AssertionError("B-1 forbids real database/network execution")
 
-    for cls, name in ((Engine, "connect"), (Connection, "execute"), (Session, "execute"),
+    for cls, name in ((Engine, "connect"), (Engine, "raw_connection"),
+                      (Connection, "execute"), (Connection, "exec_driver_sql"), (Session, "execute"),
                       (Session, "flush"), (Session, "commit")):
         monkeypatch.setattr(cls, name, forbidden)
+    monkeypatch.setattr(psycopg, "connect", forbidden)
+    monkeypatch.setattr(command, "upgrade", forbidden)
+    monkeypatch.setattr(Operations, "execute", forbidden)
     monkeypatch.setattr(socket.socket, "connect", forbidden)
     monkeypatch.setattr(socket.socket, "connect_ex", forbidden)
     monkeypatch.setattr(socket, "create_connection", forbidden)
@@ -43,11 +50,14 @@ def dossier(context):
 
 
 @pytest.fixture
-def config(dossier):
+def config(dossier, tmp_path):
     root = Path(__file__).resolve().parents[2]
     evidence = tuple((path, hashlib.sha256((root/path).read_bytes()).hexdigest()) for path in RELEASE_PATHS)
+    ca = tmp_path / "fake-ca-bytes.txt"
+    ca.write_bytes(b"unit-test-only fake CA bytes; not a certificate")
     return SandboxConfig(dossier.destination, "127.0.0.2", 5432, "p101_owner", "p101_reader",
-                         "a" * 40, "unit-test-ca.pem", "unit-test-password-only", evidence)
+                         "a" * 40, str(ca), "unit-test-password-only", evidence,
+                         hashlib.sha256(ca.read_bytes()).hexdigest(), "00000000-0000-4000-8000-000000000010")
 
 
 def signed_approval(dossier, config, **changes):

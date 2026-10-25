@@ -13,6 +13,7 @@ from sqlalchemy.schema import CreateTable
 
 from app.p101_postgres.ddl import FUNCTIONS, function_ddl
 from app.p101_postgres.guard import REQUIRED_TRUE, check_destination, validate_identity
+from app.p101_postgres.catalog import CONSTRAINTS, MARKER_CONSTRAINTS, TABLES
 from app.p101_postgres.repository import P101Repository, reservation_statement
 from app.p101_postgres.runtime import GuardRejected, ContentConflict
 from app.p101_postgres.tables import registry, predictions
@@ -27,7 +28,8 @@ def identity(config):
         purpose="p101-ml-sandbox", owner_role=config.owner_role, writer_role=config.destination.role,
         reader_role=config.reader_role, core_revision="09ac8101e9fe", p101_revision="p101_0001",
         core_installed="09ac8101e9fe", p101_installed="p101_0001", isolation_level="read committed",
-        marker_owner=config.owner_role, **{key: True for key in REQUIRED_TRUE})
+        marker_owner=config.owner_role, bootstrap_uuid=config.bootstrap_uuid,
+        marker_database=config.destination.database, **{key: True for key in REQUIRED_TRUE})
 
 
 class Rows:
@@ -45,10 +47,16 @@ def catalog(config):
         "p101_key_hex": "c", "p101_content_hex": "c", "p101_key_size": "c", "p101_content_size": "c"}.items():
         deferred = kind == "f"
         constraints.append(dict(conname=name, contype=kind, condeferrable=deferred, condeferred=deferred,
-                                convalidated=True, registry_table=True, reference_target=True))
+                                convalidated=True, registry_table=True, reference_target=True,
+                                columns=CONSTRAINTS[name][1], referenced_columns=CONSTRAINTS[name][2],
+                                definition=CONSTRAINTS[name][3]))
     functions = [dict(proname=name, owner=config.owner_role, prosecdef=True,
         proconfig=["search_path=pg_catalog"], body_sha256=hashlib.sha256(values[2].encode()).hexdigest(),
-        executable=name == "lock_sources", public_execute=False) for name, values in FUNCTIONS.items()]
+        executable=name == "lock_sources", public_execute=False,
+        language="plpgsql", provolatile="i" if name == "canonical_value" else "v", prokind="f",
+        arguments="jsonb" if name == "canonical_value" else "", result_type=values[1],
+        execute_roles=sorted([config.owner_role] + ([config.destination.role] if name == "lock_sources" else [])),
+        no_execute_delegation=True) for name, values in FUNCTIONS.items()]
     triggers = []
     for name in ("p101_shape", "p101_prediction_link", "p101_registry_link"):
         deferred = name != "p101_shape"
@@ -56,8 +64,13 @@ def catalog(config):
         triggers.append(dict(tgname=name, tgenabled="O", deferred_capable=deferred, initially_deferred=deferred,
             table_schema="p101_pilot" if sandbox else "public",
             table_name="idempotency_records" if sandbox else "prediction_records",
-            function_name="enforce_link" if deferred else "enforce_shape", function_schema="p101_pilot"))
-    return [[identity(config)], functions, constraints, triggers]
+            function_name="enforce_link" if deferred else "enforce_shape", function_schema="p101_pilot",
+            tgtype=29 if deferred else 31, tgnargs=0, tgqual=None, tgisinternal=False, attribute_numbers=""))
+    objects = [dict(name=name, owner=config.owner_role, schema_owner=config.owner_role,
+                    relkind="r", relrowsecurity=False, columns=columns) for name, columns in TABLES.items()]
+    marker_constraints = [dict(conname=name, convalidated=True, condeferrable=False, definition=definition)
+                          for name, definition in MARKER_CONSTRAINTS.items()]
+    return [[identity(config)], functions, constraints, triggers, objects, marker_constraints]
 
 
 class CatalogSession:
@@ -70,7 +83,7 @@ class CatalogSession:
 def test_complete_simulated_guard_snapshot(config):
     session = CatalogSession(catalog(config))
     check_destination(session, config)
-    assert len(session.statements) == 4
+    assert len(session.statements) == 6
     assert all(statement.lstrip().startswith("SELECT") for statement in session.statements)
     # Host published port differs from server internal port, legitimately.
     assert config.destination.port != config.server_port
@@ -148,9 +161,10 @@ def test_metadata_and_migration_sources_only():
     assert "content_canonical::jsonb" in FUNCTIONS["enforce_link"][2]
     env = (root / "backend/p101_migrations/env.py").read_text(encoding="utf-8")
     ast.parse(env)
-    assert 'version_table_schema="p101_pilot"' in env
-    assert "p101_authorize_migration" in env and "create_engine" not in env
-    assert "DATABASE_URL" not in env and "is_offline_mode" in env
+    admin = (root / "backend/app/p101_postgres/administration.py").read_text(encoding="utf-8")
+    assert 'else "p101_pilot"' in admin and 'AdminAction.PILOT' in env
+    assert "p101_admin_verifier" in admin and "create_engine" not in env + admin
+    assert "DATABASE_URL" not in env + admin and "is_offline_mode" in admin
     assert "sqlalchemy.url" not in (root / "backend/p101_migrations/alembic.ini").read_text()
 
 
