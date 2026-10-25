@@ -14,16 +14,17 @@ Définir l'architecture frontend d'Industrial Predict AI et garantir une interfa
 - SCSS ; Dart Sass installé : 1.97.3, minimum 1.95.0 pour la correction Nebular
 - HttpClient configuré par `provideHttpClient()` ; base relative `/api/v1`
 
-État documentaire synchronisé en UI 8.7 le 24 octobre 2026 sur
-feature/frontend-maintenance à d71774c. main local est à 74a24e4, incluant
-Measurements (15c956b) et la conception Maintenance ; origin/main local est à
-15c956b, sans fetch. Maintenance MVP est implémenté sur sa branche, avant fusion.
-Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée-ui-87)
-centralise preuves et réserves. Aucun test/build ni accès DEV relancé en UI 8.7.
+État documentaire synchronisé en UI 9.7 le 25 octobre 2026 :
+`feature/frontend-predictions` à `edb7b6c`, main et origin/main locaux à
+`05545a8` (UI 9.1 incluse), sans fetch. Maintenance est intégré dans main ;
+Predictions est implémenté sur la feature, avant fusion. Les sections des modules
+précédents conservent leurs preuves historiques. Voir le
+[dossier de livraison Predictions](ui-9.7-predictions-delivery.md).
+Aucun test/build ni accès DEV relancé pour cette étape documentaire.
 
 Voir `decisions.md` pour les limites de compatibilité.
 
-## Structure réellement présente - socle et modules MVP jusqu'à Maintenance
+## Structure réellement présente - socle et modules MVP jusqu'à Predictions
 
 ```text
 frontend/
@@ -65,6 +66,10 @@ utils/ pour temps précis, brouillons et présentation. Aucun formulaire d'écri
 `features/maintenance/` contient models/, data-access/, maintenance-list.facade.*,
 maintenance.routes.*, pages/maintenance-list/ et pages/maintenance-detail/.
 Aucun composant de formulaire ni DTO d'écriture.
+`features/predictions/` contient models/, data-access/, utils/,
+predictions-list.facade.*, predictions.routes.*, pages/predictions-list/
+et components/prediction-details/. Aucun formulaire d'écriture ni page détail
+autonome ; les détails se déplient localement dans la liste.
 
 `AppComponent` contient le Router Outlet racine. `ShellComponent` contient
 un seul `nb-layout`, un `nb-sidebar`, un `nb-layout-header subheader`
@@ -170,7 +175,7 @@ unique partagée par `app.routes.ts` et la Sidebar.
 | `/measurements/:measurementId` | Détail mesure | MeasurementDetailComponent | Mesures |
 | `/maintenance` | Maintenance | MaintenanceListComponent | Maintenance |
 | `/maintenance/:maintenanceId` | Détail intervention | MaintenanceDetailComponent | Maintenance |
-| `/predictions` | Prédictions | FeaturePlaceholderComponent | Prédictions |
+| `/predictions` | Prédictions | PredictionsListComponent, lazy PREDICTION_ROUTES | Prédictions |
 | `/recommendations` | Recommandations | FeaturePlaceholderComponent | Recommandations |
 | `**` (dernière route) | Page introuvable | NotFoundComponent, `data.isNotFound: true` | Aucune sélection trompeuse |
 
@@ -194,7 +199,8 @@ Measurements et Maintenance utilisent `loadChildren` vers `COMPANY_ROUTES`, `SIT
 sans préchargement configuré. Dans chaque feature, `new` puis la route d'édition
 précèdent l'identifiant dynamique lorsque ces formulaires existent. Measurements
 expose uniquement liste et détail, comme Maintenance, sans new/edit.
-Prédictions et Recommandations conservent le placeholder.
+Prédictions utilise également loadChildren vers PREDICTION_ROUTES puis
+loadComponent pour sa seule liste. Recommandations conserve le placeholder.
 Les tests contrôlent les chargeurs différés sans dépendre des noms de chunks.
 Les placeholders n'affichent aucun faux KPI et ne déclenchent aucun appel API.
 Les fichiers DashboardPlaceholderComponent restent présents mais ne sont plus
@@ -241,7 +247,7 @@ src/app/
 
 Dashboard V1, Companies, Sites, Équipements, Sensors, Measurements et Maintenance MVP sont implémentés.
 Les listes ci-dessous distinguent les fonctions livrées des intentions futures ;
-Prédictions et Recommandations rendent des placeholders.
+Prédictions est livré en consultation ; Recommandations rend un placeholder.
 
 ### Dashboard V1 - livré en UI 2.2 à UI 2.7.1
 
@@ -264,18 +270,16 @@ Health Score, Failure Risk, RUL et dernière maintenance ne sont pas affichés.
 L'action Voir les capteurs ouvre la liste Sensors contextualisée avec les parents
 réels, page 1 et taille 20. Voir les interventions ouvre Maintenance avec les
 mêmes parents vérifiés et pagination initiale, sans filtres Equipment transférés.
-Les onglets Mesures, Prédictions, Recommandations et Documents restent futurs,
+L'action Predictions est décrite ci-dessous. Les onglets intégrés Mesures,
+Recommandations et Documents restent futurs,
 sans compteurs fictifs ni calcul ML.
 
-### Prédictions
+### Prédictions - consultation livrée en UI 9
 
-- historique
-- filtres
-- pagination
-- anomaly
-- failure risk
-- health score
-- RUL
+Historique paginé, trois sélections et références réelles vérifiées, filtres,
+quatre types, métadonnées et JSON dépliables, navigation bidirectionnelle avec
+Equipment et retour pre_ ; détails dans la section d'architecture ci-dessous.
+Aucune génération automatique ni calcul ML depuis cette page.
 
 ### Recommandations
 
@@ -1171,10 +1175,67 @@ dans UI 1.7.2 :
 
 ## Ordre d'implémentation
 
-Le layout, Dashboard, Companies, Sites, Équipements, Sensors et Measurements
-sont intégrés dans main local. UI 8.1 est déjà dans main à 74a24e4 ; UI 8.2 à
-UI 8.6 sont implémentées sur feature/frontend-maintenance à d71774c.
-UI 8.7 prépare le [dossier de livraison](ui-8.7-maintenance-delivery.md), avant
-validation puis commit et fusion séparément autorisés. Les écritures Maintenance
-nécessitent arbitrage métier et sécurisation backend dans un chantier distinct.
-Prédictions et Recommandations restent futures. UI 9 non commencée.
+Le socle et les modules jusqu'à Maintenance sont intégrés dans main. UI 9.1
+est intégré dans main à `05545a8` ; UI 9.2 à UI 9.6 sont commités sur
+`feature/frontend-predictions` à `edb7b6c`. UI 9.7 prépare le
+[dossier de livraison](ui-9.7-predictions-delivery.md), avant validation puis
+commit et fusion séparément autorisés. Recommandations frontend reste futur.
+Le chantier ML de la roadmap est distinct et non commencé.
+
+## Prédictions MVP - architecture implémentée UI 9
+
+Sidebar -> route lazy `/predictions` -> PredictionsListComponent standalone ->
+PredictionsListFacade locale (signals/switchMap) -> PredictionsApiService ->
+GET `/api/v1/equipments/{equipment_id}/predictions` -> backend existant ->
+PostgreSQL. La façade utilise ReferenceDataApiService pour vérifier la chaîne
+Equipment -> Site -> Company avant historique ; aucune sélection automatique
+ou autorisation tenant déduite.
+Page partagé, DTO strict de 14 champs, validation défensive des réponses et de
+l'équipement de chaque ligne. Aucun endpoint détail/latest ajouté.
+Whitelist page/page_size/prediction_type/level/is_alert/start_time/end_time,
+sans company_id/site_id ; false est transmis explicitement.
+Période predicted_at [début, fin] inclusive, égalité autorisée, offsets et
+microsecondes conservés ; aucune convention [début, fin) des autres modules
+transposée. Scores des quatre types selon contrat/provenance, détails locaux
+sans nouveau GET et JSON échappé. Limites 10 000 caractères/six niveaux
+uniquement de présentation, jamais réseau/backend.
+Navigation Equipment <-> Predictions, retour pre_ validé avec filtres appliqués
+et pagination ; actions Voir/Retour exclusives, autres actions conservées.
+Aucun POST/PATCH/DELETE, polling, calcul ML ou génération automatique.
+
+La [livraison UI 9.7](ui-9.7-predictions-delivery.md) distingue tests isolés,
+HTTP indépendants, observations Angular et SQL UI 9.6. DEV ne contient aucune
+prédiction : scores/JSON réels, sélectivité et pagination multiligne non prouvés,
+capture XHR brute absente. B-PRE-01 à B-PRE-11 non corrigés ; absence de sécurité
+multi-tenant bloquante pour production SaaS. Aucun changement backend en UI 9.
+
+La page OnPush fournit sa façade ; abonnements liés au DestroyRef, annulation
+des lectures obsolètes, aucun cache global multi-équipements ni requête par ligne.
+Catalogues paginés de 50, suite explicite ; Page par défaut 1/20, choix 20/50/100,
+tailles URL 1..100 conservées. États idle/loading/vide/aucun résultat/hors plage/
+erreur séparés, retry manuel. URL source de l'état appliqué, brouillons distincts ;
+changement de filtre/taille remet page à 1. Comparateur précis de Measurements
+réutilisé, validation inclusive dédiée ; dates sources conservées sans Date.
+
+PredictionRead porte id, equipment_id, sensor_id, measurement_id, prediction_type,
+score, level, is_alert, model_name, model_version, horizon_hours, details,
+predicted_at et created_at. Les huit champs nullables sont sensor_id,
+measurement_id, level, is_alert, model_name, model_version, horizon_hours,
+details. JsonValue récursif sans any ; inconnus et erreurs de contrat non coercés.
+La mention historique de 15 champs en UI 9.1 est une erreur de comptage déjà
+documentée en UI 9.2 ; aucun champ fictif ajouté ni rapport historique réécrit.
+
+Anomaly : indice déclaré ; failure_risk : score brut et probabilité séparée
+seulement si valide ; health_score : échelle /100 uniquement pour le profil
+producteur audité reconnu, sans authentification de provenance ; rul : heures
+sans date de panne extrapolée. Niveaux déclarés non recalculés, inconnus conservés ;
+alerte true/false/null distincte. predicted_at et created_at séparés.
+Détails natifs aria-expanded, focus conservé, métadonnées et JSON échappés sans
+innerHTML/liens actifs ; sensor_id/measurement_id sans liens descendants.
+Le contexte pre_ whitelisté valide l'ID Equipment et conserve les filtres
+appliqués, false, périodes et page ; retour fixe interne, aucun returnUrl libre.
+Les autres actions Equipment et le repli de Modifier approuvé sont préservés.
+
+Les preuves et réserves de tests/build, responsive, accessibilité et DEV sont
+centralisées dans le [dossier UI 9.7](ui-9.7-predictions-delivery.md). Aucun audit
+multi-navigateurs, lecteur d'écran ou zoom réel complet n'est revendiqué.

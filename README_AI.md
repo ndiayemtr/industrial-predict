@@ -81,10 +81,11 @@ réellement livrée et le bilan sont dans `docs/frontend-architecture.md` et
 Les lectures FastAPI ont été contrôlées en UI 3.7 ; POST/PATCH sont implémentés
 mais validés par simulation, sans écriture réelle dans PostgreSQL.
 Sites et Équipements sont intégrés dans `main` (référence locale `a76e49c`).
-Sensors et Measurements MVP sont intégrés dans main local. Maintenance MVP de
-consultation est implémenté sur feature/frontend-maintenance à d71774c et sa
-livraison documentaire UI 8.7 est préparée. main local est à 74a24e4, origin/main
-local à 15c956b, sans fetch. Prédictions et Recommandations restent des placeholders.
+Sensors, Measurements et Maintenance MVP sont intégrés dans main local.
+Au contrôle UI 9.7 du 25 octobre 2026, main et origin/main locaux sont à
+`05545a8`, incluant UI 9.1 ; aucun fetch, état distant en direct non vérifié.
+Prédictions est implémenté sur `feature/frontend-predictions` à `edb7b6c`,
+livraison documentaire préparée, sans fusion. Recommandations reste un placeholder.
 Aucun identifiant d'entreprise par défaut, polling ou donnée fictive n'est introduit.
 
 Les décisions Dashboard V1 DASH-01 à DASH-06 figurent dans D014 de
@@ -185,7 +186,40 @@ validation utilisateur 9/9 et recette UI 8.6 : 36 GET indépendants, 27 listes S
 seed strict, budget et limites de preuve restent ouverts. Le
 [dossier UI 8.7](docs/ui-8.7-maintenance-delivery.md) prépare la livraison en DEV,
 sans aptitude déclarée à la production SaaS. Aucun test/build ou accès DEV relancé.
-Commit et fusion attendent des autorisations distinctes ; UI 9 non commencée.
+Cette section conserve les références historiques UI 8 ; Maintenance et son
+dossier sont depuis intégrés dans main (livraison `2365259`, finition `024c740`).
+
+## UI 9 - Prédictions MVP de consultation, livraison préparée
+
+PRE-01 à PRE-16 validées. Route lazy `/predictions` depuis la Sidebar, sélection
+Entreprise -> Site -> Équipement et rattachements réels vérifiés, historique GET
+paginé, filtres type/niveau/alerte/période. `predicted_at` utilise [début, fin],
+deux bornes inclusives et égalité permise ; offsets, instants et microsecondes
+conservés sans normalisation silencieuse. Quatre types anomaly, failure_risk,
+health_score et rul ; scores selon le contrat et la provenance du producteur,
+jamais selon la seule plage numérique. Métadonnées et JSON dépliables sûrs.
+Equipment <-> Predictions, retour `pre_` avec filtres appliqués et pagination ;
+Voir les prédictions et Retour aux prédictions sont exclusifs.
+Aucun POST/PATCH/DELETE, polling, calcul ML ou production automatique.
+
+Références historiques UI 9.5 : **642 tests ciblés**, **2 376 tests Angular dans
+84 fichiers**, build production réussi, initial **606 501 octets** ; **163 tests
+ciblés** de finition, validation visuelle utilisateur **8/8**, puis finition
+contextuelle approuvée. Suite complète/build antérieurs à cette finition.
+UI 9.6 : DEV permanent confirmé, **8 tables / 40 lignes** et empreintes globales/
+par ligne identiques, **0 PredictionRecord**, **33 contrôles HTTP indépendants**
+conformes dont **26 réponses 200 comparées au SQL**, navigation Angular et état
+vide observés, aucune écriture métier. Aucune capture XHR brute : ces preuves
+HTTP ne sont pas le trafic capturé du navigateur.
+
+Les scores/niveaux/JSON réels, le filtrage sélectif et la pagination multiligne
+ne sont pas démontrés sur des prédictions DEV ; fixtures isolées distinctes.
+B-PRE-01 à B-PRE-11 restent ouverts, sécurité multi-tenant absente, seed strict
+Sensor 1 historiquement non conforme, budget initial 500 kB dépassé, lecteur
+d'écran/zoom réel 200/400 % et couverture multi-navigateurs non certifiés.
+Le MVP de consultation n'est pas validé pour la production SaaS.
+Voir le [dossier UI 9.7](docs/ui-9.7-predictions-delivery.md).
+Aucune validation applicative relancée pour cette documentation.
 
 ### Machine Learning
 

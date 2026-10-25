@@ -25,15 +25,18 @@ Sidebar, Header global, routing avec chargement différé, page 404 et gestion
 accessible du focus. Dashboard V1 et Companies MVP sont livrés dans `main`.
 Sites et Équipements MVP sont intégrés dans `main` (référence locale `a76e49c`).
 Sensors et Measurements MVP sont intégrés dans main local, ce dernier à `15c956b`.
-Maintenance MVP de consultation est implémenté sur feature/frontend-maintenance
-à `d71774c`, livraison UI 8.7 préparée. main local contient déjà UI 8.1 à `74a24e4`.
-Prédictions et Recommandations restent des placeholders, distincts du ML backend.
+Maintenance MVP et sa livraison sont intégrés dans main. Prédictions MVP de
+consultation est implémenté sur `feature/frontend-predictions` à `edb7b6c` ;
+UI 9.7 prépare la livraison. main et origin/main locaux sont à `05545a8`,
+incluant UI 9.1, sans fetch ni fusion de la feature. Recommandations reste un
+placeholder, distinct du ML backend.
 
 L'architecture présente sépare `layout` (structure globale), `features` (pages
 métier), `shared` (présentation réutilisable et pages transversales) et `core`
 (configuration HTTP, services et modèles de références). Le dossier `core`
 est implémenté ; `features/dashboard`, `features/companies`, `features/sites`, `features/equipments`
-ainsi que `features/sensors`, `features/measurements` et `features/maintenance` existent.
+ainsi que `features/sensors`, `features/measurements`, `features/maintenance`
+et `features/predictions` existent.
 
 UI 1.7 a livré quatre composants de présentation dans
 `shared/components/` : PageHeader, LoadingState, EmptyState et ErrorState.
@@ -169,6 +172,33 @@ Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée
 centralise validations historiques, recette de lecture et réserves B-MAIN-01 à 09.
 Le [dossier UI 8.7](ui-8.7-maintenance-delivery.md) prépare la fusion sans nouvelle
 recette ni changement exécutable. Le MVP DEV ne garantit aucune sécurité SaaS.
+
+### Prédictions MVP de consultation
+
+Sidebar -> route lazy `/predictions` -> PredictionsListComponent standalone ->
+PredictionsListFacade locale (signals/switchMap) -> PredictionsApiService ->
+GET `/api/v1/equipments/{equipment_id}/predictions` -> backend existant ->
+PostgreSQL. La façade utilise ReferenceDataApiService pour vérifier la chaîne
+Equipment -> Site -> Company avant historique ; aucune sélection automatique
+ou autorisation tenant déduite.
+Page partagé, DTO strict de 14 champs, validation défensive des réponses et de
+l'équipement de chaque ligne. Aucun endpoint détail/latest ajouté.
+Whitelist page/page_size/prediction_type/level/is_alert/start_time/end_time,
+sans company_id/site_id ; false est transmis explicitement.
+Période predicted_at [début, fin] inclusive, égalité autorisée, offsets et
+microsecondes conservés ; aucune convention [début, fin) des autres modules
+transposée. Scores des quatre types selon contrat/provenance, détails locaux
+sans nouveau GET et JSON échappé. Limites 10 000 caractères/six niveaux
+uniquement de présentation, jamais réseau/backend.
+Navigation Equipment <-> Predictions, retour pre_ validé avec filtres appliqués
+et pagination ; actions Voir/Retour exclusives, autres actions conservées.
+Aucun POST/PATCH/DELETE, polling, calcul ML ou génération automatique.
+
+La [livraison UI 9.7](ui-9.7-predictions-delivery.md) distingue tests isolés,
+HTTP indépendants, observations Angular et SQL UI 9.6. DEV ne contient aucune
+prédiction : scores/JSON réels, sélectivité et pagination multiligne non prouvés,
+capture XHR brute absente. B-PRE-01 à B-PRE-11 non corrigés ; absence de sécurité
+multi-tenant bloquante pour production SaaS. Aucun changement backend en UI 9.
 
 ## Backend
 

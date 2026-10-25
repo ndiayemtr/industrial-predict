@@ -149,6 +149,47 @@ pagination multiligne, fractions stockées et responsive 389/391 pour 390 px.
 Le [dossier UI 8.7](../docs/ui-8.7-maintenance-delivery.md) prépare la fusion.
 Aucune validation relancée ici ; aucune aptitude déclarée à la production SaaS.
 
+## Prédictions MVP - livraison préparée UI 9.7
+
+PRE-01 à PRE-16 validées. Route lazy `/predictions` depuis la Sidebar, sélection
+Entreprise -> Site -> Équipement et rattachements réels vérifiés, historique GET
+paginé, filtres type/niveau/alerte/période. `predicted_at` utilise [début, fin],
+deux bornes inclusives et égalité permise ; offsets, instants et microsecondes
+conservés sans normalisation silencieuse. Quatre types anomaly, failure_risk,
+health_score et rul ; scores selon le contrat et la provenance du producteur,
+jamais selon la seule plage numérique. Métadonnées et JSON dépliables sûrs.
+Equipment <-> Predictions, retour `pre_` avec filtres appliqués et pagination ;
+Voir les prédictions et Retour aux prédictions sont exclusifs.
+Aucun POST/PATCH/DELETE, polling, calcul ML ou production automatique.
+
+Références historiques UI 9.5 : **642 tests ciblés**, **2 376 tests Angular dans
+84 fichiers**, build production réussi, initial **606 501 octets** ; **163 tests
+ciblés** de finition, validation visuelle utilisateur **8/8**, puis finition
+contextuelle approuvée. Suite complète/build antérieurs à cette finition.
+UI 9.6 : DEV permanent confirmé, **8 tables / 40 lignes** et empreintes globales/
+par ligne identiques, **0 PredictionRecord**, **33 contrôles HTTP indépendants**
+conformes dont **26 réponses 200 comparées au SQL**, navigation Angular et état
+vide observés, aucune écriture métier. Aucune capture XHR brute : ces preuves
+HTTP ne sont pas le trafic capturé du navigateur.
+
+Les scores/niveaux/JSON réels, le filtrage sélectif et la pagination multiligne
+ne sont pas démontrés sur des prédictions DEV ; fixtures isolées distinctes.
+B-PRE-01 à B-PRE-11 restent ouverts, sécurité multi-tenant absente, seed strict
+Sensor 1 historiquement non conforme, budget initial 500 kB dépassé, lecteur
+d'écran/zoom réel 200/400 % et couverture multi-navigateurs non certifiés.
+Le MVP de consultation n'est pas validé pour la production SaaS.
+Voir le [dossier UI 9.7](../docs/ui-9.7-predictions-delivery.md).
+Aucune validation applicative relancée pour cette documentation.
+
+Le transport Predictions expose uniquement
+`GET /api/v1/equipments/{equipment_id}/predictions` ; whitelist page/page_size/
+prediction_type/level/is_alert/start_time/end_time. Ni company_id ni site_id
+ne sont envoyés à cet endpoint. DTO de 14 champs réels, `Page<PredictionRead>`
+partagé et JSON récursif typé. Aperçu JSON limité à 10 000 caractères/six niveaux,
+uniquement pour la présentation, sans limite réseau/backend.
+Les sections des modules précédents ci-dessus conservent leurs validations
+historiques ; Maintenance est depuis intégré dans main.
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

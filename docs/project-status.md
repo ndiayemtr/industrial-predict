@@ -6,11 +6,13 @@ Projet en développement actif.
 
 ## Branche actuelle
 
-`feature/frontend-maintenance`, HEAD `d71774c`, contrôlé le 24 octobre 2026,
-dépôt propre avant UI 8.7. main local : `74a24e4` ; origin/main local : `15c956b`.
-Six commits à intégrer à main ; sept par rapport à origin/main, dont UI 8.1 déjà
-dans main. Aucun fetch. UI 8.7 modifie six documents de suivi et crée le
-[dossier de livraison](ui-8.7-maintenance-delivery.md), sans commit ni fusion.
+`feature/frontend-predictions`, HEAD `edb7b6c5e1bc1e8f17ba6f5ed4668c0fe2a6e3f2`,
+contrôlé le 25 octobre 2026, dépôt propre avant UI 9.7.
+main et origin/main locaux : `05545a88dcd45940f00c1c029d9e567a9c5a4cee`.
+Aucun fetch ; pas de vérification directe du serveur distant. Cinq commits
+d'avance, aucun retard sur les deux références ; 47 fichiers dans le diff
+commité. UI 9.1 déjà dans main, non recomptée. UI 9.7 prépare sept documents
+(six synchronisés, un rapport nouveau), sans commit ni fusion.
 
 À mettre à jour à chaque changement de branche.
 
@@ -343,9 +345,10 @@ est fusionné. L'état Git initial de la branche Dashboard est propre.
 | UI 8.7 | Documentation de livraison préparée, validation attendue |
 
 Dashboard V1, Companies, Sites, Équipements et Sensors MVP sont intégrés dans `main`.
-Measurements MVP est également intégré dans main local. Maintenance MVP de
-consultation est implémenté sur sa branche ; Prédictions et Recommandations
-restent des placeholders.
+Measurements et Maintenance MVP sont également intégrés dans main local.
+Prédictions est implémenté sur sa branche, livraison UI 9.7 préparée ;
+Recommandations reste un placeholder. Les tableaux des étapes précédentes
+conservent leur état historique à la rédaction de leurs rapports.
 Rapports et Administration restent « À venir » et sans route dédiée. L'authentification
 frontend n'est pas implémentée ; le Dashboard n'est pas déclaré prêt pour une
 production SaaS multi-tenant faute d'autorisation multi-entreprises démontrée.
@@ -899,10 +902,42 @@ la présente synchronisation documentaire ne relance pas les tests applicatifs.
 Les limites restent ouvertes : budget initial de 500 ko dépassé, lecteur d’écran
 réel non testé et autorisation multi-entreprises à renforcer avant production.
 
+## UI 9 - Prédictions MVP de consultation, livraison préparée
+
+PRE-01 à PRE-16 validées. Route lazy `/predictions` depuis la Sidebar, sélection
+Entreprise -> Site -> Équipement et rattachements réels vérifiés, historique GET
+paginé, filtres type/niveau/alerte/période. `predicted_at` utilise [début, fin],
+deux bornes inclusives et égalité permise ; offsets, instants et microsecondes
+conservés sans normalisation silencieuse. Quatre types anomaly, failure_risk,
+health_score et rul ; scores selon le contrat et la provenance du producteur,
+jamais selon la seule plage numérique. Métadonnées et JSON dépliables sûrs.
+Equipment <-> Predictions, retour `pre_` avec filtres appliqués et pagination ;
+Voir les prédictions et Retour aux prédictions sont exclusifs.
+Aucun POST/PATCH/DELETE, polling, calcul ML ou production automatique.
+
+Références historiques UI 9.5 : **642 tests ciblés**, **2 376 tests Angular dans
+84 fichiers**, build production réussi, initial **606 501 octets** ; **163 tests
+ciblés** de finition, validation visuelle utilisateur **8/8**, puis finition
+contextuelle approuvée. Suite complète/build antérieurs à cette finition.
+UI 9.6 : DEV permanent confirmé, **8 tables / 40 lignes** et empreintes globales/
+par ligne identiques, **0 PredictionRecord**, **33 contrôles HTTP indépendants**
+conformes dont **26 réponses 200 comparées au SQL**, navigation Angular et état
+vide observés, aucune écriture métier. Aucune capture XHR brute : ces preuves
+HTTP ne sont pas le trafic capturé du navigateur.
+
+Les scores/niveaux/JSON réels, le filtrage sélectif et la pagination multiligne
+ne sont pas démontrés sur des prédictions DEV ; fixtures isolées distinctes.
+B-PRE-01 à B-PRE-11 restent ouverts, sécurité multi-tenant absente, seed strict
+Sensor 1 historiquement non conforme, budget initial 500 kB dépassé, lecteur
+d'écran/zoom réel 200/400 % et couverture multi-navigateurs non certifiés.
+Le MVP de consultation n'est pas validé pour la production SaaS.
+Voir le [dossier UI 9.7](ui-9.7-predictions-delivery.md).
+Aucune validation applicative relancée pour cette documentation.
+
 ## Prochaine action
 
-Valider le [dossier UI 8.7 et sa checklist](ui-8.7-maintenance-delivery.md), puis
-faire autoriser le commit documentaire et séparément la fusion fast-forward.
-Aucun test, build, accès PostgreSQL/Docker, commit, push, rebase ou merge en UI 8.7.
-
-UI 9 non commencée. Les prochaines étapes des rapports historiques restent datées.
+Valider le [dossier UI 9.7](ui-9.7-predictions-delivery.md), puis autoriser
+séparément le commit documentaire et la fusion fast-forward. Aucun commit,
+push, merge ou rebase réalisé. Le chantier ML proposé dans la
+[roadmap](roadmap.md) reste distinct et non commencé, sans date de livraison.
+Les prochaines étapes des rapports historiques restent datées.

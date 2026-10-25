@@ -44,7 +44,7 @@
 Les quatre composants sont implémentés sous `shared/components/` et commités
 dans `e3a2a2c`. Ils restent autonomes et sont désormais intégrés au Dashboard V1 ;
 Companies, Sites, Équipements, Sensors, Measurements et Maintenance les réutilisent
-également ; Prédictions et Recommandations restent des placeholders.
+également ; Prédictions les réutilise désormais, Recommandations reste un placeholder.
 
 ### UI 1.8 - Responsive et accessibilité terminés et fusionnés
 
@@ -208,8 +208,8 @@ Le [statut Équipements](project-status.md#équipements-mvp---livraison-prépar�
 centralise le périmètre, les limites et les dettes. Aucun test/build relancé ici.
 Ces résultats Équipements restent historiques. La gestion Sensors est désormais
 implémentée ci-dessous ; les agrégats Dashboard et le ML backend ne constituent
-pas les écrans Measurements en lecture seule décrits ci-dessous, ni les futurs
-écrans Maintenance ou Prédictions.
+pas les écrans Measurements en lecture seule décrits ci-dessous, ni les modules
+de consultation Maintenance et Prédictions livrés ultérieurement.
 
 ### UI 6 - Sensors MVP intégré dans main
 
@@ -262,8 +262,8 @@ couverture PostgreSQL. Aucune validation relancée en UI 7.6 documentaire.
 - [x] UI 8.4 / UI 8.4.1 - [Détail et titres cliquables](ui-8.4-maintenance-detail.md), `c66e7f3`
 - [x] UI 8.5 - [Navigation Equipment et finitions](ui-8.5-maintenance-navigation.md), `b51d20e`
 - [x] UI 8.6 - [Recette DEV en lecture seule](ui-8.6-maintenance-integration.md), `d71774c`
-- [ ] UI 8.7 - [Dossier de livraison](ui-8.7-maintenance-delivery.md) préparé, validation puis commit attendus
-- [ ] Fusion fast-forward vers main, sur autorisation distincte
+- [x] UI 8.7 - [Dossier de livraison](ui-8.7-maintenance-delivery.md), `2365259`
+- [x] Maintenance intégré dans main, finition `024c740` incluse
 
 Livré : trois choix explicites et références vérifiées, liste/historique paginé,
 recherche, filtres et période created_at [début, fin), microsecondes/offsets,
@@ -277,9 +277,49 @@ ligne préservées. Aucune validation relancée en UI 8.7.
 
 Le [statut Maintenance](project-status.md#maintenance-mvp---livraison-préparée-ui-87)
 centralise les limites. Écritures et transitions exigent un chantier distinct après
-arbitrage métier et sécurisation backend. Prédictions et Recommandations restent
-des placeholders ; aucune fonction IA n'est livrée par le type predictive.
-UI 9 non commencée.
+arbitrage métier et sécurisation backend. Aucune fonction IA n'est livrée par le
+type predictive. Les références UI 8 ci-dessus restent historiques.
+
+### UI 9 - Prédictions MVP de consultation, livraison préparée
+
+- [x] UI 9.1 - [PRE-01 à PRE-16](etape-ui-9.1-predictions.md), `05545a8`, déjà dans main et origin/main locaux
+- [x] UI 9.2 - [DTO et GET](ui-9.2-predictions-data-access.md), `f956c90`
+- [x] UI 9.3 - [Liste et filtres](ui-9.3-predictions-list.md), `3600d8e`
+- [x] UI 9.4 - [Scores et détails](ui-9.4-predictions-presentation.md), `da9f0e0`
+- [x] UI 9.5 - [Routing et navigation Equipment](ui-9.5-predictions-navigation.md), `b92ab9e`
+- [x] UI 9.6 - [Recette DEV partielle](ui-9.6-predictions-integration.md), `edb7b6c`
+- [ ] UI 9.7 - [Livraison documentaire](ui-9.7-predictions-delivery.md) préparée, validation et commit attendus
+- [ ] Fusion fast-forward et publication, sur autorisations distinctes
+
+Consultation GET seule : sélection Entreprise -> Site -> Équipement vérifiée,
+historique paginé, filtres type/niveau/alerte/période predicted_at inclusive
+[début, fin], égalité, offsets et microsecondes préservés. Quatre types, scores
+selon contrat/provenance, détails JSON locaux et retour pre_ avec pagination,
+actions Voir/Retour exclusives. Aucun calcul ni alimentation automatique.
+UI 9.5 : 642 ciblés, 2 376 tests/84 fichiers, build réussi, 606 501 octets,
+8/8 visuels puis finition contextuelle approuvée (163 tests ciblés).
+UI 9.6 : 33 HTTP indépendants conformes, 26 réponses 200 comparées au SQL,
+navigation/état vide Angular, 8 tables/40 lignes et empreintes identiques,
+0 prédiction et aucune écriture. Pas de capture XHR brute ; scores/JSON réels,
+sélectivité et pagination multiligne non démontrés. B-PRE-01 à B-PRE-11,
+sécurité absente, seed Sensor 1, budget 500 kB et réserves d'accessibilité/
+navigateurs conservés. Pas de validation pour production SaaS.
+
+### Proposition future - Intégration ML - Génération, validation et persistance contrôlées des prédictions
+
+Chantier distinct, **non commencé**, sans date de livraison. La présence de
+services ML backend et d'une page de consultation ne prouve pas un pipeline
+opérationnel ni une alimentation automatique de l'historique.
+Prérequis à instruire avant une éventuelle autorisation :
+
+- Disponibilité des mesures industrielles.
+- Provenance et qualité des datasets.
+- Disponibilité des modèles et de leurs artefacts.
+- Évaluation des performances.
+- Orchestration et persistance des résultats.
+- Traçabilité et version des modèles.
+- Recette isolée et autorisée avant toute écriture.
+- Sécurisation backend avant exposition à des clients.
 
 ### Écrans métier restant à implémenter
 
