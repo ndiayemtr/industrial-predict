@@ -1,0 +1,18 @@
+{
+  "format": "p101-local-settings-v1",
+  "private_root": "<ABSOLUTE_PRIVATE_DIRECTORY_OUTSIDE_GIT>",
+  "host": "127.0.0.1",
+  "port": 55432,
+  "database": "industrial_predict_p101_local_demo",
+  "server_address": "<APPROVED_PRIVATE_IPV4_ADDRESS>",
+  "server_port": 5432,
+  "network_subnet": "<APPROVED_NON_OVERLAPPING_IPV4_CIDR>",
+  "instance_uuid": "<NEW_CANONICAL_NONZERO_UUID>",
+  "bootstrap_at": "<FIXED_APPROVED_UTC_TIMESTAMP_AFTER_FIXTURE>",
+  "secret_files": {
+    "p101_local_admin": "admin.password",
+    "p101_local_owner": "owner.password",
+    "p101_local_writer": "writer.password",
+    "p101_local_reader": "reader.password"
+  }
+}
