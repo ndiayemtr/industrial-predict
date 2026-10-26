@@ -1,71 +1,169 @@
-<app-page-header title="Prédictions" description="Consultez les prédictions enregistrées d’un équipement, en lecture seule.">
-  @if (equipmentDestination(); as destination) { <a class="predictions-equipment" [routerLink]="destination">Voir la fiche équipement</a> }
+<app-page-header
+  title="Prédictions"
+  description="Consultez les prédictions enregistrées d’un équipement, en lecture seule."
+>
+  @if (equipmentDestination(); as destination) {
+    <a class="predictions-equipment" [routerLink]="destination">Voir la fiche équipement</a>
+  }
 </app-page-header>
-@if (urlNotice()) { <p class="url-notice" role="status">{{ urlNotice() }}</p> }
+@if (urlNotice()) {
+  <p class="url-notice" role="status">{{ urlNotice() }}</p>
+}
 <section class="filters" aria-labelledby="predictions-context-title">
   <h2 id="predictions-context-title">Entreprise, site et équipement</h2>
+  <p class="selection-help" id="predictions-context-help">
+    Sélectionnez l’entreprise, puis le site et l’équipement. Les rattachements sont vérifiés.
+  </p>
   <div class="parents">
     @for (selector of selectors; track selector.key) {
       <div>
         <label [for]="'predictions-' + selector.key">{{ selector.name }}</label>
-        <select [id]="'predictions-' + selector.key" [formControl]="selector.control"
-          [attr.aria-describedby]="'predictions-help-' + selector.key" [attr.aria-busy]="selector.catalog.state().status === 'loading'">
+        <select
+          [id]="'predictions-' + selector.key"
+          [formControl]="selector.control"
+          aria-describedby="predictions-context-help"
+          [attr.aria-busy]="selector.catalog.state().status === 'loading'"
+        >
           <option [ngValue]="null">Sélectionner : {{ selector.name }}</option>
-          @for (item of options(selector.key, selector.catalog); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+          @for (item of options(selector.key, selector.catalog); track item.id) {
+            <option [ngValue]="item.id">{{ referenceLabel(item) }}</option>
+          }
         </select>
-        <p [id]="'predictions-help-' + selector.key">Choix explicite ; rattachement vérifié avant lecture de l’historique.</p>
         @let catalog = selector.catalog.state();
-        @if (catalog.status === 'loading') { <p role="status">Chargement du catalogue…</p> }
+        @if (catalog.status === 'loading') {
+          <p role="status">Chargement du catalogue…</p>
+        }
         @if (catalog.status === 'error') {
           <p role="status">Le catalogue ne peut pas être chargé ou son contenu est incohérent.</p>
-          @if (catalog.retryable) { <button type="button" (click)="selector.catalog.retry()">Réessayer : {{ selector.plural }}</button> }
+          @if (catalog.retryable) {
+            <button type="button" (click)="selector.catalog.retry()">
+              Réessayer : {{ selector.plural }}
+            </button>
+          }
         }
-        @if (catalog.status === 'ready' && catalog.total === 0) { <p>Aucun élément disponible pour cette sélection.</p> }
-        @if (catalog.status === 'ready' && catalog.page < catalog.pages) { <button type="button" (click)="selector.catalog.more()">Charger plus : {{ selector.plural }}</button> }
+        @if (catalog.status === 'ready' && catalog.total === 0) {
+          <p>Aucun élément disponible pour cette sélection.</p>
+        }
+        @if (catalog.status === 'ready' && catalog.page < catalog.pages) {
+          <button type="button" (click)="selector.catalog.more()">
+            Charger plus : {{ selector.plural }}
+          </button>
+        }
       </div>
     }
   </div>
-  <button type="button" (click)="resetSelection()">Recommencer la sélection</button>
+  <button class="reset-selection" type="button" (click)="resetSelection()">
+    Recommencer la sélection
+  </button>
   <form novalidate (submit)="$event.preventDefault()" aria-label="Filtres des prédictions">
     <h3>Filtres de l’historique</h3>
     <div class="criteria">
-      <div><label for="predictions-type">Type de prédiction</label>
-        <select id="predictions-type" [formControl]="predictionType" [attr.aria-invalid]="fieldErrors()['type'] ? 'true' : null" [attr.aria-describedby]="fieldErrors()['type'] ? 'predictions-error-type' : null">
+      <div>
+        <label for="predictions-type">Type de prédiction</label>
+        <select
+          id="predictions-type"
+          [formControl]="predictionType"
+          [attr.aria-invalid]="fieldErrors()['type'] ? 'true' : null"
+          [attr.aria-describedby]="fieldErrors()['type'] ? 'predictions-error-type' : null"
+        >
           <option value="">Tous</option>
-          @for (type of types; track type) { <option [value]="type">{{ typeLabels[type] }}</option> }
+          @for (type of types; track type) {
+            <option [value]="type">{{ typeLabels[type] }}</option>
+          }
         </select>
       </div>
-      <div><label for="predictions-level">Niveau déclaré exact</label>
-        <input id="predictions-level" type="text" [formControl]="level" [attr.aria-invalid]="fieldErrors()['level'] ? 'true' : null"
-          [attr.aria-describedby]="fieldErrors()['level'] ? 'predictions-level-help predictions-error-level' : 'predictions-level-help'" />
-        <p id="predictions-level-help">Facultatif : 1 à 50 caractères bruts, espaces conservés. Les niveaux dépendent du producteur.</p>
+      <div>
+        <label for="predictions-level">Niveau déclaré exact</label>
+        <input
+          id="predictions-level"
+          type="text"
+          [formControl]="level"
+          [attr.aria-invalid]="fieldErrors()['level'] ? 'true' : null"
+          [attr.aria-describedby]="
+            fieldErrors()['level']
+              ? 'predictions-level-help predictions-error-level'
+              : 'predictions-level-help'
+          "
+        />
+        <p id="predictions-level-help">Facultatif - saisissez un niveau exact pour filtrer.</p>
       </div>
-      <div><label for="predictions-alert">Alerte déclarée</label>
-        <select id="predictions-alert" [formControl]="alert" [attr.aria-invalid]="fieldErrors()['alert'] ? 'true' : null" [attr.aria-describedby]="fieldErrors()['alert'] ? 'predictions-error-alert' : null">
-          <option value="">Tous</option><option value="true">Oui</option><option value="false">Non</option>
+      <div>
+        <label for="predictions-alert">Alerte déclarée</label>
+        <select
+          id="predictions-alert"
+          [formControl]="alert"
+          [attr.aria-invalid]="fieldErrors()['alert'] ? 'true' : null"
+          [attr.aria-describedby]="fieldErrors()['alert'] ? 'predictions-error-alert' : null"
+        >
+          <option value="">Tous</option>
+          <option value="true">Oui</option>
+          <option value="false">Non</option>
         </select>
       </div>
     </div>
     <h3>Période de prédiction (UTC)</h3>
-    <p id="predictions-period-help">Début inclus, fin incluse ; égalité permise. Saisissez la date et l’heure UTC, avec les secondes et jusqu’à six décimales facultatives. Aucun horaire par défaut ; les offsets des sources inchangées sont conservés.</p>
+    <p id="predictions-period-help">
+      Début inclus, fin incluse ; égalité permise. Saisissez la date et l’heure UTC, avec les
+      secondes et jusqu’à six décimales facultatives. Aucun horaire par défaut ; les offsets des
+      sources inchangées sont conservés.
+    </p>
     <div class="period-layout">
       @for (bound of bounds; track bound.key) {
-        <fieldset class="period-bound"><legend>{{ bound.label }}</legend>
+        <fieldset class="period-bound">
+          <legend>{{ bound.label }}</legend>
           <div class="bound-controls">
-            <div><label [for]="'predictions-' + bound.key + '-date'">Date</label>
-              <input [id]="'predictions-' + bound.key + '-date'" type="date" min="0001-01-01" max="9999-12-31" [formControl]="bound.form.controls.date"
+            <div>
+              <label [for]="'predictions-' + bound.key + '-date'">Date</label>
+              <input
+                [id]="'predictions-' + bound.key + '-date'"
+                type="date"
+                min="0001-01-01"
+                max="9999-12-31"
+                [formControl]="bound.form.controls.date"
                 [attr.aria-invalid]="fieldErrors()[bound.key + '-date'] ? 'true' : null"
-                [attr.aria-describedby]="'predictions-period-help' + (fieldErrors()[bound.key + '-date'] ? ' predictions-error-' + bound.key + '-date' : '')" />
+                [attr.aria-describedby]="
+                  'predictions-period-help' +
+                  (fieldErrors()[bound.key + '-date']
+                    ? ' predictions-error-' + bound.key + '-date'
+                    : '')
+                "
+              />
             </div>
-            <div><label [for]="'predictions-' + bound.key + '-time'">Heure UTC</label>
-              <input [id]="'predictions-' + bound.key + '-time'" type="time" step="1" [formControl]="bound.form.controls.time"
+            <div>
+              <label [for]="'predictions-' + bound.key + '-time'">Heure UTC</label>
+              <input
+                [id]="'predictions-' + bound.key + '-time'"
+                type="time"
+                step="1"
+                [formControl]="bound.form.controls.time"
                 [attr.aria-invalid]="fieldErrors()[bound.key + '-time'] ? 'true' : null"
-                [attr.aria-describedby]="'predictions-period-help' + (fieldErrors()[bound.key + '-time'] ? ' predictions-error-' + bound.key + '-time' : '')" />
+                [attr.aria-describedby]="
+                  'predictions-period-help' +
+                  (fieldErrors()[bound.key + '-time']
+                    ? ' predictions-error-' + bound.key + '-time'
+                    : '')
+                "
+              />
             </div>
-            <div><label [for]="'predictions-' + bound.key + '-fraction'">Fraction (0 à 6 chiffres)</label>
-              <input [id]="'predictions-' + bound.key + '-fraction'" type="text" inputmode="numeric" placeholder="Facultative" spellcheck="false" [formControl]="bound.form.controls.fraction"
+            <div>
+              <label [for]="'predictions-' + bound.key + '-fraction'"
+                >Fraction (0 à 6 chiffres)</label
+              >
+              <input
+                [id]="'predictions-' + bound.key + '-fraction'"
+                type="text"
+                inputmode="numeric"
+                placeholder="Facultative"
+                spellcheck="false"
+                [formControl]="bound.form.controls.fraction"
                 [attr.aria-invalid]="fieldErrors()[bound.key + '-fraction'] ? 'true' : null"
-                [attr.aria-describedby]="'predictions-period-help' + (fieldErrors()[bound.key + '-fraction'] ? ' predictions-error-' + bound.key + '-fraction' : '')" />
+                [attr.aria-describedby]="
+                  'predictions-period-help' +
+                  (fieldErrors()[bound.key + '-fraction']
+                    ? ' predictions-error-' + bound.key + '-fraction'
+                    : '')
+                "
+              />
             </div>
           </div>
         </fieldset>
@@ -74,77 +172,241 @@
     <div id="predictions-feedback" tabindex="-1" role="alert" aria-atomic="true">
       @if (feedback()) {
         <p>{{ feedback() }}</p>
-        @for (field of ['type', 'level', 'alert', 'start-date', 'start-time', 'start-fraction', 'end-date', 'end-time', 'end-fraction']; track field) {
-          @if (fieldErrors()[field]) { <p class="field-error" [id]="'predictions-error-' + field">{{ field.startsWith('start-') ? 'Début : ' : field.startsWith('end-') ? 'Fin : ' : '' }}{{ fieldErrors()[field] }}</p> }
+        @for (
+          field of [
+            'type',
+            'level',
+            'alert',
+            'start-date',
+            'start-time',
+            'start-fraction',
+            'end-date',
+            'end-time',
+            'end-fraction',
+          ];
+          track field
+        ) {
+          @if (fieldErrors()[field]) {
+            <p class="field-error" [id]="'predictions-error-' + field">
+              {{ field.startsWith('start-') ? 'Début : ' : field.startsWith('end-') ? 'Fin : ' : ''
+              }}{{ fieldErrors()[field] }}
+            </p>
+          }
         }
       }
     </div>
     <div class="actions">
       <button class="primary" type="button" (click)="applyFilters()">Appliquer les filtres</button>
       <button type="button" (click)="clearPeriod()">Effacer la période</button>
-      <button type="button" (click)="clearFilters()">Réinitialiser les filtres et la pagination</button>
+      <button type="button" (click)="clearFilters()">
+        Réinitialiser les filtres et la pagination
+      </button>
     </div>
-    @if (draft()) { <p class="draft-notice" role="status">Brouillon de filtres non appliqué. La liste conserve les critères appliqués.</p> }
-    @if (facade.query(); as query) {
-      <p class="applied-filters">Filtres appliqués : type {{ query.prediction_type ?? 'tous' }} ; niveau {{ query.level ?? 'tous' }} ; alerte {{ query.is_alert === undefined ? 'tous' : query.is_alert ? 'oui' : 'non' }}.</p>
-      <p class="applied-period">Période appliquée : début inclus {{ query.start_time ?? 'sans borne' }} ; fin incluse {{ query.end_time ?? 'sans borne' }}.</p>
+    @if (draft()) {
+      <p class="draft-notice" role="status">
+        Brouillon de filtres non appliqué. La liste conserve les critères appliqués.
+      </p>
+    }
+    @if (filtered()) {
+      @if (facade.query(); as query) {
+        <div class="filter-summary" role="status" aria-atomic="true">
+          <p class="filter-summary-title">Filtres actifs</p>
+          <ul class="applied-filters">
+            @if (query.prediction_type !== undefined) {
+              <li>Type : {{ typeLabels[query.prediction_type] }}</li>
+            }
+            @if (query.level !== undefined) {
+              <li>
+                Niveau : <span class="filter-raw-value">«{{ query.level }}»</span>
+              </li>
+            }
+            @if (query.is_alert !== undefined) {
+              <li>Alerte : {{ query.is_alert ? 'Oui' : 'Non' }}</li>
+            }
+            @if (query.start_time !== undefined) {
+              <li class="applied-period">Début inclus : {{ query.start_time }}</li>
+            }
+            @if (query.end_time !== undefined) {
+              <li class="applied-period">Fin incluse : {{ query.end_time }}</li>
+            }
+          </ul>
+        </div>
+      }
     }
   </form>
-  <div class="size-control"><label for="predictions-size">Prédictions par page</label>
+  <div class="size-control">
+    <label for="predictions-size">Prédictions par page</label>
     <select id="predictions-size" [formControl]="size">
-      @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+      @for (value of sizes(); track value) {
+        <option [ngValue]="value">{{ value }}</option>
+      }
     </select>
   </div>
 </section>
 <section class="results" aria-labelledby="predictions-results-title" [attr.aria-busy]="busy()">
   <h2 id="predictions-results-title">Historique des prédictions</h2>
   @if (canFilter()) {
-    <p class="context">{{ referenceLabel(facade.company()!) }} / {{ referenceLabel(facade.site()!) }} / {{ referenceLabel(facade.equipment()!) }}</p>
+    <p class="context">
+      {{ referenceLabel(facade.company()!) }} / {{ referenceLabel(facade.site()!) }} /
+      {{ referenceLabel(facade.equipment()!) }}
+    </p>
     <button type="button" (click)="refresh()" [disabled]="busy()">Actualiser</button>
   }
   @let state = facade.state();
   @switch (state.status) {
-    @case ('idle') { <app-empty-state title="Sélection attendue" message="Sélectionnez explicitement une entreprise, un site et un équipement pour consulter ses prédictions enregistrées." /> }
-    @case ('loading') { <app-loading-state message="Vérification du contexte et chargement des prédictions…" /> }
-    @case ('error') { <app-error-state title="Chargement impossible" [message]="state.message" [retryable]="state.retryable" (retry)="facade.retry()" /> }
+    @case ('idle') {
+      <app-empty-state
+        title="Sélection attendue"
+        message="Sélectionnez explicitement une entreprise, un site et un équipement pour consulter ses prédictions enregistrées."
+      />
+    }
+    @case ('loading') {
+      <app-loading-state message="Vérification du contexte et chargement des prédictions…" />
+    }
+    @case ('error') {
+      <app-error-state
+        title="Chargement impossible"
+        [message]="state.message"
+        [retryable]="state.retryable"
+        (retry)="facade.retry()"
+      />
+    }
     @case ('empty') {
       <p role="status">0 prédiction</p>
-      <app-empty-state [title]="filtered() ? 'Aucun résultat' : 'Aucune prédiction enregistrée'"
-        [message]="filtered() ? 'Aucune prédiction ne correspond aux filtres de cet équipement.' : 'Aucune prédiction enregistrée pour cet équipement.'" />
-      @if (filtered()) { <button type="button" (click)="clearFilters()">Effacer les filtres</button> }
+      <app-empty-state
+        [title]="filtered() ? 'Aucun résultat' : 'Aucune prédiction enregistrée'"
+        [message]="
+          filtered()
+            ? 'Aucune prédiction ne correspond aux filtres de cet équipement.'
+            : 'Aucune prédiction enregistrée pour cet équipement.'
+        "
+      />
+      @if (filtered()) {
+        <button type="button" (click)="clearFilters()">Effacer les filtres</button>
+      }
     }
     @case ('out-of-range') {
-      <app-empty-state title="Page hors plage" message="Cette page ne contient plus de prédictions. Le total reste disponible." />
+      <app-empty-state
+        title="Page hors plage"
+        message="Cette page ne contient plus de prédictions. Le total reste disponible."
+      />
       <p role="status">{{ state.data.total }} prédictions au total ; page demandée {{ page() }}.</p>
       <button type="button" (click)="recoverPage()">Revenir à la page 1</button>
     }
     @case ('success') {
-      <p class="scroll-help">Sur petit écran, faites défiler le tableau horizontalement. Le score brut ne constitue pas une probabilité universelle.</p>
-      <div class="table-scroll" tabindex="0" role="region" aria-label="Historique des prédictions de l’équipement">
-        <table><caption>{{ state.data.total }} prédictions - Page {{ page() }} sur {{ state.data.pages }}. Tri serveur : date de prédiction décroissante, puis identifiant décroissant. De nouvelles lignes peuvent déplacer les pages.</caption>
-          <thead><tr><th scope="col">Date de prédiction (offset fourni)</th><th scope="col">Type</th><th scope="col">Valeur déclarée</th><th scope="col">Niveau déclaré</th><th scope="col">Alerte déclarée</th><th scope="col">Détails</th></tr></thead>
-          <tbody>@for (item of state.data.items; track item.id) {
-            @let view = presentation(item);
-            <tr><td><time [attr.datetime]="item.predicted_at">{{ item.predicted_at }}</time></td><td>{{ typeLabels[item.prediction_type] }}</td>
-              <td><span class="value-label">{{ view.label }}</span><strong>{{ view.value }}</strong>
-                @for (warning of view.warnings; track warning) { <p class="value-warning">{{ warning }}</p> }
-              </td><td>{{ view.level }}</td><td>{{ view.alert }}</td>
-              <td><button type="button" [id]="'prediction-toggle-' + item.id" [attr.aria-expanded]="openDetails().has(item.id)"
-                [attr.aria-controls]="openDetails().has(item.id) ? 'prediction-panel-' + item.id : null"
-                [attr.aria-label]="'Détails de la prédiction ' + item.id + ' : ' + typeLabels[item.prediction_type]"
-                (click)="toggleDetails(item.id)">Détails</button></td></tr>
-            @if (openDetails().has(item.id)) {
-              <tr class="detail-row"><td colspan="6"><section [id]="'prediction-panel-' + item.id" [attr.aria-labelledby]="'prediction-toggle-' + item.id">
-                <app-prediction-details [prediction]="item" />
-              </section></td></tr>
+      <p class="scroll-help">Faites défiler le tableau horizontalement.</p>
+      <div
+        class="table-scroll"
+        tabindex="0"
+        role="region"
+        aria-label="Historique des prédictions de l’équipement"
+      >
+        <table>
+          <caption>
+            {{
+              state.data.total
+            }}
+            prédictions - Page
+            {{
+              page()
+            }}
+            sur
+            {{
+              state.data.pages
+            }}. Tri serveur : date de prédiction décroissante, puis identifiant décroissant. De
+            nouvelles lignes peuvent déplacer les pages.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Date de prédiction (offset fourni)</th>
+              <th scope="col">Type</th>
+              <th scope="col">Valeur déclarée</th>
+              <th scope="col">Niveau déclaré</th>
+              <th scope="col">Alerte déclarée</th>
+              <th scope="col">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of state.data.items; track item.id) {
+              @let view = presentation(item);
+              <tr>
+                <td>
+                  <time [attr.datetime]="item.predicted_at">{{ item.predicted_at }}</time>
+                </td>
+                <td>{{ typeLabels[item.prediction_type] }}</td>
+                <td>
+                  <span class="value-label">{{ view.label }}</span
+                  ><strong>{{ view.value }}</strong>
+                  @for (warning of view.warnings; track warning) {
+                    <p class="value-warning">{{ warning }}</p>
+                  }
+                </td>
+                <td>{{ view.level }}</td>
+                <td>
+                  <span
+                    class="alert-badge"
+                    [class.alert-yes]="item.is_alert === true"
+                    [class.alert-no]="item.is_alert === false"
+                    [class.alert-unknown]="item.is_alert === null"
+                    >{{ view.alert }}</span
+                  >
+                </td>
+                <td class="details-cell">
+                  <button
+                    class="details-toggle"
+                    [class.is-open]="openDetails().has(item.id)"
+                    type="button"
+                    [id]="'prediction-toggle-' + item.id"
+                    [attr.aria-expanded]="openDetails().has(item.id)"
+                    [attr.aria-controls]="
+                      openDetails().has(item.id) ? 'prediction-panel-' + item.id : null
+                    "
+                    [attr.aria-label]="
+                      'Détails de la prédiction ' +
+                      item.id +
+                      ' : ' +
+                      typeLabels[item.prediction_type]
+                    "
+                    (click)="toggleDetails(item.id)"
+                  >
+                    <span>Détails</span
+                    ><span class="details-indicator" aria-hidden="true">{{
+                      openDetails().has(item.id) ? '−' : '+'
+                    }}</span>
+                  </button>
+                </td>
+              </tr>
+              @if (openDetails().has(item.id)) {
+                <tr class="detail-row">
+                  <td colspan="6">
+                    <section
+                      [id]="'prediction-panel-' + item.id"
+                      [attr.aria-labelledby]="'prediction-toggle-' + item.id"
+                    >
+                      <app-prediction-details [prediction]="item" />
+                      @if (item.prediction_type === 'anomaly') {
+                        <p class="anomaly-notice">
+                          L’indice d’anomalie n’est pas une probabilité de panne.
+                        </p>
+                      }
+                    </section>
+                  </td>
+                </tr>
+              }
             }
-          }</tbody>
+          </tbody>
         </table>
       </div>
       <nav class="pagination" aria-label="Pagination des prédictions">
-        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">Précédent</button>
-        <p role="status">Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} prédictions</p>
-        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">Suivant</button>
+        <button type="button" [disabled]="page() <= 1 || busy()" (click)="changePage(page() - 1)">
+          Précédent
+        </button>
+        <p role="status">
+          Page {{ page() }} sur {{ state.data.pages }} - {{ state.data.total }} prédictions
+        </p>
+        <button type="button" [disabled]="!canNext() || busy()" (click)="changePage(page() + 1)">
+          Suivant
+        </button>
       </nav>
     }
   }
