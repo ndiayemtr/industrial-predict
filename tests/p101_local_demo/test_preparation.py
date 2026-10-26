@@ -92,7 +92,7 @@ def test_compose_is_independent_and_never_pulls():
     assert 'env_file' not in service and 'build' not in service
     assert compose['volumes']['p101_data']['name'] == CLUSTER + '-data'
     assert compose['networks']['p101_net']['name'] == CLUSTER + '-net'
-    assert compose['networks']['p101_net']['internal'] is True
+    assert compose['networks']['p101_net']['internal'] is False
     assert 'external' not in compose['volumes']['p101_data']
     assert not any('docker-entrypoint-initdb.d' in v for v in service['volumes'])
 

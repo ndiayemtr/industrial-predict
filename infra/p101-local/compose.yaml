@@ -35,7 +35,7 @@ networks:
   p101_net:
     name: industrial-predict-p101-local-demo-net
     driver: bridge
-    internal: true
+    internal: false
     ipam:
       config:
         - subnet: ${P101_LOCAL_SUBNET:?Explicit approved non-overlapping subnet required}
