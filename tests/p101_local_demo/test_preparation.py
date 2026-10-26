@@ -22,6 +22,7 @@ import yaml
 from app.p101_local_demo.bootstrap import insert_payloads, plan, validate_snapshot
 from app.p101_local_demo.contracts import DATABASE, LocalDemoError, SqlRows
 from app.p101_local_demo import provisioning, setup
+from app.p101_local_demo.reader import IDENTITY_SQL
 from app.p101_local_demo.setup_config import (
     CLUSTER, CORE_FILES, REVISION, ROOT, ROLES, SetupError, compose_files, parse_settings,
 )
@@ -172,8 +173,17 @@ def test_simulated_identity_acceptance_is_not_database_proof(settings):
     provisioning.validate_connection(fake_connection(settings), settings, ROLES[1])
 
 
+@pytest.mark.parametrize('query', [provisioning.IDENTITY, IDENTITY_SQL], ids=['provisioning', 'reader'])
+def test_server_address_is_projected_as_host_without_netmask(query):
+    """Static SQL contract only; PostgreSQL host() semantics require the real read-only check."""
+    sql = str(query)
+    assert 'host(inet_server_addr()) AS server_address' in sql
+    assert 'inet_server_addr()::text' not in sql
+
+
 @pytest.mark.parametrize('field,value', [('database','industrial_predict_dev'), ('cluster','dev'),
     ('server_address','172.18.0.2'), ('server_port',5433), ('effective_role',ROLES[0]),
+    ('server_address',None), ('server_address','invalid'), ('server_address','172.30.101.2/32'),
     ('rolsuper',True), ('rolcreaterole',True), ('no_memberships',False),
     ('no_protected_schema',False), ('encoding','LATIN1')])
 def test_bad_simulated_identity(settings, field, value):

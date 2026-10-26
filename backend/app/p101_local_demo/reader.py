@@ -30,7 +30,7 @@ measurements = Table("measurements", metadata, Column("id", Integer), Column("se
 
 IDENTITY_SQL = text("""
 SELECT current_database() AS database,session_user::text AS session_role,current_user::text AS effective_role,
- inet_server_addr()::text AS server_address,inet_server_port() AS server_port,
+ host(inet_server_addr()) AS server_address,inet_server_port() AS server_port,
  current_setting('transaction_isolation') AS isolation_level,
  current_setting('server_encoding') AS encoding,
  m.instance_uuid::text,m.purpose,m.database_name::text,m.bootstrap_closed,m.schema_revision,

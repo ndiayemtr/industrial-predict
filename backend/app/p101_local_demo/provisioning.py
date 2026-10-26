@@ -13,7 +13,7 @@ from app.p101_local_demo.setup_config import (
 
 IDENTITY = text("""
 SELECT current_database() AS database, session_user::text AS session_role,
- current_user::text AS effective_role, inet_server_addr()::text AS server_address,
+ current_user::text AS effective_role, host(inet_server_addr()) AS server_address,
  inet_server_port() AS server_port, current_setting('cluster_name') AS cluster,
  current_setting('server_encoding') AS encoding,
  current_setting('transaction_isolation') AS isolation,

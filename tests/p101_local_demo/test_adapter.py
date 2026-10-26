@@ -255,7 +255,8 @@ def test_bad_destination_refused_before_sql(destination, rows, field, value):
 @pytest.mark.parametrize("field,value", [("instance_uuid", "other"), ("purpose", "other"),
     ("database_name", "other"), ("bootstrap_closed", False), ("schema_revision", "other"),
     ("no_protected_schema", False), ("limited_role", False), ("sources_immutable", False),
-    ("not_owner", False), ("server_address", "127.0.0.3"), ("server_port", 55432), ("source_read", 1)])
+    ("not_owner", False), ("server_address", "127.0.0.3"), ("server_port", 55432), ("source_read", 1),
+    ("server_address", None), ("server_address", "invalid"), ("server_address", "127.0.0.2/32")])
 def test_bad_effective_identity_prevents_source_reads(destination, rows, field, value):
     row = identity(destination)
     row[field] = value
