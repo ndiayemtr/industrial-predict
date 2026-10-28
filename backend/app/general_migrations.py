@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 import hashlib
 from ipaddress import ip_address
+import json
 from pathlib import Path
 import re
 from uuid import UUID
@@ -45,6 +46,7 @@ HISTORICAL_SOURCES = (
 )
 ALLOWED_ENVIRONMENTS = frozenset({"oidc-migration-test"})
 SCHEMA_SCOPE = ("public.oidc_transactions",)
+MANIFEST_PATH = GENERAL_DIRECTORY / "revision_manifest.json"
 
 
 class MigrationGuardError(ValueError):
@@ -113,6 +115,17 @@ class SourceSnapshot:
     sources: tuple[SourceFingerprint, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class PublishedRevision:
+    """Recognized publication data, never an authenticated execution approval."""
+
+    revision: str
+    parent: str
+    path: str
+    sha256: str
+    schema_scope: tuple[str, ...]
+
+
 @dataclass(frozen=True, slots=True, repr=False)
 class MigrationIntent:
     destination: DestinationExpectation
@@ -146,8 +159,12 @@ def _revision_id(value):
     return type(value) is str and re.fullmatch(r"[a-z0-9_]{1,32}", value) and value not in {"head", "heads", "base"}
 
 
-def _read(path):
+def _check_path(path):
     _require(path.resolve() == path and path.is_file() and path.stat().st_size <= 1_048_576)
+
+
+def _read(path):
+    _check_path(path)
     return path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
@@ -168,6 +185,132 @@ def _parse_revision(path, source):
     _require(values["down_revision"] is None or _revision_id(values["down_revision"]))
     _require(values["branch_labels"] is None and values["depends_on"] is None)
     return RevisionDescription(values["revision"], values["down_revision"], path.relative_to(BACKEND).as_posix())
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        _require(key not in result)
+        result[key] = value
+    return result
+
+
+def _manifest(source):
+    data = json.loads(source, object_pairs_hook=_unique_object)
+    _require(type(data) is dict and set(data) == {"format", "revisions"})
+    _require(data["format"] == "general-revisions-v1")
+    # This publication contains exactly one OIDC revision. Other scopes and
+    # additional revisions require a separately reviewed change of this policy.
+    _require(type(data["revisions"]) is list and len(data["revisions"]) == 1)
+    entry = data["revisions"][0]
+    _require(type(entry) is dict and set(entry) == {"revision", "parent", "path", "sha256", "schema_scope"})
+    _require(_revision_id(entry["revision"]) and entry["revision"] not in HISTORICAL_CHAIN)
+    _require(entry["parent"] == HISTORICAL_HEAD)
+    _require(entry["path"] == f"general_migrations/versions/{entry['revision']}_create_oidc_transactions.py")
+    _require(type(entry["sha256"]) is str and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]))
+    _require(type(entry["schema_scope"]) is list and entry["schema_scope"] == list(SCHEMA_SCOPE))
+    return (PublishedRevision(entry["revision"], entry["parent"], entry["path"],
+                              entry["sha256"], tuple(entry["schema_scope"])),)
+
+
+@_guarded
+def read_manifest() -> tuple[PublishedRevision, ...]:
+    return _manifest(_read(MANIFEST_PATH))
+
+
+def _spec(operation, *args, **kwargs):
+    return operation, args, tuple(sorted(kwargs.items()))
+
+
+def _ast_value(node):
+    if isinstance(node, ast.Constant):
+        _require(type(node.value) in (str, int, bool, type(None)))
+        if type(node.value) is int:
+            _require(node.value in (43, 64, 512, 2048))
+        return node.value
+    if isinstance(node, ast.List):
+        _require(all(isinstance(n, ast.Constant) and type(n.value) is str for n in node.elts))
+        return tuple(n.value for n in node.elts)
+    _require(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+             and isinstance(node.func.value, ast.Name))
+    name = node.func.value.id + "." + node.func.attr
+    _require(name in {
+        "op.create_table", "op.create_index", "op.drop_index", "op.drop_table",
+        "sa.Column", "sa.String", "sa.DateTime", "sa.Text", "sa.PrimaryKeyConstraint",
+        "sa.UniqueConstraint", "sa.CheckConstraint",
+    })
+    _require(all(k.arg is not None for k in node.keywords))
+    _require(len({k.arg for k in node.keywords}) == len(node.keywords))
+    return _spec(name, *(_ast_value(a) for a in node.args),
+                 **{k.arg: _ast_value(k.value) for k in node.keywords})
+
+
+def _expected_oidc_operations():
+    # A closed declaration of this one schema, not an interpreter for Python or
+    # arbitrary SQL. Tests compare the independently declared ORM metadata.
+    columns = [
+        _spec("sa.Column", name, _spec("sa.String", length), nullable=False)
+        for name, length in (
+            ("transaction_id", 64), ("state_digest", 64), ("browser_binding_digest", 64),
+            ("policy_digest", 64), ("nonce", 43), ("code_verifier", 43), ("issuer", 2048),
+            ("client_id", 512), ("callback_url", 2048), ("return_target", 64),
+        )
+    ]
+    columns += [_spec("sa.Column", name, _spec("sa.DateTime", timezone=True), nullable=False)
+                for name in ("created_at", "expires_at")]
+    columns += [_spec("sa.Column", "contract_version", _spec("sa.Text"), nullable=False)]
+    constraints = [
+        _spec("sa.PrimaryKeyConstraint", "transaction_id", name="pk_oidc_transactions"),
+        _spec("sa.UniqueConstraint", "state_digest", name="uq_oidc_transactions_state_digest"),
+    ]
+    constraints += [_spec("sa.CheckConstraint", f"{name} ~ '^[0-9a-f]{{64}}$'",
+                          name=f"ck_oidc_transactions_{name}_hex")
+                    for name in ("transaction_id", "state_digest", "browser_binding_digest", "policy_digest")]
+    constraints += [_spec("sa.CheckConstraint", expression, name=name) for name, expression in (
+        ("ck_oidc_transactions_expiry", "expires_at > created_at"),
+        ("ck_oidc_transactions_nonce_length", "char_length(nonce) = 43"),
+        ("ck_oidc_transactions_code_verifier_length", "char_length(code_verifier) = 43"),
+    )]
+    return (
+        (_spec("op.create_table", "oidc_transactions", *columns, *constraints, schema="public"),
+         _spec("op.create_index", "ix_oidc_transactions_expires_at", "oidc_transactions",
+               ("expires_at",), unique=False, schema="public")),
+        (_spec("op.drop_index", "ix_oidc_transactions_expires_at", table_name="oidc_transactions", schema="public"),
+         _spec("op.drop_table", "oidc_transactions", schema="public")),
+    )
+
+
+@_guarded
+def validate_oidc_source(source: str, *, revision: str, parent: str):
+    """Return literal operation descriptions after a closed AST check, never exec.
+
+    This establishes only this static profile. It does not authorize import or
+    guarantee safety of arbitrary Python/dependencies on a live SQL destination.
+    """
+    _require(_revision_id(revision) and revision not in HISTORICAL_CHAIN and parent == HISTORICAL_HEAD)
+    body = ast.parse(source).body
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and type(body[0].value.value) is str:
+        body = body[1:]
+    _require(len(body) == 8)
+    expected_imports = ast.parse("from alembic import op\nimport sqlalchemy as sa").body
+    _require(all(ast.dump(actual) == ast.dump(expected) for actual, expected in zip(body[:2], expected_imports)))
+    for node, (name, value) in zip(body[2:6], (
+        ("revision", revision), ("down_revision", parent), ("branch_labels", None), ("depends_on", None),
+    )):
+        _require(isinstance(node, ast.Assign) and len(node.targets) == 1
+                 and isinstance(node.targets[0], ast.Name) and node.targets[0].id == name)
+        _require(isinstance(node.value, ast.Constant) and node.value.value == value and not node.type_comment)
+    operations = []
+    for node, name in zip(body[6:], ("upgrade", "downgrade")):
+        _require(isinstance(node, ast.FunctionDef) and node.name == name and not node.decorator_list)
+        args = node.args
+        _require(not (args.posonlyargs or args.args or args.kwonlyargs or args.defaults or args.kw_defaults
+                      or args.vararg or args.kwarg or node.type_comment or getattr(node, "type_params", [])))
+        _require(node.returns is None or (isinstance(node.returns, ast.Constant) and node.returns.value is None))
+        _require(len(node.body) == 2 and all(isinstance(s, ast.Expr) and isinstance(s.value, ast.Call) for s in node.body))
+        operations.append(tuple(_ast_value(s.value) for s in node.body))
+    _require(tuple(operations) == _expected_oidc_operations())
+    return tuple(operations)
 
 
 @_guarded
@@ -197,22 +340,35 @@ def resolve_upgrade(revisions: tuple[RevisionDescription, ...], initial: str, fi
 @_guarded
 def inspect_sources() -> SourceSnapshot:
     """Explicit filesystem read only; no revision import, SQL or Alembic command."""
-    # No authority can authenticate a new physical revision in this lot. Refuse
-    # it before reading/parsing it; future dependency tests use metadata in memory.
-    _require(not tuple((GENERAL_DIRECTORY / "versions").glob("*.py")))
+    manifest_source = _read(MANIFEST_PATH)
+    published = _manifest(manifest_source)
+    expected_new = {entry.path for entry in published} | {"general_migrations/versions/.gitkeep"}
+    _require({p.relative_to(BACKEND).as_posix() for p in (GENERAL_DIRECTORY / "versions").iterdir()} == expected_new)
     _require({p.name for p in HISTORICAL_DIRECTORY.glob("*.py")} == {name for name, _ in HISTORICAL_SOURCES})
-    revisions, fingerprints = [], []
-    for name, expected in HISTORICAL_SOURCES:
-        path = HISTORICAL_DIRECTORY / name
-        source = _read(path)
+    paths = [(HISTORICAL_DIRECTORY / name, expected) for name, expected in HISTORICAL_SOURCES]
+    paths += [(BACKEND / entry.path, entry.sha256) for entry in published]
+    for path, _ in paths:
+        _check_path(path)
+    _check_path(GENERAL_DIRECTORY / "versions/.gitkeep")
+    _require((GENERAL_DIRECTORY / "versions/.gitkeep").stat().st_size == 0)
+    sources = [(path, expected, _read(path)) for path, expected in paths]
+    revisions, fingerprints = [], [_fingerprint(MANIFEST_PATH, manifest_source)]
+    for path, expected, source in sources:
         fingerprint = _fingerprint(path, source)
         _require(fingerprint.sha256 == expected)
         fingerprints.append(fingerprint)
+    # No AST inspection starts until every declared source hash has matched.
+    for path, _, source in sources:
         revisions.append(_parse_revision(path, source))
+    graph = tuple(sorted(revisions, key=lambda r: r.revision))
+    entry = published[0]
+    _require(resolve_upgrade(graph, HISTORICAL_HEAD, entry.revision) == (entry.revision,))
+    recognized = next(r for r in graph if r.path == entry.path)
+    _require((recognized.revision, recognized.parent) == (entry.revision, entry.parent))
+    validate_oidc_source(next(source for path, _, source in sources if path == BACKEND / entry.path),
+                         revision=entry.revision, parent=entry.parent)
     for path in (GENERAL_DIRECTORY / "alembic.ini", GENERAL_DIRECTORY / "env.py", Path(__file__).resolve()):
         fingerprints.append(_fingerprint(path, _read(path)))
-    graph = tuple(sorted(revisions, key=lambda r: r.revision))
-    resolve_upgrade(graph, HISTORICAL_HEAD, HISTORICAL_HEAD)
     return SourceSnapshot(graph, tuple(sorted(fingerprints, key=lambda s: s.path)))
 
 
@@ -251,11 +407,10 @@ def _validate_destination(destination):
 
 @_guarded
 def preflight(intent: MigrationIntent, approval: ApprovalDeclaration, *, now: datetime) -> PreflightReport:
-    """Check an untrusted claim against current sources; NEVER authenticate it.
+    """Check a claim against recognized publications, NEVER authenticate or execute.
 
-With no future revision, only the empty reference-to-reference sequence can be
-described. This is a preparatory no-op declaration, not a migratable bootstrap.
-"""
+    Even an exact one-revision OIDC plan remains an untrusted declaration.
+    """
     _require(type(intent) is MigrationIntent and type(approval) is ApprovalDeclaration)
     _validate_destination(intent.destination)
     _require(intent.direction == "upgrade" and type(intent.sequence) is tuple)

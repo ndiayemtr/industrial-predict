@@ -1,0 +1,12 @@
+{
+  "format": "general-revisions-v1",
+  "revisions": [
+    {
+      "revision": "12e2fc65f372",
+      "parent": "09ac8101e9fe",
+      "path": "general_migrations/versions/12e2fc65f372_create_oidc_transactions.py",
+      "sha256": "8dd65b4517c0fba38f789b8b2ce016cafa80794fd0bcf6b8a35d194773da5274",
+      "schema_scope": ["public.oidc_transactions"]
+    }
+  ]
+}

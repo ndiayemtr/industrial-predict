@@ -23,16 +23,38 @@ Explicitly reconfiguring Alembic elsewhere is outside this component's boundary.
 
 The nine historical sources remain in their original directory, with pinned
 SHA-256 fingerprints over UTF-8/LF source (checkout CRLF is normalized). Safe graph
-inspection uses AST metadata, never revision imports. Any Python file in the new
-`versions/` directory is refused before reading it: no authority can authenticate
-it yet. A future cross-directory dependency on `09ac8101e9fe` is demonstrated
-using Alembic metadata in memory only, without creating a revision file. The
-two-location loading strategy is reserved for a later reviewed activation lot;
-it is not an operational configuration today. P101/local-demo paths stay intact.
+inspection uses AST metadata, never revision imports. `revision_manifest.json`
+is the closed positive list of recognized publications: revision, parent, exact
+backend-relative path, SHA-256 and OIDC scope. It contains one revision,
+`12e2fc65f372`, descending from `09ac8101e9fe`. Unknown keys, duplicate keys/entries,
+external paths, altered hashes, redirects and extra files/directories in
+`versions/` are rejected. `.gitkeep` is the only non-revision file allowed there.
+No expected hash is derived automatically from directory discovery.
+
+Order: validate manifest, compare exact file set, check paths, read all sources,
+verify all expected hashes, parse AST, validate graph, check OIDC operations,
+then include the manifest and sources in the snapshot. A matching manifest is
+recognition of a versioned publication, NOT proof of administrative approval.
+Changing both the manifest and source cannot enable execution or Python loading.
+The two-location loading strategy is reserved for a later reviewed activation
+lot; it is not an operational configuration today. P101/local-demo paths stay intact.
 An empty reference-to-reference plan is useful for offline contract checks only;
 it cannot execute or bootstrap business tables.
 Only a linear graph extending the historical chain is supported. Dynamic targets,
 unknown revisions, branches, merges, downgrade, stamp and autogeneration are denied.
+
+The published module is never imported, including by tests. Its closed AST profile
+permits only the exact two imports, four literal metadata assignments and two
+undecorated, parameterless functions. Literal calls must describe exactly the
+13 required columns, nine named constraints and one expiration index. Unknown
+calls, raw SQL execution, helpers, module-level execution, dynamic expressions,
+decorators, defaults and operations outside OIDC are rejected. This is not a
+Python sandbox or an authorization to import arbitrary future scripts.
+
+The ORM and published revision both require exact length 43 for nonce/verifier.
+The upgrade creates only `public.oidc_transactions` and its index. The downgrade
+describes only their removal, without CASCADE. Neither function has been run;
+having downgrade code never authorizes operational downgrade.
 
 Destination hosts accept ASCII DNS labels (1–63 characters, alphanumeric ends,
 hyphens inside, total at most 253), IPv4 literals or unbracketed IPv6 literals.

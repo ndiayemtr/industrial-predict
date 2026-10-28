@@ -21,6 +21,8 @@ class OidcTransactionRecord(Base):
                           name=f"ck_oidc_transactions_{column}_hex")
           for column in ("transaction_id", "state_digest", "browser_binding_digest", "policy_digest")),
         CheckConstraint("expires_at > created_at", name="ck_oidc_transactions_expiry"),
+        CheckConstraint("char_length(nonce) = 43", name="ck_oidc_transactions_nonce_length"),
+        CheckConstraint("char_length(code_verifier) = 43", name="ck_oidc_transactions_code_verifier_length"),
         Index("ix_oidc_transactions_expires_at", "expires_at"),
         {"schema": "public"},
     )

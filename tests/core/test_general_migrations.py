@@ -85,15 +85,17 @@ def test_guarded_config_is_inert_even_after_source_validation():
     assert config.attributes == {}
     with pytest.raises(CommandError):
         ScriptDirectory.from_config(config)
-    assert not list((module.GENERAL_DIRECTORY / "versions").glob("*.py"))
+    assert [p.relative_to(module.BACKEND).as_posix() for p in (module.GENERAL_DIRECTORY / "versions").glob("*.py")] == [
+        entry.path for entry in module.read_manifest()]
 
 
 def test_real_historical_graph_and_pinned_sources_without_running_env():
     snapshot = module.inspect_sources()
-    assert len(snapshot.revisions) == 9
-    assert {r.revision for r in snapshot.revisions} == set(module.HISTORICAL_CHAIN)
-    assert len(snapshot.sources) == 12  # nine revisions, config, env, guards
-    graph = RevisionMap(lambda: iter(Revision(r.revision, r.parent) for r in snapshot.revisions))
+    historical = tuple(r for r in snapshot.revisions if r.revision in module.HISTORICAL_CHAIN)
+    assert len(historical) == 9 and len(snapshot.revisions) == 10
+    assert {r.revision for r in historical} == set(module.HISTORICAL_CHAIN)
+    assert len(snapshot.sources) == 14  # ten revisions, manifest, config, env, guards
+    graph = RevisionMap(lambda: iter(Revision(r.revision, r.parent) for r in historical))
     assert graph.heads == (module.HISTORICAL_HEAD,)
     assert len(list(graph.iterate_revisions(module.HISTORICAL_HEAD, "base"))) == 9
     assert module.resolve_upgrade(snapshot.revisions, module.HISTORICAL_HEAD, module.HISTORICAL_HEAD) == ()
@@ -103,7 +105,8 @@ def test_future_external_parent_resolution_with_alembic_in_memory_only():
     snapshot = module.inspect_sources()
     future = module.RevisionDescription("oidc_synthetic_future", module.HISTORICAL_HEAD,
                                         "general_migrations/versions/oidc_synthetic_future.py")
-    revisions = snapshot.revisions + (future,)
+    historical = tuple(r for r in snapshot.revisions if r.revision in module.HISTORICAL_CHAIN)
+    revisions = historical + (future,)
     assert module.resolve_upgrade(revisions, module.HISTORICAL_HEAD, future.revision) == (future.revision,)
     # Alembic metadata only: no ScriptDirectory loader or migration module.
     graph = RevisionMap(lambda: iter(Revision(r.revision, r.parent) for r in revisions))
@@ -117,7 +120,7 @@ def test_future_external_parent_resolution_with_alembic_in_memory_only():
 
 @pytest.mark.parametrize("kind", ["unknown", "head", "heads", "downgrade", "multiple_heads", "duplicate", "cycle", "missing_parent"])
 def test_invalid_graphs_and_targets_are_rejected(kind):
-    graph = module.inspect_sources().revisions
+    graph = tuple(r for r in module.inspect_sources().revisions if r.revision in module.HISTORICAL_CHAIN)
     target = module.HISTORICAL_HEAD
     if kind in {"unknown", "head", "heads"}:
         target = kind
@@ -190,19 +193,20 @@ def test_altered_historical_source_refused_before_config_or_import(monkeypatch):
 def test_future_source_refused_before_read_config_or_import(monkeypatch):
     # Simulate discovery, without creating a revision file in any directory.
     future = module.GENERAL_DIRECTORY / "versions/unapproved_future.py"
-    original = Path.glob
-    def discovered(path, pattern):
-        if path == future.parent and pattern == "*.py":
-            return iter((future,))
-        return original(path, pattern)
-    monkeypatch.setattr(Path, "glob", discovered)
-    with patch.object(module, "_read") as reader, \
+    original = Path.iterdir
+    def discovered(path):
+        if path == future.parent:
+            return iter((*original(path), future))
+        return original(path)
+    monkeypatch.setattr(Path, "iterdir", discovered)
+    with patch.object(module, "_read", wraps=module._read) as reader, \
          patch("alembic.config.Config") as constructor, \
          patch("alembic.util.load_python_file") as importer:
         with pytest.raises(module.MigrationGuardError) as caught:
             module.make_alembic_config()
         assert_sanitized(caught.value)
-        reader.assert_not_called()
+        # Manifest validation precedes directory comparison; no revision read.
+        reader.assert_called_once_with(module.MANIFEST_PATH)
         constructor.assert_not_called()
         importer.assert_not_called()
     assert not future.exists()
