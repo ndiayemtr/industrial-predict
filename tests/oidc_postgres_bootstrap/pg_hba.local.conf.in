@@ -1,0 +1,4 @@
+local postgres "@BOOTSTRAP@" scram-sha-256
+local "@DATABASE@" "@BOOTSTRAP@" scram-sha-256
+local all all reject
+host all all all reject

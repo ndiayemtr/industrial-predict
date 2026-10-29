@@ -1,0 +1,4 @@
+local all all reject
+hostnossl all all all reject
+hostssl "@DATABASE@" "@OWNER@","@APP@","@OBSERVER@" @SOURCE_CIDR@ scram-sha-256
+hostssl all all all reject
