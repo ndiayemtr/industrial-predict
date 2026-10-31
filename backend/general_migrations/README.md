@@ -25,15 +25,18 @@ The nine historical sources remain in their original directory, with pinned
 SHA-256 fingerprints over UTF-8/LF source (checkout CRLF is normalized). Safe graph
 inspection uses AST metadata, never revision imports. `revision_manifest.json`
 is the closed positive list of recognized publications: revision, parent, exact
-backend-relative path, SHA-256 and OIDC scope. It contains one revision,
-`12e2fc65f372`, descending from `09ac8101e9fe`. Unknown keys, duplicate keys/entries,
+backend-relative path, SHA-256 and scope. It contains exactly two revisions:
+`12e2fc65f372` descends from `09ac8101e9fe`, and `4b7e2a91c6d0` extends it
+with public.local_users, public.external_identities, public.company_memberships
+and public.membership_permissions. Unknown keys, duplicate keys/entries,
 external paths, altered hashes, redirects and extra files/directories in
 `versions/` are rejected. `.gitkeep` is the only non-revision file allowed there.
 No expected hash is derived automatically from directory discovery.
 
 Order: validate manifest, compare exact file set, check paths, read all sources,
 verify all expected hashes, parse AST, validate graph, check OIDC operations,
-then include the manifest and sources in the snapshot. A matching manifest is
+validate the independently pinned account AST, then include the manifest and
+sources in the snapshot. A matching manifest is
 recognition of a versioned publication, NOT proof of administrative approval.
 Changing both the manifest and source cannot enable execution or Python loading.
 The two-location loading strategy is reserved for a later reviewed activation
@@ -43,7 +46,7 @@ it cannot execute or bootstrap business tables.
 Only a linear graph extending the historical chain is supported. Dynamic targets,
 unknown revisions, branches, merges, downgrade, stamp and autogeneration are denied.
 
-The published module is never imported, including by tests. Its closed AST profile
+The published OIDC module is never imported, including by tests. Its closed AST profile
 permits only the exact two imports, four literal metadata assignments and two
 undecorated, parameterless functions. Literal calls must describe exactly the
 13 required columns, nine named constraints and one expiration index. Unknown
@@ -80,3 +83,24 @@ script-safety enforcement is supplied in this lot.
 
 References: [connection sharing](https://alembic.sqlalchemy.org/en/latest/cookbook.html#sharing-a-connection-across-one-or-more-programmatic-migration-commands),
 [runtime transaction behavior](https://alembic.sqlalchemy.org/en/latest/api/runtime.html#alembic.runtime.migration.MigrationContext.begin_transaction).
+
+## Professional accounts — Mission 2A
+
+The account revision is also never imported/executed by these checks or tests.
+Its complete reviewed AST has an independent fixed SHA-256 anchor in the guard.
+Changing the source and its manifest hash together does not approve altered
+operations: the AST anchor must also be changed in a separately reviewed policy.
+This is closed recognition of one concrete revision, not a generic SQL/Python
+validator or a signature. AST pinning permits formatting changes only when the
+manifest source hash is also reviewed; runtime never calculates an approval pin.
+
+Upgrade describes four new account tables and two indexes. Foreign keys may
+reference public.companies; that business table is not modified. Downgrade
+removes only these account objects in reverse dependency order, without CASCADE.
+ORM names follow existing unqualified business conventions; deployment must fix
+search_path to public, while revision references explicitly name public.
+The independent schema test compares columns, PK/UK/FK/CHECK/index declarations
+with ORM metadata without importing the revision or invoking Alembic.
+
+No execution guard has been enabled: env.py and INI remain unchanged. This lot
+adds no migrations runner, administrative authority or database provisioning.

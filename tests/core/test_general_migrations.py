@@ -85,16 +85,16 @@ def test_guarded_config_is_inert_even_after_source_validation():
     assert config.attributes == {}
     with pytest.raises(CommandError):
         ScriptDirectory.from_config(config)
-    assert [p.relative_to(module.BACKEND).as_posix() for p in (module.GENERAL_DIRECTORY / "versions").glob("*.py")] == [
-        entry.path for entry in module.read_manifest()]
+    assert sorted(p.relative_to(module.BACKEND).as_posix() for p in (module.GENERAL_DIRECTORY / "versions").glob("*.py")) == sorted(
+        entry.path for entry in module.read_manifest())
 
 
 def test_real_historical_graph_and_pinned_sources_without_running_env():
     snapshot = module.inspect_sources()
     historical = tuple(r for r in snapshot.revisions if r.revision in module.HISTORICAL_CHAIN)
-    assert len(historical) == 9 and len(snapshot.revisions) == 10
+    assert len(historical) == 9 and len(snapshot.revisions) == 11
     assert {r.revision for r in historical} == set(module.HISTORICAL_CHAIN)
-    assert len(snapshot.sources) == 14  # ten revisions, manifest, config, env, guards
+    assert len(snapshot.sources) == 15  # eleven revisions, manifest, config, env, guards
     graph = RevisionMap(lambda: iter(Revision(r.revision, r.parent) for r in historical))
     assert graph.heads == (module.HISTORICAL_HEAD,)
     assert len(list(graph.iterate_revisions(module.HISTORICAL_HEAD, "base"))) == 9

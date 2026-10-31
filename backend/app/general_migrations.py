@@ -45,7 +45,11 @@ HISTORICAL_SOURCES = (
     ("d6ec01cf13b6_add_prediction_records.py", "1fbda40b9aa8a1997ecb29fd6859a3c64785781c5163128940612bd5f15b4f99"),
 )
 ALLOWED_ENVIRONMENTS = frozenset({"oidc-migration-test"})
-SCHEMA_SCOPE = ("public.oidc_transactions",)
+OIDC_SCOPE = ("public.oidc_transactions",)
+ACCOUNT_SCOPE = ("public.local_users", "public.external_identities", "public.company_memberships", "public.membership_permissions")
+SCHEMA_SCOPE = OIDC_SCOPE + ACCOUNT_SCOPE
+ACCOUNT_REVISION = "4b7e2a91c6d0"
+ACCOUNT_AST_SHA256 = "6e56f6b7cc92a4315c77a2d8b64ecc5e62163d59c30470dc24426759bf0ac424"
 MANIFEST_PATH = GENERAL_DIRECTORY / "revision_manifest.json"
 
 
@@ -199,18 +203,21 @@ def _manifest(source):
     data = json.loads(source, object_pairs_hook=_unique_object)
     _require(type(data) is dict and set(data) == {"format", "revisions"})
     _require(data["format"] == "general-revisions-v1")
-    # This publication contains exactly one OIDC revision. Other scopes and
-    # additional revisions require a separately reviewed change of this policy.
-    _require(type(data["revisions"]) is list and len(data["revisions"]) == 1)
-    entry = data["revisions"][0]
-    _require(type(entry) is dict and set(entry) == {"revision", "parent", "path", "sha256", "schema_scope"})
-    _require(_revision_id(entry["revision"]) and entry["revision"] not in HISTORICAL_CHAIN)
-    _require(entry["parent"] == HISTORICAL_HEAD)
-    _require(entry["path"] == f"general_migrations/versions/{entry['revision']}_create_oidc_transactions.py")
-    _require(type(entry["sha256"]) is str and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]))
-    _require(type(entry["schema_scope"]) is list and entry["schema_scope"] == list(SCHEMA_SCOPE))
-    return (PublishedRevision(entry["revision"], entry["parent"], entry["path"],
-                              entry["sha256"], tuple(entry["schema_scope"])),)
+    # Exactly two reviewed publications, in their fixed linear order. No directory
+    # discovery or manifest recomputation can approve another AST profile.
+    _require(type(data["revisions"]) is list and len(data["revisions"]) == 2)
+    result = []
+    for entry, (revision, parent, suffix, scope) in zip(data["revisions"], (
+        ("12e2fc65f372", HISTORICAL_HEAD, "create_oidc_transactions", OIDC_SCOPE),
+        (ACCOUNT_REVISION, "12e2fc65f372", "create_professional_accounts", ACCOUNT_SCOPE),
+    )):
+        _require(type(entry) is dict and set(entry) == {"revision", "parent", "path", "sha256", "schema_scope"})
+        _require(entry["revision"] == revision and entry["parent"] == parent)
+        _require(entry["path"] == f"general_migrations/versions/{revision}_{suffix}.py")
+        _require(type(entry["sha256"]) is str and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]))
+        _require(type(entry["schema_scope"]) is list and entry["schema_scope"] == list(scope))
+        result.append(PublishedRevision(revision, parent, entry["path"], entry["sha256"], scope))
+    return tuple(result)
 
 
 @_guarded
@@ -314,6 +321,20 @@ def validate_oidc_source(source: str, *, revision: str, parent: str):
 
 
 @_guarded
+def validate_account_source(source: str, *, revision: str, parent: str):
+    """Recognize only the independently pinned, reviewed literal account AST.
+
+    The pin is part of this guard, not supplied by the publication manifest.
+    No revision import/evaluation occurs. Every AST alteration fails closed,
+    including dynamic calls, extra effects and changes to business tables.
+    """
+    _require(revision == ACCOUNT_REVISION and parent == "12e2fc65f372")
+    tree = ast.parse(source)
+    _require(hashlib.sha256(ast.dump(tree, include_attributes=False).encode()).hexdigest() == ACCOUNT_AST_SHA256)
+    return None
+
+
+@_guarded
 def resolve_upgrade(revisions: tuple[RevisionDescription, ...], initial: str, final: str) -> tuple[str, ...]:
     """Pure graph resolution, not approval; synthetic future nodes are supported."""
     _require(type(revisions) is tuple and all(type(r) is RevisionDescription for r in revisions))
@@ -361,12 +382,13 @@ def inspect_sources() -> SourceSnapshot:
     for path, _, source in sources:
         revisions.append(_parse_revision(path, source))
     graph = tuple(sorted(revisions, key=lambda r: r.revision))
-    entry = published[0]
-    _require(resolve_upgrade(graph, HISTORICAL_HEAD, entry.revision) == (entry.revision,))
-    recognized = next(r for r in graph if r.path == entry.path)
-    _require((recognized.revision, recognized.parent) == (entry.revision, entry.parent))
-    validate_oidc_source(next(source for path, _, source in sources if path == BACKEND / entry.path),
-                         revision=entry.revision, parent=entry.parent)
+    _require(resolve_upgrade(graph, HISTORICAL_HEAD, published[-1].revision) == tuple(e.revision for e in published))
+    for entry in published:
+        recognized = next(r for r in graph if r.path == entry.path)
+        _require((recognized.revision, recognized.parent) == (entry.revision, entry.parent))
+        validator = validate_oidc_source if entry.revision == "12e2fc65f372" else validate_account_source
+        validator(next(source for path, _, source in sources if path == BACKEND / entry.path),
+                  revision=entry.revision, parent=entry.parent)
     for path in (GENERAL_DIRECTORY / "alembic.ini", GENERAL_DIRECTORY / "env.py", Path(__file__).resolve()):
         fingerprints.append(_fingerprint(path, _read(path)))
     return SourceSnapshot(graph, tuple(sorted(fingerprints, key=lambda s: s.path)))
@@ -409,7 +431,7 @@ def _validate_destination(destination):
 def preflight(intent: MigrationIntent, approval: ApprovalDeclaration, *, now: datetime) -> PreflightReport:
     """Check a claim against recognized publications, NEVER authenticate or execute.
 
-    Even an exact one-revision OIDC plan remains an untrusted declaration.
+    Even an exact recognized publication plan remains an untrusted declaration.
     """
     _require(type(intent) is MigrationIntent and type(approval) is ApprovalDeclaration)
     _validate_destination(intent.destination)

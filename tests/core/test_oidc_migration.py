@@ -57,7 +57,7 @@ def assert_rejected(call):
 
 def test_publication_identity_hash_and_single_extended_head(source):
     entries = guards.read_manifest()
-    assert len(entries) == 1
+    assert len(entries) == 2
     entry = entries[0]
     assert (entry.revision, entry.parent, entry.path, entry.schema_scope) == (
         REVISION, "09ac8101e9fe", PATH.relative_to(guards.BACKEND).as_posix(), ("public.oidc_transactions",))
@@ -65,8 +65,8 @@ def test_publication_identity_hash_and_single_extended_head(source):
     assert hashlib.sha256(PATH.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == entry.sha256
     snapshot = guards.inspect_sources()
     nodes = {r.revision: r for r in snapshot.revisions}
-    assert set(nodes) == set(guards.HISTORICAL_CHAIN) | {REVISION}
-    assert set(nodes) - {r.parent for r in snapshot.revisions} == {REVISION}
+    assert set(nodes) == set(guards.HISTORICAL_CHAIN) | {REVISION, guards.ACCOUNT_REVISION}
+    assert set(nodes) - {r.parent for r in snapshot.revisions} == {guards.ACCOUNT_REVISION}
     assert guards.resolve_upgrade(snapshot.revisions, guards.HISTORICAL_HEAD, REVISION) == (REVISION,)
     fingerprints = {s.path: s.sha256 for s in snapshot.sources}
     assert fingerprints[entry.path] == entry.sha256
@@ -89,7 +89,7 @@ def test_every_hash_checked_before_first_ast(monkeypatch):
     guards.inspect_sources()
     hashes = [i for i, (kind, p) in enumerate(events) if kind == "hash" and p.parent in (PATH.parent, guards.HISTORICAL_DIRECTORY)]
     parses = [i for i, (kind, _) in enumerate(events) if kind == "ast"]
-    assert len(hashes) == len(parses) == 10
+    assert len(hashes) == len(parses) == 11
     assert max(hashes) < min(parses)
 
 

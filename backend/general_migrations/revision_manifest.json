@@ -6,7 +6,21 @@
       "parent": "09ac8101e9fe",
       "path": "general_migrations/versions/12e2fc65f372_create_oidc_transactions.py",
       "sha256": "8dd65b4517c0fba38f789b8b2ce016cafa80794fd0bcf6b8a35d194773da5274",
-      "schema_scope": ["public.oidc_transactions"]
+      "schema_scope": [
+        "public.oidc_transactions"
+      ]
+    },
+    {
+      "revision": "4b7e2a91c6d0",
+      "parent": "12e2fc65f372",
+      "path": "general_migrations/versions/4b7e2a91c6d0_create_professional_accounts.py",
+      "sha256": "0aed6450f32f5b5459684de15c72f442cdaa39672df30224affb6b55221f1a26",
+      "schema_scope": [
+        "public.local_users",
+        "public.external_identities",
+        "public.company_memberships",
+        "public.membership_permissions"
+      ]
     }
   ]
 }
