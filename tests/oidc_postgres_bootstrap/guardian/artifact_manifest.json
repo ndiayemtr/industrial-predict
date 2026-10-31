@@ -1,0 +1,29 @@
+{
+  "schema_version": "3F-idle-only-v1",
+  "base_image": "docker.io/library/postgres@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317",
+  "platform": "linux/amd64",
+  "guardian_path": "/usr/local/libexec/oidc-test-guardian",
+  "owner_uid": 0,
+  "owner_gid": 0,
+  "mode": "0555",
+  "entrypoint": ["/usr/local/libexec/oidc-test-guardian"],
+  "command": [],
+  "initial_user": "0:0",
+  "stop_signal": "SIGTERM",
+  "initial_behavior": "idle_only",
+  "activation_interface": "absent",
+  "derived_digest": "unavailable_until_authorized_build",
+  "runtime_requirements": {
+    "read_only_rootfs": true,
+    "privileged": false,
+    "cap_drop": ["ALL"],
+    "cap_add": [],
+    "guardian_writable_directories": []
+  },
+  "bootstrap_reference_sha256": "d319573e82d26516aca327a1294dd44d6abad2e5883995a1b557969a9aa24665",
+  "artifacts": {
+    "guardian.sh": "bbca41577ef41c12d6cb3f31615c2c0c4a18fda028c7d5c0c7d44d05fbc992c2",
+    "Dockerfile.in": "aae8dad868a68f48085a1c6a59abf26a66ad41eb0643f0f18c0013c0033b6e95",
+    ".dockerignore": "181be2c9e6db070e048be5103914e0953e35f6042111f7b34b81549223dfe1b8"
+  }
+}
