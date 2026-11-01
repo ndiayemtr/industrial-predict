@@ -1,6 +1,8 @@
 @use '../../../../../styles/actions' as actions;
 @use '../../../../../styles/tokens' as tokens;
 
+// Keep the shared header override local to this page.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 .maintenance-back { @include actions.navigation-action(); }
 a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
@@ -8,7 +10,12 @@ a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 
   margin-top: tokens.$space-md; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius;
 }
-h2 { margin-top: 0; font-size: 1.25rem; }
+section > h2, .intervention-title h2 {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
 dl { display: grid; gap: tokens.$space-md; margin: 0; }
 dl > div { min-width: 0; }
 dt { font-weight: 600; }
@@ -24,7 +31,10 @@ time, code { font-variant-numeric: tabular-nums; }
 
 .text-value { white-space: pre-wrap; }
 
-.intervention-title h2 { margin: 0; font-size: 1.375rem; white-space: pre-wrap; }
+.intervention-title h2 { margin: 0 0 tokens.$space-sm; font-size: 1.375rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.intervention-title dd { margin: 0; }
+// Retain the definition label for assistive technology without repeating it visually.
+.intervention-title dt { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .badge {
   display: inline-block; padding: tokens.$space-xs tokens.$space-sm; border-radius: tokens.$border-radius;
   background: tokens.$content-background; font-weight: 600; border: tokens.$border-width solid tokens.$border-color;

@@ -32,6 +32,10 @@ describe('Maintenance read-only detail', () => {
 
   it('renders all 18 actual fields, null, empty text and zero without invented units', async () => {
     await loaded();
+    expect(root().querySelector('h1')?.textContent).toBe('Détail intervention');
+    expect([...root().querySelectorAll('section > h2')].map(title=>title.textContent)).toEqual([
+      'Description et diagnostic','Dates métier','Coût et indisponibilité déclarés','Informations de suivi','Rattachement industriel réel'
+    ]);
     expect([...root().querySelectorAll('[data-field]')].map(el => el.getAttribute('data-field')).sort()).toEqual(Object.keys(record).sort());
     expect(value('id')).toBe('17'); expect(value('equipment_id')).toBe('12'); expect(value('title')).toBe(record.title);
     expect(value('description')).toBe(record.description); expect(value('failure_code')).toBe('Texte vide'); expect(value('root_cause')).toBe('Non renseigné');

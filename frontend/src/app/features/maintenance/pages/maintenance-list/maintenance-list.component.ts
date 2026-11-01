@@ -209,7 +209,10 @@ export class MaintenanceListComponent {
     const period = this.validatePeriodDraft();
     if (!period) {
       const field = Object.keys(this.fieldErrors())[0];
-      this.element.nativeElement.querySelector<HTMLInputElement>(field ? '#maintenance-' + field : '#maintenance-end-date')?.focus();
+      const input = this.element.nativeElement.querySelector<HTMLInputElement>(field ? '#maintenance-' + field : '#maintenance-end-date');
+      const details = input?.closest<HTMLDetailsElement>('details');
+      if (details) details.open = true;
+      input?.focus();
       return;
     }
     const query = this.facade.query();

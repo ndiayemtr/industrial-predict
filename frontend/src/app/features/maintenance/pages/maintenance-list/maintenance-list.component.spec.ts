@@ -37,6 +37,39 @@ describe('Maintenance list and applied context', () => {
   c.site.setValue(9); await settle(); req('sites/9').flush(site); req('companies/7').flush(company); await settle(); req('equipments').flush({ ...catalog, items: [equipment] }); await settle();
   expect(c.equipment.value).toBeNull(); http.expectNone(() => true); c.equipment.setValue(12); await settle(); await reload(); expect(root().querySelector('#equipment-help')).toBeNull();
  });
+ it('keeps precision closed initially and preserves raw applied UTC offsets and six-digit drafts across toggles', async () => {
+  const start='2026-10-23T17:30:00.123456+05:30',end='2026-10-24T00:00:00.000001Z';
+  await ready(base+'&start_time='+encodeURIComponent(start)+'&end_time='+encodeURIComponent(end));
+  expect(root().querySelector('h1')?.textContent).toBe('Maintenance');
+  expect([...root().querySelectorAll('#maintenance-context-title, .period-title, #maintenance-results-title')].map(title=>title.textContent))
+    .toEqual(['Entreprise, site et équipement','Période de création du dossier (UTC)','Interventions de l’équipement']);
+  expect(root().querySelector('#period-help')?.textContent).toContain('created_at uniquement');
+  const details=root().querySelector<HTMLDetailsElement>('.advanced-precision')!,summary=details.querySelector<HTMLElement>('summary')!;
+  expect(details.open).toBe(false);expect(summary.textContent).toBe('Précision avancée');
+  expect(details.querySelectorAll('input')).toHaveLength(2);expect(root().querySelectorAll('.period-layout > .period-bound input')).toHaveLength(4);
+  const draft=[c.start.getRawValue(),c.end.getRawValue()],applied={...url()};
+  summary.click();expect(details.open).toBe(true);await settle();summary.click();expect(details.open).toBe(false);await settle();
+  expect([c.start.getRawValue(),c.end.getRawValue()]).toEqual(draft);expect(url()).toEqual(applied);expect(c.periodDraft()).toBe(false);http.expectNone(()=>true);
+  c.end.controls.fraction.setValue('000002');await settle();expect(c.periodDraft()).toBe(true);expect(url()['end_time']).toBe(end);http.expectNone(()=>true);
+  root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click();await settle();parents();
+  const request=list();expect(request.request.params.get('start_time')).toBe(start);expect(request.request.params.get('end_time')).toBe('2026-10-24T00:00:00.000002Z');
+  request.flush(page);await settle();expect(c.periodDraft()).toBe(false);
+ });
+ it('opens advanced precision to focus an invalid fraction and keeps its error visible when folded again', async () => {
+  await ready();c.start.setValue({date:'2026-10-23',time:'12:00:00',fraction:'1234567'});await settle();
+  const details=root().querySelector<HTMLDetailsElement>('.advanced-precision')!;
+  expect(details.open).toBe(false);c.applyPeriod();await settle();expect(details.open).toBe(true);expect(document.activeElement?.id).toBe('maintenance-start-fraction');
+  details.querySelector<HTMLElement>('summary')!.click();expect(details.open).toBe(false);await settle();
+  const error=root().querySelector('#start-fraction-error')!;
+  expect(error.closest('details')).toBeNull();expect(error.closest('.period-feedback')?.getAttribute('role')).toBe('alert');expect(error.textContent).toContain('0 à 6 chiffres');
+  expect(root().querySelector('#maintenance-start-fraction')?.getAttribute('aria-describedby')).toContain('start-fraction-error');
+  expect(c.start.controls.fraction.value).toBe('1234567');expect(url()['start_time']).toBeUndefined();http.expectNone(()=>true);
+ });
+ it('requires a UTC hour without inventing one or opening the advanced fields', async () => {
+  await ready();c.start.controls.date.setValue('2026-10-23');c.applyPeriod();await settle();
+  expect(root().querySelector<HTMLDetailsElement>('.advanced-precision')!.open).toBe(false);expect(c.start.controls.time.value).toBe('');
+  expect(root().querySelector('#start-time-error')?.textContent).toContain('heure UTC');expect(document.activeElement?.id).toBe('maintenance-start-time');http.expectNone(()=>true);
+ });
  it('renders six real columns, null and naive dates without adding UTC, with an explicit detail action', async () => {
   await ready(); expect([...root().querySelectorAll('thead th')].map(e => e.textContent)).toEqual(['Titre', 'Type', 'Statut', 'Priorité', 'Date planifiée', 'Date de création']);
   expect(root().textContent).toContain('Prédictive'); expect(root().textContent).toContain('Non renseignée'); expect(root().textContent).toContain(record.created_at + ' (fuseau non fourni)');

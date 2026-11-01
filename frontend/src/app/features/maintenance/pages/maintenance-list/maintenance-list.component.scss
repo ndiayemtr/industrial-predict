@@ -1,78 +1,71 @@
 @use '../../../../../styles/tokens' as tokens;
-@use '../../../../../styles/actions' as actions;
 
+// This header override and all control styles remain local to Maintenance.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
-
-.filters, .results {
-  margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
-  border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius;
-}
+.filters, .results { margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; }
+.filters { container: maintenance-filters / inline-size; padding: tokens.$space-lg; }
 .results { container: maintenance-results / inline-size; }
-.scroll-help { display: none; }
+.scroll-help, .period-feedback:empty { display: none; }
 @container maintenance-results (width < 60rem) { .scroll-help { display: block; } }
-.parents, .criteria, .period-layout, .bound-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
-label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
-form, .criteria { margin-top: tokens.$space-lg; }
-h3 { font-size: 1rem; margin: tokens.$space-lg 0 tokens.$space-sm; }
-// Border-box is already supplied by the application-wide reset.
+:is(.parents, .criteria, .period-layout, .bound-controls) { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
+:is(.parents, .criteria) { gap: tokens.$space-lg tokens.$space-xl; }
+:is(.parents, .criteria, .bound-controls) > div, form, .search-field { min-width: 0; }
+label { display: block; }
+label, legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
+form, .criteria { margin-top: tokens.$space-xl; }
+h2, .period-title { margin: 0 0 tokens.$space-md; padding-left: .8rem; border-left: 3px solid tokens.$navigation-active; font-weight: 700; line-height: 1.35; }
+h2 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); }
+.period-title { font-size: 1.125rem; }
+// Factor only the geometry already shared by the local inputs and buttons.
+input, select, button { min-height: 2.75rem; padding: tokens.$space-sm tokens.$space-md; border: 1px solid tokens.$text-secondary; border-radius: tokens.$border-radius; font: inherit; background: tokens.$surface-background; color: tokens.$text-primary; }
 input, select { display: block; width: 100%; min-width: 0; }
-input, select {
-  min-height: 2.75rem; padding: tokens.$space-sm tokens.$space-md;
-  border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius;
-  font: inherit; background: tokens.$surface-background; color: tokens.$text-primary;
-}
-button { @include actions.navigation-action(); cursor: pointer; white-space: normal; }
-// The shared mixin supplies geometry and focus once; the primary variant changes colors only.
-button.primary {
-  background: tokens.$navigation-active; border-color: tokens.$navigation-active; color: tokens.$sidebar-text;
-}
+button { display: inline-flex; align-items: center; justify-content: center; gap: tokens.$space-sm; box-sizing: border-box; min-width: 0; max-width: 100%; font-weight: 600; line-height: tokens.$line-height-body; text-decoration: none; text-align: center; overflow-wrap: anywhere; cursor: pointer; white-space: normal; }
+button:hover { background: tokens.$content-background; text-decoration: none; }
+button.primary { background: tokens.$navigation-active; border-color: tokens.$navigation-active; color: tokens.$sidebar-text; }
 button:disabled, select:disabled { color: tokens.$text-secondary; background: tokens.$content-background; cursor: not-allowed; }
 button:disabled { opacity: .65; }
-a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+:is(a, input, select, button, summary):focus-visible, .table-scroll:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 2px; }
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
-
-h2 { margin-top: 0; font-size: 1.25rem; }
-.table-scroll { overflow-x: auto; max-width: 100%; }
+.table-scroll { overflow-x: auto; }
 table { width: 100%; min-width: 60rem; table-layout: fixed; border-collapse: collapse; }
 caption { text-align: left; padding-bottom: tokens.$space-md; }
-th, td { text-align: left; vertical-align: top; padding: tokens.$space-sm; border-bottom: tokens.$border-width solid tokens.$border-color; overflow-wrap: anywhere; }
+th, td { text-align: left; vertical-align: top; padding: tokens.$space-sm; border-bottom: 1px solid tokens.$border-color; overflow-wrap: anywhere; }
+th:first-child { width: 27%; }
 time { font-variant-numeric: tabular-nums; }
-.badge {
-  display: inline-block; padding: tokens.$space-xs tokens.$space-sm; border-radius: tokens.$border-radius;
-  background: tokens.$content-background; font-weight: 600; border: tokens.$border-width solid tokens.$border-color;
-}
-.pagination { display: flex; flex-wrap: wrap; align-items: center; gap: tokens.$space-sm; margin-top: tokens.$space-lg; }
+.badge { display: inline-block; padding: tokens.$space-xs tokens.$space-sm; border-radius: tokens.$border-radius; background: tokens.$content-background; font-weight: 600; border: 1px solid tokens.$border-color; }
+.status-badge { color: tokens.$text-primary; }
+.priority-badge { color: tokens.$sidebar-background; }
+.pagination, .period-actions { display: flex; flex-wrap: wrap; gap: tokens.$space-sm; }
+.pagination { align-items: center; margin-top: tokens.$space-lg; }
 .pagination p { flex: 1 1 10rem; }
-.period-layout, .bound-controls { align-items: end; }
-.period-bound { min-width: 0; margin: 0; padding: 0; border: 0; }
-.period-bound legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
-.bound-controls { gap: tokens.$space-sm; }
+:is(.period-layout, .bound-controls) { align-items: end; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .bound-controls input { padding-inline: tokens.$space-sm; }
 .bound-controls label { font-size: tokens.$font-size-small; }
-@media (min-width: 48rem) {
-  .parents, .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 30rem) {
-  .filters, .results { padding: tokens.$space-sm; }
-  th, td { padding: tokens.$space-xs; font-size: tokens.$font-size-small; }
-  .pagination p { flex-basis: 100%; order: -1; }
-}
-.filters { container: maintenance-filters / inline-size; }
-.period-actions { display: flex; flex-wrap: wrap; gap: tokens.$space-sm; align-items: start; }
+.period-actions { align-items: start; }
 .period-actions button { flex: 1 1 10rem; }
-.search-form { display: grid; gap: tokens.$space-sm; align-items: end; }
-.search-field { min-width: 0; }
-.search-form > p { grid-column: 1 / -1; }
+.search-form { display: grid; gap: tokens.$space-md; align-items: end; }
+
+.search-form > p, details, .period-feedback { grid-column: 1 / -1; }
 .search-form p { margin: tokens.$space-xs 0; }
 .filters .field-error { color: #9b1c1c; }
 .filters .draft-notice { color: tokens.$text-primary; border-left: 3px solid tokens.$navigation-active; padding-left: tokens.$space-sm; }
-.record-title { font-weight: 600; }
-th:first-child { width: 27%; }
-.status-badge { color: tokens.$text-primary; }
-.priority-badge { color: tokens.$sidebar-background; }
+.record-title, summary { font-weight: 600; }
+summary { cursor: pointer; min-height: 2.5rem; align-content: center; }
+.period-feedback { min-height: 2.75rem; }
+.period-feedback p { margin: 0; }
+.bound-controls [aria-invalid='true'] { border-color: #9b1c1c; }
+@media (min-width: 48rem) { :is(.parents, .criteria) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 30rem) {
+  .results { padding: tokens.$space-sm; }
+  .filters { padding: tokens.$space-md; }
+  th, td { padding: tokens.$space-xs; font-size: tokens.$font-size-small; }
+  .pagination p { flex-basis: 100%; order: -1; }
+}
 @container maintenance-filters (min-width: 34rem) {
-  .bound-controls { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); }
+  .bound-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .search-form { grid-template-columns: minmax(0, 1fr) auto; }
 }
 @container maintenance-filters (min-width: 48rem) {
@@ -81,9 +74,3 @@ th:first-child { width: 27%; }
   .period-actions button { flex: 0 1 auto; }
 }
 @media (min-width: 75rem) { .parents { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-
-.period-feedback { grid-column: 1 / -1; min-height: 2.75rem; }
-.period-feedback:empty { display: none; }
-.bound-controls [aria-invalid='true'] { border-color: #9b1c1c; }
-
-.period-feedback p { margin: 0; }
