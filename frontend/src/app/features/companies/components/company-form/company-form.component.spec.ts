@@ -22,6 +22,28 @@ describe('CompanyFormComponent', () => {
     expect(component.hasChanges()).toBe(false);
   });
 
+  it.each([false, true])('keeps section hierarchy, field order and secondary-first actions in edit mode %s', editMode => {
+    fixture.componentRef.setInput('editMode', editMode); fixture.detectChanges();
+    expect(element().querySelector('fieldset > legend > h2')?.textContent).toBe('Informations de l’entreprise');
+    expect([...element().querySelectorAll('.fields-grid .field')].map(field => field.querySelector('input, textarea')?.id))
+      .toEqual(['company-name', 'company-code', 'company-description']);
+    expect(element().querySelector('.description-field textarea')?.id).toBe('company-description');
+    const actions = [...element().querySelectorAll<HTMLButtonElement>('.actions button')];
+    expect(actions.map(action => action.textContent?.trim())).toEqual(['Annuler', editMode ? 'Enregistrer les modifications' : 'Créer l’entreprise']);
+    expect(actions.map(action => action.type)).toEqual(['button', 'submit']);
+    const cancel = vi.fn(), submit = vi.fn();
+    component.cancelled.subscribe(cancel); component.submitted.subscribe(submit);
+    actions[0].click();
+    expect(cancel).toHaveBeenCalledOnce(); expect(submit).not.toHaveBeenCalled();
+    valid(); actions[1].click();
+    expect(submit).toHaveBeenCalledExactlyOnceWith({ name: 'Société énergie', code: 'Mix-é' });
+    fixture.componentRef.setInput('saving', true); fixture.detectChanges();
+    expect(actions.every(action => action.disabled)).toBe(true);
+    expect(actions[1].textContent).toBe('Enregistrement en cours...');
+    actions[0].click(); actions[1].click();
+    expect(cancel).toHaveBeenCalledOnce(); expect(submit).toHaveBeenCalledOnce();
+  });
+
   it('prefills editing without treating loaded or reverted values as unsaved edits', () => {
     fixture.componentRef.setInput('editMode', true);
     fixture.componentRef.setInput('initialCompany', { id: 7, name: ' Original ', code: 'Code', description: null,

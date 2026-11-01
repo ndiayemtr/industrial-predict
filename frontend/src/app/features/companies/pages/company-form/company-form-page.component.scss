@@ -1,6 +1,8 @@
 @use '../../../../../styles/tokens' as tokens;
 
 :host { display: block; min-width: 0; overflow-wrap: anywhere; color: tokens.$text-primary; }
+// Limit the shared header override to the creation/edit page.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 .creation { margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius; }
 a { display: inline-flex; align-items: center; min-height: 2.75rem; color: tokens.$navigation-active; }
@@ -14,7 +16,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-ac
   border-top: tokens.$border-width solid tokens.$border-color;
   color: tokens.$text-secondary;
   font-size: tokens.$font-size-small;
-  h2 { font-size: 1rem; margin-top: 0; }
+  h2 {
+    margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+    border-left: 3px solid tokens.$navigation-active;
+    font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+    line-height: 1.35; color: tokens.$text-primary;
+  }
   dl { display: flex; flex-wrap: wrap; gap: tokens.$space-md tokens.$space-xl; }
   dt { font-weight: 600; }
   dd { margin: tokens.$space-xs 0 0; }

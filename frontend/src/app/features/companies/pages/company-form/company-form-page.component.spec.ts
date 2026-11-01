@@ -45,6 +45,7 @@ describe('Company creation page', () => {
     await open();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
     expect(root().querySelector('h1')?.textContent).toBe('Nouvelle entreprise');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Informations de l’entreprise']);
     expect(root().querySelector('.tracking-information')).toBeNull();
     http.expectNone(() => true);
     await submit();

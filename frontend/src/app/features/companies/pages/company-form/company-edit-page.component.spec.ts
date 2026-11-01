@@ -57,6 +57,7 @@ describe('Company editing using the existing form page', () => {
     const get = request(); expect(get.request.method).toBe('GET'); get.flush(company); await settle();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
     expect(root().querySelector('h1')?.textContent).toBe('Modifier l’entreprise');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Informations de l’entreprise', 'Informations de suivi']);
     expect(page.editor()!.form.getRawValue()).toEqual({ name: ' Original ', code: 'TEST-7', description: 'Texte\noriginal' });
     expect(page.editor()!.hasChanges()).toBe(false);
     expect(page.state()).toBe('idle');
