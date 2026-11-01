@@ -40,6 +40,9 @@ describe('Sensor edit with isolated HTTP and real parents', () => {
 
   it('shows actual immutable references, type, unit and tracking before actions, independent of return context', async () => {
     await ready('/sensors/17/edit?' + context);
+    expect(root().querySelector('h1')?.textContent).toBe('Modifier le capteur');
+    expect([...root().querySelectorAll('fieldset > legend > h2, #sensor-tracking-title')].map(title => title.textContent))
+      .toEqual(['Rattachement industriel', 'Informations du capteur', 'Informations de suivi']);
     expect(editor().form.getRawValue()).toMatchObject({ name: sensor.name, code: sensor.code, description: sensor.description });
     for (const key of ['company_id', 'site_id', 'equipment_id', 'sensor_type', 'unit'] as const) {
       expect(root().querySelector('#sensor-' + key)).toBeNull(); expect(editor().form.controls[key].disabled).toBe(true);

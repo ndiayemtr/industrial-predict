@@ -38,6 +38,8 @@ describe('Sensor creation with isolated HTTP', () => {
 
   it.each(['', '?company_id=7', '?site_id=9', '?equipment_id=12', '?company_id=0&site_id=9&equipment_id=12', '?company_id=7&site_id=9&equipment_id=abc'])('leaves all parents unselected with incomplete context %s', async query => {
     await open('/sensors/new' + query); read('companies').flush(catalog); await settle();
+    expect(root().querySelector('h1')?.textContent).toBe('Nouveau capteur industriel');
+    expect([...root().querySelectorAll('fieldset > legend > h2')].map(title => title.textContent)).toEqual(['Rattachement industriel', 'Informations du capteur']);
     expect(editor().form.getRawValue()).toMatchObject({ company_id: null, site_id: null, equipment_id: null, status: 'active' });
     expect(editor().form.controls.site_id.disabled).toBe(true); expect(editor().form.controls.equipment_id.disabled).toBe(true);
     fill(); await submit(); http.expectNone(() => true); expect(document.activeElement?.id).toBe('sensor-company_id');

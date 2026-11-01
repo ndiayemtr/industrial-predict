@@ -12,6 +12,34 @@ describe('Typed Sensor creation form', () => {
   });
   afterEach(() => TestBed.resetTestingModule());
   function fill() { component.form.patchValue({ name: ' Nom 日本 ', code: ' Code ', sensor_type: ' Type ', unit: ' mm/s ' }); }
+  it.each([false, true])('preserves headings, field order and readonly values in edit mode %s', editMode => {
+    if (editMode) fixture.componentRef.setInput('initialSensor', {
+      id: 17, equipment_id: 12, name: 'Capteur', code: 'SEN', sensor_type: 'temperature', unit: '°C',
+      status: 'active', description: null, created_at: '', updated_at: ''
+    });
+    fixture.componentRef.setInput('editMode', editMode); fixture.detectChanges(); TestBed.tick(); fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    expect([...root.querySelectorAll('fieldset > legend > h2')].map(title => title.textContent))
+      .toEqual(['Rattachement industriel', 'Informations du capteur']);
+    expect([...root.querySelectorAll('.fields-grid input, .fields-grid select, .fields-grid textarea')].map(control => control.id))
+      .toEqual(editMode ? ['sensor-name', 'sensor-code', 'sensor-status', 'sensor-description']
+        : ['sensor-name', 'sensor-code', 'sensor-sensor_type', 'sensor-unit', 'sensor-status', 'sensor-description']);
+    expect(root.querySelector('.description-field textarea')?.id).toBe('sensor-description');
+    if (editMode) {
+      expect([...root.querySelectorAll('.fields-grid .readonly-values dd')].map(value => value.textContent)).toEqual(['temperature', '°C']);
+      expect(component.form.controls.sensor_type.disabled).toBe(true); expect(component.form.controls.unit.disabled).toBe(true);
+    }
+    const actions = [...root.querySelectorAll<HTMLButtonElement>('.actions button')];
+    expect(actions.map(action => action.textContent?.trim())).toEqual(['Annuler', editMode ? 'Enregistrer les modifications' : 'Créer le capteur']);
+    expect(actions.map(action => action.type)).toEqual(['button', 'submit']);
+    const cancel = vi.fn(), submit = vi.fn(), update = vi.fn();
+    component.cancelled.subscribe(cancel); component.submitted.subscribe(submit); component.updated.subscribe(update);
+    actions[0].click(); expect(cancel).toHaveBeenCalledOnce(); expect(submit).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
+    fixture.componentRef.setInput('saving', true); fixture.detectChanges();
+    expect(actions.every(action => action.disabled)).toBe(true);
+    expect(actions[1].textContent).toBe('Enregistrement en cours…');
+    actions[0].click(); expect(cancel).toHaveBeenCalledOnce();
+  });
   it('starts active with no description and a clean verified baseline', () => {
     expect(component.form.controls.status.value).toBe('active'); expect(component.form.controls.description.value).toBeNull(); expect(component.hasChanges()).toBe(false);
     expect(fixture.nativeElement.querySelectorAll('label[for]')).toHaveLength(9);

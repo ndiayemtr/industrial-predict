@@ -1,6 +1,8 @@
 @use '../../../../../styles/tokens' as tokens;
 @use '../../../../../styles/actions' as actions;
 
+// Scope the shared header override to this Sensors page.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 
 .filters, .results {
@@ -10,10 +12,16 @@
 .results { container: sensor-results / inline-size; }
 .scroll-help { display: none; }
 @container sensor-results (width < 38rem) { .scroll-help { display: block; } }
-.parents, .criteria, .search-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
+.parents, .criteria, .search-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-lg tokens.$space-xl; }
+.filters { padding: tokens.$space-lg; }
+.filters > h2 { margin-bottom: tokens.$space-lg; }
+.filters p { margin: tokens.$space-sm 0; }
 .parents > div, .criteria > div { min-width: 0; }
 label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
-form, .criteria { margin-top: tokens.$space-lg; }
+form, .criteria { margin-top: tokens.$space-xl; }
+form { min-width: 0; }
+.search-controls { gap: tokens.$space-md; }
+.search-controls button { min-width: min(100%, 10rem); }
 input, select { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
 input, select, button {
   min-height: 2.75rem; max-width: 100%; padding: tokens.$space-sm tokens.$space-md;
@@ -28,7 +36,12 @@ a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 #sensors-search-error:empty { display: none; }
-h2 { margin-top: 0; font-size: 1.25rem; }
+h2 {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
 .table-scroll { overflow-x: auto; max-width: 100%; }
 table { width: 100%; min-width: 38rem; table-layout: fixed; border-collapse: collapse; }
 caption { text-align: left; padding-bottom: tokens.$space-md; }
@@ -40,10 +53,11 @@ th, td { text-align: left; vertical-align: top; padding: tokens.$space-sm; borde
 @media (min-width: 48rem) {
   .parents { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .search-controls { grid-template-columns: minmax(0, 1fr) auto auto; gap: tokens.$space-sm; }
+  .search-controls { grid-template-columns: minmax(0, 1fr) auto auto; }
 }
 @media (max-width: 30rem) {
-  .filters, .results { padding: tokens.$space-sm; }
+  .results { padding: tokens.$space-sm; }
+  .filters { padding: tokens.$space-md; }
   th, td { padding: tokens.$space-xs; font-size: tokens.$font-size-small; }
   .pagination p { flex-basis: 100%; order: -1; }
 }

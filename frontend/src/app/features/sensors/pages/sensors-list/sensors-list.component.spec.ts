@@ -42,6 +42,12 @@ describe('Sensors list, references and URL integration', () => {
 
   it('waits for all three explicit selections even when each catalog contains one option', async () => {
     await open(); request('companies').flush(catalog); await settle();
+    expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Capteurs');
+    expect([...root().querySelectorAll('#sensor-context-title, #sensor-results-title')].map(title => title.textContent))
+      .toEqual(['Entreprise, site et équipement', 'Capteurs de l’équipement']);
+    expect([...root().querySelectorAll('.filters input, .filters select')].map(control => control.id))
+      .toEqual(['sensors-company', 'sensors-site', 'sensors-equipment', 'sensors-search', 'sensors-status', 'sensors-size']);
     expect(component.company.value).toBeNull(); expect(component.site.disabled).toBe(true); expect(component.equipment.disabled).toBe(true);
     expect(button('Rechercher').disabled).toBe(true); expect(root().textContent).toContain('Sélectionnez une entreprise, puis un site et un équipement');
     http.expectNone(() => true);

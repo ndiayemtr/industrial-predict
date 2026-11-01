@@ -61,6 +61,8 @@ describe('Sensor read-only detail and real parent chain', () => {
   it('renders semantic read-only fields, French status, original text and administrative dates', async () => {
     await loaded();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Détail capteur');
+    expect(root().querySelector('#sensor-information-title')?.textContent).toBe('Informations du capteur');
     expect(values().map(([label]) => label)).toEqual(['Nom', 'Code métier', 'Type de capteur', 'Unité', 'Statut', 'Description', 'Équipement', 'Site industriel', 'Entreprise de rattachement', 'Création', 'Dernière modification']);
     expect(values()).toContainEqual(['Type de capteur', 'temperature']); expect(values()).toContainEqual(['Unité', '°C']);
     expect(values()).toContainEqual(['Statut', 'Actif']); expect(values()).toContainEqual(['Description', sensor.description]);

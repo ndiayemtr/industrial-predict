@@ -1,5 +1,7 @@
 @use '../../../../../styles/tokens' as tokens;
 
+// Scope the shared header override to this Sensors page.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 .edition { margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius; }
@@ -9,7 +11,12 @@ button { min-height: 2.75rem; max-width: 100%; padding: tokens.$space-sm tokens.
 a:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 p { line-height: tokens.$line-height-body; }
 .tracking-information { margin: tokens.$space-lg 0; }
-h2 { font-size: 1.25rem; }
+h2 {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
 dl { display: grid; gap: tokens.$space-md; margin: 0; }
 dt { font-weight: 600; }
 dd { margin: tokens.$space-xs 0 0; }
