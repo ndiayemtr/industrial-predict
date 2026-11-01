@@ -31,7 +31,21 @@ tbody a { display: inline-flex; align-items: center; min-height: 2.75rem; color:
 p { line-height: tokens.$line-height-body; }
 .search-form p, .availability { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 #search-error:empty { display: none; }
-h2 { margin-top: 0; font-size: 1.25rem; }
+// Scope the shared header override to this page; shared components remain unchanged.
+:host ::ng-deep > app-page-header h1 {
+  padding-left: .8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+h2 {
+  margin: 0 0 tokens.$space-sm;
+  padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: tokens.$text-primary;
+}
 table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 caption { text-align: left; padding-bottom: tokens.$space-md; }
 th, td { text-align: left; vertical-align: top; padding: tokens.$space-sm; border-bottom: tokens.$border-width solid tokens.$border-color; overflow-wrap: anywhere; }
