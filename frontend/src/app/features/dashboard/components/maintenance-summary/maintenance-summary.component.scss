@@ -5,3 +5,5 @@
 .subsection-title { margin-top: tokens.$space-lg; font-size: 1.125rem; color: tokens.$text-primary; }
 .coverage-context { padding: tokens.$space-md; border-left: 3px solid tokens.$navigation-active; background: tokens.$content-background; line-height: tokens.$line-height-body; overflow-wrap: anywhere; }
 td[colspan] { width: auto; text-align: left; }
+
+.compact-empty { margin: tokens.$space-sm 0; color: tokens.$text-secondary; font-size: tokens.$font-size-small; line-height: tokens.$line-height-body; }

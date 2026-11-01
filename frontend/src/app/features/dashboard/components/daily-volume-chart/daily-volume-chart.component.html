@@ -1,0 +1,16 @@
+<figure>
+  <figcaption>Volume quotidien des mesures</figcaption>
+  @if (seriesState() === 'data') {
+    <p class="chart-description">{{ description() }}</p>
+    <svg viewBox="0 0 800 148" role="img" [attr.aria-label]="description()" preserveAspectRatio="none">
+      <line x1="16" y1="130" x2="784" y2="130" class="baseline" />
+      <polyline [attr.points]="points()" />
+      @if (days().length === 1) { <circle cx="400" [attr.cy]="maximum() > 0 ? 18 : 130" r="4" /> }
+    </svg>
+    <div class="axis-labels"><span>{{ days()[0].date }}</span><span>{{ days()[days().length - 1].date }}</span></div>
+  } @else if (seriesState() === 'empty') {
+    <p class="no-measurements">Aucune mesure enregistrée sur la période sélectionnée</p>
+  } @else if (seriesState() === 'invalid') {
+    <p class="unavailable-series">Les volumes quotidiens sont indisponibles ou incohérents.</p>
+  } @else { <p>Données quotidiennes indisponibles.</p> }
+</figure>

@@ -1,6 +1,7 @@
-<article class="kpi-card">
+<article class="kpi-card" [class.needs-attention]="needsAttention()">
   <p class="temporal-scope">{{ temporalScope() }}</p>
   <h3>{{ label() }}</h3>
   <p class="kpi-value">{{ formattedValue() }}@if (showUnit()) { <span class="unit"> {{ unit() }}</span> }</p>
+  @if (needsAttention()) { <span class="attention-label">À examiner</span> }
   @if (information()) { <p class="information">{{ information() }}</p> }
 </article>

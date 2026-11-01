@@ -25,6 +25,16 @@ describe('DashboardKpiCardComponent', () => {
     expect(fixture.nativeElement.querySelector('.kpi-value').textContent).toBe('Non calculable');
     expect(fixture.nativeElement.querySelector('.unit')).toBeNull();
   });
+  it.each([0, null, undefined, 'Non calculable'])('does not signal normal/absent values as attention (%s)', value => {
+    fixture.componentRef.setInput('value', value); fixture.componentRef.setInput('attention', true); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.attention-label')).toBeNull();
+  });
+  it('distinguishes an explicitly selected positive attention count without inventing a severity', () => {
+    fixture.componentRef.setInput('value', 2); fixture.componentRef.setInput('attention', true); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.attention-label').textContent).toBe('À examiner');
+    expect(fixture.nativeElement.querySelector('.kpi-value').textContent).toBe('2');
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
   it.each(['État actuel', 'Sur la période', 'Au calcul'])('renders temporal context %s and optional information', temporalScope => {
     fixture.componentRef.setInput('value', 0); fixture.componentRef.setInput('unit', '%');
     fixture.componentRef.setInput('temporalScope', temporalScope); fixture.componentRef.setInput('information', '0 sur 12'); fixture.detectChanges();

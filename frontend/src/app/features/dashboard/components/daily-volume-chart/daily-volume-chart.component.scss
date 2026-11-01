@@ -1,0 +1,10 @@
+@use '../../../../../styles/tokens' as tokens;
+:host { display: block; min-width: 0; margin-top: tokens.$space-lg; }
+figure { margin: 0; padding: tokens.$space-md; background: tokens.$content-background; border-radius: tokens.$border-radius; }
+figcaption { font-weight: 650; color: tokens.$text-primary; }
+svg { display: block; width: 100%; height: clamp(7rem, 16vw, 11rem); overflow: visible; }
+polyline { fill: none; stroke: tokens.$navigation-active; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+circle { fill: tokens.$navigation-active; }
+.baseline { stroke: tokens.$border-color; stroke-width: 1; }
+.axis-labels { display: flex; flex-wrap: wrap; justify-content: space-between; gap: tokens.$space-sm; }
+p, .axis-labels { font-size: tokens.$font-size-small; color: tokens.$text-secondary; line-height: 1.5; overflow-wrap: anywhere; }

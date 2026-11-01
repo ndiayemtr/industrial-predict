@@ -24,6 +24,11 @@ describe('SensorSummaryComponent', () => {
     expect(cards[2].textContent).toContain('Fin de période exclusive');
   });
   it('preserves unknown categories, table semantics and zero counts', () => {
+    const details = fixture.nativeElement.querySelector('.data-details') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('summary')!.textContent).toBe('Voir les détails');
+    details.querySelector('summary')!.click(); expect(details.open).toBe(true);
+    details.querySelector('summary')!.click(); expect(details.open).toBe(false);
     expect(fixture.nativeElement.querySelector('table').textContent).toContain('custom_sensor_status');
     expect(fixture.nativeElement.querySelector('tbody td').textContent).toBe('0');
     expect(fixture.nativeElement.querySelector('caption')).not.toBeNull();

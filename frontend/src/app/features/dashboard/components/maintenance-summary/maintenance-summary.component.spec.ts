@@ -9,6 +9,17 @@ describe('MaintenanceSummaryComponent', () => {
     fixture = TestBed.createComponent(MaintenanceSummaryComponent);
     fixture.componentRef.setInput('summary', emptyDashboardResponse().maintenance);
   });
+  it.each([[null, 'Non renseigné'], [undefined, 'Non renseigné'], [0, '0'], [12, '12'], [NaN, 'NaN']])('preserves all five visible fallbacks for %s as %s', (value, expected) => {
+    const summary = emptyDashboardResponse().maintenance;
+    summary.open.planned = value as number;
+    summary.open.in_progress = value as number;
+    summary.open.other = value as number;
+    summary.open.priorities.distribution = [{ value: 'vendor_priority', count: value as number }];
+    summary.completed.types.distribution = [{ value: 'vendor_type', count: value as number }];
+    fixture.componentRef.setInput('summary', summary); fixture.detectChanges();
+    const values = [...fixture.nativeElement.querySelectorAll('tbody td')].map((cell: Element) => cell.textContent);
+    expect(values).toEqual([expected, expected, expected, expected, expected]);
+  });
   it('renders current open statuses, priorities, overdue and missing dates separately from completed period data', () => {
     const summary = emptyDashboardResponse().maintenance;
     summary.open = { ...summary.open, total: 6, planned: 2, in_progress: 3, other: 1,
@@ -67,5 +78,35 @@ describe('MaintenanceSummaryComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('987');
     expect(fixture.nativeElement.textContent).not.toContain('USD');
     expect(fixture.nativeElement.textContent).toContain('Affichage monétaire différé');
+  });
+  it('folds zero tables by default while keeping the useful KPI and exact values', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.compact-empty').textContent).toBe('Aucune intervention ouverte.');
+    expect(fixture.nativeElement.querySelectorAll('app-dashboard-kpi-card')).toHaveLength(9);
+    for (const details of fixture.nativeElement.querySelectorAll('.data-details') as NodeListOf<HTMLDetailsElement>) {
+      expect(details.open).toBe(false);
+      expect(details.querySelector('summary')!.textContent).toContain('Voir les détails');
+      details.querySelector('summary')!.click(); expect(details.open).toBe(true);
+      details.querySelector('summary')!.click(); expect(details.open).toBe(false);
+    }
+    expect(fixture.nativeElement.querySelector('.open-details td').textContent).toBe('0');
+  });
+  it('does not put contradictory positive counts or missing dates behind an empty message', () => {
+    const summary = emptyDashboardResponse().maintenance;
+    summary.overdue.overdue = 2;
+    summary.completed.completed_without_completed_at = 3;
+    fixture.componentRef.setInput('summary', summary); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.compact-empty')).toBeNull();
+    const cards = fixture.nativeElement.querySelectorAll('app-dashboard-kpi-card');
+    expect(cards[1].querySelector('.kpi-value').textContent).toBe('2');
+    expect(cards[1].querySelector('.attention-label')).not.toBeNull();
+    expect(cards[5].querySelector('.kpi-value').textContent).toBe('3');
+  });
+  it('preserves an unknown count without claiming that there are no interventions', () => {
+    const summary = emptyDashboardResponse().maintenance;
+    summary.open.total = null as unknown as number;
+    fixture.componentRef.setInput('summary', summary); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.open-details').previousElementSibling.textContent).not.toBe('Aucune intervention ouverte.');
+    expect(fixture.nativeElement.querySelector('.kpi-value').textContent).toBe('Non renseignée');
   });
 });

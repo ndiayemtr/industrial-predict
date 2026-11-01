@@ -54,6 +54,18 @@ describe('DashboardFiltersComponent', () => {
     fixture.detectChanges();
   }
 
+  it('folds advanced controls without changing UTC values, selections or HTTP traffic', () => {
+    companiesReady();
+    const values = component.form.getRawValue();
+    const details = fixture.nativeElement.querySelector('.advanced-options') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('#dashboard-precision')).not.toBeNull();
+    details.open = true; details.dispatchEvent(new Event('toggle')); fixture.detectChanges();
+    expect(component.form.getRawValue()).toEqual(values);
+    expect(fixture.nativeElement.querySelector('#dashboard-start').closest('details')).toBeNull();
+    http.expectNone(() => true);
+  });
+
   it('loads only companies initially, without a default selection, output or Dashboard call', () => {
     const emitted = vi.fn(); component.filtersApplied.subscribe(emitted);
     expect(component.form.controls.company_id.value).toBeNull();

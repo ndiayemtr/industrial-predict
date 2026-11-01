@@ -1,6 +1,6 @@
 <section aria-labelledby="measurement-summary-title">
-  <h2 id="measurement-summary-title">Mesures</h2>
-  <p class="section-context">Sur la période - qualité déclarée, sans diagnostic ni seuil d’alerte. Début inclus, fin exclue.</p>
+  <h2 id="measurement-summary-title">Analyse des mesures</h2>
+  <p class="section-context">Qualité des mesures sur la période sélectionnée.</p>
   <app-dashboard-kpi-card label="Part de qualité bonne" [value]="summary().quality.good_ratio.percentage === null ? 'Non calculable' : summary().quality.good_ratio.percentage"
     unit="%" temporalScope="Sur la période" [information]="summary().quality.good_ratio.numerator + ' mesures de qualité bonne sur ' + summary().quality.good_ratio.denominator + ' mesures.'" />
   <dl class="quality-counts">
@@ -11,6 +11,9 @@
     <div><dt>Estimée</dt><dd>{{ summary().quality.estimated }}</dd></div>
     <div><dt>Autres / non reconnus</dt><dd>{{ summary().quality.other }}</dd></div>
   </dl>
+  <details class="data-details quality-details">
+    <summary>Voir les détails — qualité des mesures</summary>
+    <p class="section-context">Sur la période - qualité déclarée, sans diagnostic ni seuil d’alerte. Début inclus, fin exclue. Les bornes sont en UTC.</p>
   <table>
     <caption>Répartition réelle de qualité - {{ summary().quality.total }} mesures sur la période</caption>
     <thead><tr><th scope="col">Qualité déclarée</th><th scope="col">Effectif</th></tr></thead>
@@ -20,18 +23,27 @@
       } @empty { <tr><td colspan="2">Aucune catégorie fournie par l’API pour cette période.</td></tr> }
     </tbody>
   </table>
+  </details>
+  <app-daily-volume-chart [days]="summary().daily_volume" />
+  <details class="data-details daily-details">
+    <summary>Voir les détails — valeurs quotidiennes, jours à zéro inclus</summary>
   <p class="section-context daily-context">Dates UTC : les journées de début et de fin peuvent être partielles, selon les bornes sélectionnées. Les jours à zéro sont conservés.</p>
   <table>
     <caption>Volume quotidien - Sur la période</caption>
-    <thead><tr><th scope="col">Date (UTC)</th><th scope="col">Mesures</th></tr></thead>
+    <thead><tr><th scope="col">Date (UTC)</th><th scope="col">Nombre de mesures</th></tr></thead>
     <tbody>
       @for (day of summary().daily_volume; track $index) {
         <tr><th scope="row">{{ day.date }}</th><td>{{ day.count }}</td></tr>
       } @empty { <tr><td colspan="2">Aucun volume quotidien fourni par l’API.</td></tr> }
     </tbody>
   </table>
-  <h3 class="readings-title">Derniers relevés - Au calcul</h3>
-  <p class="section-context">Derniers relevés au {{ formatDateTime(period().calculated_at) }}, indépendamment de la période sélectionnée. Leur date peut se situer hors période. L’âge est fourni par l’API au calcul et n’est pas actualisé automatiquement.</p>
+  </details>
+  <h3 class="readings-title">Dernières données des capteurs</h3>
+  <p class="section-context">Dernières valeurs disponibles au {{ formatDateTime(period().calculated_at) }}.</p>
+  <details class="data-details reading-definitions">
+    <summary>Comprendre les dates et les âges</summary>
+    <p>Les dates sont en UTC. Ces relevés sont affichés indépendamment de la période sélectionnée. Leur date peut se situer hors période. L’âge est fourni par l’API au calcul et n’est pas actualisé automatiquement.</p>
+  </details>
   <ul class="last-readings">
     @for (reading of summary().last_measurements; track $index) {
       <li>
@@ -43,7 +55,10 @@
           <div><dt>Valeur</dt><dd>{{ reading.value ?? 'Non renseignée' }}</dd></div>
           <div><dt>Unité déclarée</dt><dd>{{ reading.unit ?? 'Non renseignée' }}</dd></div>
           <div><dt>Qualité déclarée</dt><dd>{{ reading.quality === null ? 'Non renseignée' : qualityLabel(reading.quality) }}</dd></div>
-          <div><dt>Âge au calcul</dt><dd>{{ reading.age_seconds ?? 'Non renseigné' }}@if (reading.age_seconds !== null) { <span> s</span> }</dd></div>
+          <div><dt>Âge au calcul</dt><dd>{{ formatAge(reading.age_seconds) }}
+            @if (validAge(reading.age_seconds)) {
+              <details class="age-details"><summary>Valeur exacte</summary><p>{{ reading.age_seconds }} secondes fournies par l’API au calcul.</p></details>
+            }</dd></div>
         </dl>
       </li>
     } @empty { <li>Aucun capteur ou relevé fourni par l’API.</li> }

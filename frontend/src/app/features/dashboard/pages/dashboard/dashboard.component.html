@@ -8,7 +8,7 @@
 
 @let state = facade.state();
 <section class="results" aria-labelledby="dashboard-results-title" [attr.aria-busy]="state.status === 'loading'">
-  <h2 id="dashboard-results-title">Résultats du Dashboard</h2>
+  <h2 id="dashboard-results-title">Vue d'ensemble du parc industriel</h2>
   @if (state.status === 'idle') {
     <p>Sélectionnez une entreprise, puis appliquez les filtres pour consulter le Dashboard.</p>
   } @else if (state.status === 'loading') {
@@ -28,7 +28,7 @@
       <app-empty-state title="Aucun actif dans ce périmètre" message="Le périmètre sélectionné ne contient aucun site, équipement ou capteur." />
     } @else {
       <section class="results-ready" aria-labelledby="dashboard-synthesis-title">
-        <h2 id="dashboard-synthesis-title">Synthèse</h2>
+        <h2 id="dashboard-synthesis-title">Indicateurs clés</h2>
         <p class="scope-help">Les états actuels décrivent le parc au moment de la requête ; la période UTC a une fin exclusive.</p>
         <div class="kpi-grid">
           <app-dashboard-kpi-card label="Équipements" [value]="state.data.assets.equipments" temporalScope="État actuel" />
@@ -38,7 +38,7 @@
           <app-dashboard-kpi-card label="Mesures reçues" [value]="state.data.measurements.activity.measurements_total" temporalScope="Sur la période" />
           <app-dashboard-kpi-card label="Maintenances ouvertes" [value]="state.data.maintenance.open.total" temporalScope="État actuel"
             information="Interventions planifiées ou en cours." />
-          <app-dashboard-kpi-card label="Retards de démarrage" [value]="state.data.maintenance.overdue.overdue" temporalScope="Au calcul"
+          <app-dashboard-kpi-card label="Retards de démarrage" [attention]="true" [value]="state.data.maintenance.overdue.overdue" temporalScope="Au calcul"
             information="Interventions planifiées avant le calcul et non démarrées." />
         </div>
       </section>

@@ -12,3 +12,9 @@ dl div, li { min-width: 0; overflow-wrap: anywhere; }
 .last-readings li { padding: tokens.$space-md; border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius; background: tokens.$surface-background; }
 h4 { margin: 0; font-size: tokens.$font-size-body; }
 td[colspan] { width: auto; text-align: left; }
+
+.daily-details[open] { max-height: 22rem; overflow-y: auto; }
+.age-details { margin-top: tokens.$space-xs; font-size: tokens.$font-size-small; }
+.age-details summary { min-height: 1.75rem; font-weight: 400; }
+.age-details p { margin: tokens.$space-xs 0; }
+@media (min-width: 70rem) { .last-readings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

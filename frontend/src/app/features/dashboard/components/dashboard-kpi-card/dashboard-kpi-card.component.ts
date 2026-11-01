@@ -16,6 +16,8 @@ export class DashboardKpiCardComponent {
   readonly unit = input<string>();
   readonly temporalScope = input.required<DashboardTemporalScope>();
   readonly information = input<string>();
+  readonly attention = input(false);
+  readonly needsAttention = computed(() => this.attention() && typeof this.value() === 'number' && Number.isFinite(this.value()) && (this.value() as number) > 0);
   readonly formattedValue = computed(() => {
     const value = this.value();
     return value == null ? 'Non renseignée' : typeof value === 'number' ? numberFormat.format(value) : value;

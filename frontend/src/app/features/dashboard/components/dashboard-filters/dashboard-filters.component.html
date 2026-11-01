@@ -1,5 +1,6 @@
 <form [formGroup]="form" (ngSubmit)="applyFilters()" aria-label="Filtres du Dashboard" novalidate>
   <p id="dashboard-filter-help">Sélectionnez une entreprise. Les sites et équipements sont facultatifs.</p>
+  <div class="filter-heading"><h2>Périmètre de supervision</h2><p>Choisissez le parc et la période à consulter.</p></div>
   <div class="filter-grid">
     <div class="filter-field" [attr.aria-busy]="companies().status === 'loading'">
       <label for="dashboard-company">Entreprise (obligatoire)</label>
@@ -47,6 +48,26 @@
         <button type="button" (click)="loadEquipments(equipments().page + 1)">Charger davantage d’équipements</button>
       }
     </div>
+    <div class="filter-field">
+      <label for="dashboard-start">Date de début (UTC)</label>
+      <input id="dashboard-start" type="datetime-local" [step]="advancedPrecision() ? '0.001' : '60'" formControlName="start_time" required aria-describedby="start-help period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+      <p id="start-help" class="reference-count">Début inclus</p>
+    </div>
+    <div class="filter-field">
+      <label for="dashboard-end">Date de fin (UTC, exclue)</label>
+      <input id="dashboard-end" type="datetime-local" [step]="advancedPrecision() ? '0.001' : '60'" formControlName="end_time" required aria-describedby="end-help period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
+      <p id="end-help" class="reference-count">Fin exclue</p>
+    </div>
+    <div class="filter-actions"><button class="apply-button" type="submit" [disabled]="!canApply()">Appliquer les filtres</button><p class="reference-count">UTC · début inclus, fin exclue</p></div>
+  </div>
+  <p id="period-error" class="validation-error" aria-live="polite">
+    @if (form.hasError('invalidDate')) { Renseignez deux dates UTC valides. }
+    @else if (form.hasError('invalidPeriod')) { Le début doit précéder strictement la fin. }
+    @else if (form.hasError('futureEnd')) { La date de fin ne peut pas être future. }
+  </p>
+
+  <details class="advanced-options" [open]="advancedPrecision() || precisionConversionPending()">
+    <summary>Options avancées · précision temporelle UTC</summary>
     <div class="precision-options">
       <label class="precision-toggle" for="dashboard-precision">
         <input id="dashboard-precision" type="checkbox" [checked]="advancedPrecision()"
@@ -63,22 +84,6 @@
       }
       <p id="precision-notice" class="reference-count" role="status">{{ precisionNotice() }}</p>
     </div>
-    <div class="filter-field">
-      <label for="dashboard-start">Date de début (UTC)</label>
-      <input id="dashboard-start" type="datetime-local" [step]="advancedPrecision() ? '0.001' : '60'" formControlName="start_time" required aria-describedby="start-help period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
-      <p id="start-help" class="reference-count">Début inclus</p>
-    </div>
-    <div class="filter-field">
-      <label for="dashboard-end">Date de fin (UTC, exclue)</label>
-      <input id="dashboard-end" type="datetime-local" [step]="advancedPrecision() ? '0.001' : '60'" formControlName="end_time" required aria-describedby="end-help period-help period-error" [attr.aria-invalid]="form.errors ? 'true' : null" />
-      <p id="end-help" class="reference-count">Fin exclue</p>
-    </div>
-  </div>
-  <p id="period-help">Période en UTC : début inclus, fin exclue. La fin ne peut pas être future.</p>
-  <p id="period-error" class="validation-error" aria-live="polite">
-    @if (form.hasError('invalidDate')) { Renseignez deux dates UTC valides. }
-    @else if (form.hasError('invalidPeriod')) { Le début doit précéder strictement la fin. }
-    @else if (form.hasError('futureEnd')) { La date de fin ne peut pas être future. }
-  </p>
-  <button class="apply-button" type="submit" [disabled]="!canApply()">Appliquer les filtres</button>
+    <p id="period-help">Période en UTC : début inclus, fin exclue. La fin ne peut pas être future.</p>
+  </details>
 </form>

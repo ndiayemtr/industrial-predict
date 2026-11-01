@@ -94,6 +94,12 @@ describe('DashboardComponent', () => {
     expect(fixture.nativeElement.querySelector('app-maintenance-summary')).not.toBeNull();
     expect(fixture.nativeElement.querySelectorAll('h1')).toHaveLength(1);
     http.expectNone(() => true);
+    const headings = [...fixture.nativeElement.querySelectorAll('h2, h3')].map((el: Element) => el.textContent!.trim());
+    for (const title of ["Vue d'ensemble du parc industriel", 'Indicateurs clés', 'État des équipements',
+      'Surveillance des capteurs', 'Analyse des mesures', 'Dernières données des capteurs',
+      'Suivi des interventions', 'Bilan des interventions', "Temps d'arrêt et qualité des données"]) {
+      expect(headings).toContain(title);
+    }
     apply(); const next = request();
     expect(fixture.nativeElement.querySelector('.kpi-grid')).toBeNull();
     next.flush({}, { status: 500, statusText: 'Error' }); fixture.detectChanges();
@@ -120,6 +126,7 @@ describe('DashboardComponent', () => {
   it.each([400, 422, 404, 500])('shows the appropriate HTTP %s state and keeps filters available', status => {
     apply(); request().flush({ detail: 'Test error' }, { status, statusText: 'Error' }); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.results [role="alert"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.no-measurements')).toBeNull();
     expect(fixture.nativeElement.querySelector('.results app-error-state button') !== null).toBe(status === 500);
     expect(fixture.debugElement.query(By.directive(DashboardFiltersComponent)).componentInstance).toBe(form);
     if (status === 500) { fixture.nativeElement.querySelector('.results app-error-state button').click(); request().flush(emptyDashboardResponse()); }

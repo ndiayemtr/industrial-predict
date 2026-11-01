@@ -1,4 +1,5 @@
 @use '../../../../../styles/tokens' as tokens;
+@use '../summary' as summary;
 
 :host { display: block; min-width: 0; }
 form {
@@ -10,7 +11,7 @@ form {
   overflow-wrap: anywhere;
 }
 .filter-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
-.filter-field { min-width: 0; display: flex; flex-direction: column; gap: tokens.$space-sm; }
+.filter-field { min-width: 0; display: flex; flex-direction: column; gap: tokens.$space-xs; }
 label { font-weight: 600; }
 select, input, button {
   min-width: 0;
@@ -35,6 +36,17 @@ button { cursor: pointer; white-space: normal; overflow-wrap: anywhere; }
 .precision-confirmation button + button { margin-top: tokens.$space-sm; }
 #precision-notice:empty { display: none; }
 #period-help { margin-top: tokens.$space-md; }
-.validation-error { min-height: 1.5em; margin: tokens.$space-sm 0; }
+.validation-error { margin: 0; }
+.validation-error:not(:empty) { margin-top: tokens.$space-sm; color: var(--color-danger-700, #{tokens.$text-primary}); }
 .apply-button:not(:disabled) { background: tokens.$navigation-active; color: tokens.$sidebar-text; }
+
+.filter-heading h2 { @include summary.heading; font-size: 1.125rem; }
+.filter-heading p { margin: 0 0 tokens.$space-md; font-size: tokens.$font-size-small; color: tokens.$text-secondary; }
+#dashboard-filter-help { margin: 0 0 tokens.$space-sm; font-size: tokens.$font-size-small; color: tokens.$text-secondary; }
+.filter-actions { display: flex; flex-direction: column; justify-content: center; gap: tokens.$space-xs; min-width: 0; }
+.advanced-options { margin-top: tokens.$space-sm; border-top: 1px solid tokens.$border-color; padding-top: tokens.$space-xs; }
+.advanced-options > summary { cursor: pointer; min-height: 2.5rem; align-content: center; font-size: tokens.$font-size-small; font-weight: 600; }
+.advanced-options > summary:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+.precision-options { padding-bottom: tokens.$space-sm; }
 @media (min-width: 48rem) { .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 75rem) { .filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

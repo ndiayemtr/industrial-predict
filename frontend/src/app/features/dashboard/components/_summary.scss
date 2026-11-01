@@ -1,13 +1,24 @@
 @use '../../../../styles/tokens' as tokens;
 
+@mixin heading {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
+
 @mixin layout {
   :host { display: block; min-width: 0; margin-top: tokens.$space-xl; }
-  section { min-width: 0; }
-  h2 { margin: 0 0 tokens.$space-sm; font-size: 1.25rem; color: tokens.$text-primary; }
-  .section-context { margin: 0 0 tokens.$space-md; color: tokens.$text-secondary; line-height: tokens.$line-height-body; }
-  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: tokens.$space-md; }
-  table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: tokens.$space-lg; }
+  section { min-width: 0; border-top: 1px solid tokens.$border-color; padding-top: tokens.$space-xl; }
+  h2 { @include heading; }
+  .section-context { margin: 0 0 tokens.$space-md; color: tokens.$text-secondary; line-height: tokens.$line-height-body; font-size: tokens.$font-size-small; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: tokens.$space-md; }
+  .distribution-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: tokens.$space-md; margin-top: tokens.$space-lg; }
+  .data-details { margin-top: tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; padding: tokens.$space-sm tokens.$space-md; }
+  summary { cursor: pointer; min-height: 2.5rem; align-content: center; font-weight: 600; color: tokens.$text-primary; overflow-wrap: anywhere; }
+  summary:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: tokens.$space-md; }
   caption { text-align: left; font-weight: 600; margin-bottom: tokens.$space-sm; color: tokens.$text-primary; }
   th, td { text-align: left; padding: tokens.$space-sm; border-bottom: tokens.$border-width solid tokens.$border-color; overflow-wrap: anywhere; vertical-align: top; }
-  th:last-child, td:last-child { width: 5rem; text-align: right; }
+  th:last-child, td:last-child { width: 5rem; text-align: right; font-variant-numeric: tabular-nums; }
 }

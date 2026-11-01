@@ -34,6 +34,22 @@ describe('MeasurementSummaryComponent', () => {
     expect(table.querySelector('tbody td').textContent).toBe('0');
     expect(table.querySelector('caption').textContent).toContain('Sur la période');
     expect(fixture.nativeElement.textContent).toContain('journées de début et de fin peuvent être partielles');
+    const details = fixture.nativeElement.querySelector('.daily-details') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('summary')!.textContent).toContain('jours à zéro inclus');
+    details.open = true;
+    expect(details.querySelectorAll('tbody tr')).toHaveLength(2);
+  });
+  it('presents readable ages with exact API seconds in keyboard-accessible details', () => {
+    const data = emptyDashboardResponse();
+    data.measurements.last_measurements = [{ sensor_id: 1, sensor_name: 'Pression', sensor_code: 'P1', equipment_id: 42,
+      timestamp: '2026-10-01T00:00:00Z', value: 1, unit: 'bar', quality: 'good', age_seconds: 12000 }];
+    fixture.componentRef.setInput('summary', data.measurements); fixture.detectChanges();
+    const age = fixture.nativeElement.querySelector('.last-readings li').querySelectorAll('dd')[5];
+    expect(age.textContent).toContain('3 heures et 20 minutes');
+    expect(age.querySelector('details summary').textContent).toBe('Valeur exacte');
+    expect(age.querySelector('details').textContent).toContain('12000 secondes');
+    expect(data.measurements.last_measurements[0].age_seconds).toBe(12000);
   });
   it('shows out-of-period last readings, raw precision, unknown units and the API age at calculation', () => {
     const data = emptyDashboardResponse();
@@ -74,5 +90,23 @@ describe('MeasurementSummaryComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Aucun capteur ou relevé fourni');
     expect(fixture.nativeElement.querySelector('h1')).toBeNull();
     expect(fixture.nativeElement.querySelector('table thead th').getAttribute('scope')).toBe('col');
+  });
+  it('keeps all-zero daily values and quality categories in closed, operable details', () => {
+    const summary = emptyDashboardResponse().measurements;
+    summary.daily_volume = [{ date: '2026-10-01', count: 0 }, { date: '2026-10-02', count: 0 }];
+    summary.quality.distribution = [{ value: 'vendor_quality', count: 0 }];
+    const snapshot = JSON.stringify(summary);
+    fixture.componentRef.setInput('summary', summary); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-daily-volume-chart svg')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Aucune mesure enregistrée sur la période sélectionnée');
+    for (const details of fixture.nativeElement.querySelectorAll('.quality-details, .daily-details') as NodeListOf<HTMLDetailsElement>) {
+      expect(details.open).toBe(false);
+      expect(details.querySelector('summary')!.textContent).toContain('Voir les détails');
+      details.querySelector('summary')!.click(); expect(details.open).toBe(true);
+      details.querySelector('summary')!.click(); expect(details.open).toBe(false);
+    }
+    expect(fixture.nativeElement.querySelector('.quality-details').textContent).toContain('vendor_quality');
+    expect(fixture.nativeElement.querySelectorAll('.daily-details tbody tr')).toHaveLength(2);
+    expect(JSON.stringify(summary)).toBe(snapshot);
   });
 });

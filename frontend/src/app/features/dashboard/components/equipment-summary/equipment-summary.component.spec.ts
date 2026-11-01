@@ -24,6 +24,11 @@ describe('EquipmentSummaryComponent', () => {
   it('retains unknown categories and real zero counts in accessible tables', () => {
     const tables = fixture.nativeElement.querySelectorAll('table');
     expect(tables).toHaveLength(2);
+    const details = fixture.nativeElement.querySelector('.data-details') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('summary')!.textContent).toBe('Voir les détails');
+    details.querySelector('summary')!.click(); expect(details.open).toBe(true);
+    details.querySelector('summary')!.click(); expect(details.open).toBe(false);
     expect(tables[0].textContent).toContain('Autres / non reconnus : vendor_status');
     expect(tables[1].textContent).toContain('Autres / non reconnus : vendor_criticality');
     expect(tables[0].querySelector('tbody td').textContent).toBe('0');

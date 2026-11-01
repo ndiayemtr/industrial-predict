@@ -14,6 +14,20 @@ const typeLabels: Readonly<Record<string, string>> = { preventive: 'Préventive'
 })
 export class MaintenanceSummaryComponent {
   readonly summary = input.required<MaintenanceSummary>();
+  readonly noOpenInterventions = computed(() => {
+    const { open, overdue } = this.summary();
+    return [open.total, open.planned, open.in_progress, open.other, open.priorities.total, open.priorities.low, open.priorities.medium,
+      open.priorities.high, open.priorities.critical, open.priorities.other,
+      overdue.overdue, overdue.planned_without_planned_at].every(value => value === 0)
+      && open.priorities.distribution.every(category => category.count === 0);
+  });
+  readonly noCompletedInterventions = computed(() => {
+    const completed = this.summary().completed;
+    return [completed.total, completed.completed_without_completed_at, completed.types.total, completed.types.preventive,
+      completed.types.corrective, completed.types.predictive, completed.types.other,
+      this.summary().corrective.ratio.numerator, this.summary().corrective.ratio.denominator].every(value => value === 0)
+      && completed.types.distribution.every(category => category.count === 0);
+  });
   readonly downtimeContext = computed(() => {
     const coverage = this.summary().downtime.coverage;
     if (coverage.eligible_records === 0) return 'Aucune intervention terminée éligible sur la période ; la somme renvoyée est zéro.';
@@ -24,4 +38,9 @@ export class MaintenanceSummaryComponent {
     const labels = kind === 'priority' ? priorityLabels : typeLabels;
     return Object.hasOwn(labels, value) ? labels[value] : `Autres / non reconnus : ${value}`;
   }
+  // Preserve the existing nullish fallback without asserting non-null API data.
+  displayCount(value: number | null | undefined): number | string {
+    return value ?? 'Non renseigné';
+  }
+
 }

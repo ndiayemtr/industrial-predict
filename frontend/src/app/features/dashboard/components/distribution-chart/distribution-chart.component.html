@@ -1,0 +1,16 @@
+<figure>
+  <figcaption>{{ title() }}</figcaption>
+  <ul [attr.aria-label]="title()">
+    @for (item of items(); track $index) {
+      <li>
+        <div class="bar-label"><span class="category-label"><span class="category-marker" aria-hidden="true">{{ $index + 1 }}</span>{{ item.label }}</span><strong>{{ displayCount(item.count) }}</strong></div>
+        <div class="bar-track" aria-hidden="true"><span [style.width.%]="width(item.count)"></span></div>
+      </li>
+    } @empty { <li>Aucune catégorie fournie par l’API.</li> }
+  </ul>
+  @if (allZero()) { <p>Aucun effectif sur ces catégories.</p> }
+  <details class="chart-legend">
+    <summary>Lire le graphique</summary>
+    <p class="chart-note">Longueurs relatives au plus grand effectif. Les nombres sont les valeurs exactes. Les couleurs distinguent les catégories sans indiquer une gravité.</p>
+  </details>
+</figure>
