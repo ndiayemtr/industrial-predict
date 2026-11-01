@@ -2,8 +2,17 @@
 
 :host { display: block; min-width: 0; overflow-wrap: anywhere; color: tokens.$text-primary; }
 fieldset { min-width: 0; border: 0; padding: 0; margin: 0; }
-legend { font-weight: 600; margin-bottom: tokens.$space-md; }
-.field { margin-bottom: tokens.$space-lg; }
+legend { padding: 0; margin-bottom: tokens.$space-md; max-width: 100%; }
+h2 {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
+.field { min-width: 0; margin-bottom: tokens.$space-lg; }
+.fields-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-lg; margin-bottom: tokens.$space-lg; }
+.fields-grid .field { margin-bottom: 0; }
+.company-field, .description-field { grid-column: 1 / -1; }
 label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
 input, select, textarea, button { box-sizing: border-box; min-height: 2.75rem; padding: tokens.$space-sm tokens.$space-md; font: inherit;
   border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius;
@@ -18,9 +27,10 @@ textarea { resize: vertical; }
 p { line-height: tokens.$line-height-body; }
 .field-error { font-weight: 600; }
 .field-error:empty { display: none; }
-.actions { display: flex; flex-wrap: wrap; gap: tokens.$space-sm; }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: tokens.$space-sm; }
 button { cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
 button.primary { background: tokens.$navigation-active; border-color: tokens.$navigation-active; color: tokens.$sidebar-text; }
 button:disabled { cursor: not-allowed; background: tokens.$content-background; color: tokens.$text-secondary; }
 input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
-@media (max-width: 30rem) { .actions { flex-direction: column; } }
+@media (min-width: 64rem) { .fields-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 30rem) { .actions { flex-direction: column; align-items: flex-end; } }

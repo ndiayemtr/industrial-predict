@@ -61,6 +61,12 @@ describe('Sites list page and URL', () => {
   it('renders semantic fields and a focusable detail link without write actions', async () => {
     await ready();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Sites industriels');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Filtres des sites', 'Liste des sites']);
+    expect(root().querySelector('.filters')?.getAttribute('aria-labelledby')).toBe('sites-filters-title');
+    expect([...root().querySelectorAll('.filters-grid input, .filters-grid select')].map(control => control.id))
+      .toEqual(['sites-company', 'sites-search', 'sites-page-size']);
+    expect(root().querySelector('.company-filter #companies-count')).not.toBeNull();
     expect(root().querySelectorAll('thead th[scope="col"]')).toHaveLength(3);
     expect(root().querySelector('tbody th[scope="row"]')?.textContent).toBe(site.name);
     expect(root().querySelector('caption')?.textContent?.trim()).toBe('21 sites trouvés');

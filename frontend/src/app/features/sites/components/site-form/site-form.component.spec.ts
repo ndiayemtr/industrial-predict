@@ -11,6 +11,26 @@ describe('Site creation form', () => {
     fixture.componentRef.setInput('companies', [{ id: 7, label: 'PETROSEN' }]); fixture.detectChanges();
   });
   function fill() { form.form.patchValue({ name: ' Usine 日本 😀 ', code: ' Énergie-é ' }); }
+  it.each([false, true])('preserves accessible field and action order in edit mode %s', editMode => {
+    fixture.componentRef.setInput('editMode', editMode); fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('fieldset > legend > h2')?.textContent).toBe('Informations du site');
+    expect([...root.querySelectorAll('.fields-grid input, .fields-grid select, .fields-grid textarea')].map(control => control.id))
+      .toEqual(editMode ? ['site-name', 'site-code', 'site-description'] : ['site-company_id', 'site-name', 'site-code', 'site-description']);
+    expect(root.querySelector('.description-field textarea')?.id).toBe('site-description');
+    expect(root.querySelector('.company-field select') !== null).toBe(!editMode);
+    const actions = [...root.querySelectorAll<HTMLButtonElement>('.actions button')];
+    expect(actions.map(action => action.textContent?.trim())).toEqual(['Annuler', editMode ? 'Enregistrer les modifications' : 'Créer le site']);
+    expect(actions.map(action => action.type)).toEqual(['button', 'submit']);
+    const cancel = vi.fn(), submit = vi.fn(), update = vi.fn();
+    form.cancelled.subscribe(cancel); form.submitted.subscribe(submit); form.updated.subscribe(update);
+    actions[0].click();
+    expect(cancel).toHaveBeenCalledOnce(); expect(submit).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
+    fixture.componentRef.setInput('saving', true); fixture.detectChanges();
+    expect(actions.every(action => action.disabled)).toBe(true);
+    expect(actions[1].textContent).toBe('Enregistrement en cours...');
+    actions[0].click(); expect(cancel).toHaveBeenCalledOnce();
+  });
   it('hides company guidance for a verified prefill, restores it on clearing, and keeps error descriptions connected', () => {
     const help = () => fixture.nativeElement.querySelector('#site-company-help');
     const select = fixture.nativeElement.querySelector('#site-company_id');

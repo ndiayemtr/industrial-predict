@@ -39,6 +39,7 @@ describe('Site creation page', () => {
   it('matches new before detail, loads only the catalog, and never selects a company implicitly', async () => {
     await open(); companies().flush(catalog); await settle();
     expect(root().querySelectorAll('h1')).toHaveLength(1); expect(root().querySelector('h1')?.textContent).toBe('Nouveau site industriel');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Informations du site']);
     expect(component.editor()!.form.controls.company_id.value).toBeNull(); expect(component.canLeave()).toBe(true);
     expect(root().querySelector('#site-company-help')?.textContent).toBe('Choisissez une entreprise pour rattacher le site.');
     expect(root().querySelector('#site-company_id')?.textContent).toContain('PETROSEN');

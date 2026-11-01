@@ -49,6 +49,8 @@ describe('Site read-only detail', () => {
     expect(values().map(([, value]) => value)).not.toContain('3');
     expect(root().textContent).not.toContain('Identifiant');
     expect(root().textContent).toContain('une autre entreprise que celle du contexte de retour');
+    expect(root().querySelector('h1')?.textContent).toBe('Détail du site');
+    expect(root().querySelector('#site-information-title')?.textContent).toBe('Informations du site');
     expect(root().querySelectorAll('h1')).toHaveLength(1); expect(root().querySelectorAll('form,input')).toHaveLength(0);
     expect(root().querySelector('.site-edit')?.getAttribute('href')).toBe('/sites/3/edit?company_id=99&page=2&page_size=50&search=Usine');
     expect(root().querySelector('.site-equipments')?.getAttribute('href')).toBe('/equipments?company_id=7&site_id=3&page=1&page_size=20');

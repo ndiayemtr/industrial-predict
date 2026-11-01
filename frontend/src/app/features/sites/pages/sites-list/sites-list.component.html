@@ -7,39 +7,45 @@
   </a>
 </app-page-header>
 
-<section class="filters" aria-label="Filtres des sites">
-  <label for="sites-company">Entreprise (obligatoire)</label>
-  <select id="sites-company" [formControl]="company" [attr.aria-describedby]="company.value === null ? 'companies-help companies-count' : 'companies-count'">
-    <option [ngValue]="null">Sélectionnez une entreprise</option>
-    @for (item of options(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
-  </select>
-  @if (company.value === null) { <p id="companies-help">Sélectionnez une entreprise pour afficher ses sites.</p> }
-  <p id="companies-count">{{ catalog().items.length }} / {{ catalog().total }} entreprises chargées</p>
-  @if (catalog().status === 'loading') { <app-loading-state message="Chargement des entreprises..." /> }
-  @if (catalog().status === 'error') {
-    <app-error-state title="Entreprises indisponibles" message="Le catalogue d’entreprises ne peut pas être chargé. La sélection déjà chargée reste disponible."
-      [retryable]="catalog().retryable" (retry)="retryCompanies()" />
-  }
-  @if (catalog().status === 'ready' && catalog().page < catalog().pages) {
-    <button type="button" (click)="loadMoreCompanies()">Charger davantage d’entreprises</button>
-  }
-  @if (catalog().status === 'ready' && catalog().total === 0) { <p>Aucune entreprise n’est actuellement enregistrée.</p> }
-
-  <form (submit)="applySearch($event)" aria-label="Recherche de sites">
-    <label for="sites-search">Rechercher par nom ou code</label>
-    <div class="search-controls">
-      <input id="sites-search" type="search" [formControl]="search" maxlength="100"
-        aria-describedby="sites-search-help sites-search-error" [attr.aria-invalid]="search.touched && search.invalid ? 'true' : null" />
-      <button type="submit" class="primary" [disabled]="!canSearch()">Rechercher</button>
-      <button type="button" (click)="clearSearch()" [disabled]="!canSearch()">Effacer la recherche</button>
+<section class="filters" aria-labelledby="sites-filters-title">
+  <h2 id="sites-filters-title">Filtres des sites</h2>
+  <div class="filters-grid">
+    <div class="filter-field company-filter">
+      <label for="sites-company">Entreprise (obligatoire)</label>
+      <select id="sites-company" [formControl]="company" [attr.aria-describedby]="company.value === null ? 'companies-help companies-count' : 'companies-count'">
+        <option [ngValue]="null">Sélectionnez une entreprise</option>
+        @for (item of options(); track item.id) { <option [ngValue]="item.id">{{ referenceLabel(item) }}</option> }
+      </select>
+      @if (company.value === null) { <p id="companies-help">Sélectionnez une entreprise pour afficher ses sites.</p> }
+      <p id="companies-count">{{ catalog().items.length }} / {{ catalog().total }} entreprises chargées</p>
+      @if (catalog().status === 'loading') { <app-loading-state message="Chargement des entreprises..." /> }
+      @if (catalog().status === 'error') {
+        <app-error-state title="Entreprises indisponibles" message="Le catalogue d’entreprises ne peut pas être chargé. La sélection déjà chargée reste disponible."
+          [retryable]="catalog().retryable" (retry)="retryCompanies()" />
+      }
+      @if (catalog().status === 'ready' && catalog().page < catalog().pages) {
+        <button type="button" (click)="loadMoreCompanies()">Charger davantage d’entreprises</button>
+      }
+      @if (catalog().status === 'ready' && catalog().total === 0) { <p>Aucune entreprise n’est actuellement enregistrée.</p> }
     </div>
-    <p id="sites-search-help">Recherche sur tous les sites de l’entreprise sélectionnée, pas seulement sur cette page.</p>
-    <p id="sites-search-error" aria-live="polite">@if (search.touched && search.invalid) { La recherche est limitée à 100 caractères. }</p>
-  </form>
-  <label for="sites-page-size">Sites par page</label>
-  <select id="sites-page-size" [formControl]="size">
-    @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
-  </select>
+    <form (submit)="applySearch($event)" aria-label="Recherche de sites">
+      <label for="sites-search">Rechercher par nom ou code</label>
+      <div class="search-controls">
+        <input id="sites-search" type="search" [formControl]="search" maxlength="100"
+          aria-describedby="sites-search-help sites-search-error" [attr.aria-invalid]="search.touched && search.invalid ? 'true' : null" />
+        <button type="submit" class="primary" [disabled]="!canSearch()">Rechercher</button>
+        <button type="button" (click)="clearSearch()" [disabled]="!canSearch()">Effacer la recherche</button>
+      </div>
+      <p id="sites-search-help">Recherche sur tous les sites de l’entreprise sélectionnée, pas seulement sur cette page.</p>
+      <p id="sites-search-error" aria-live="polite">@if (search.touched && search.invalid) { La recherche est limitée à 100 caractères. }</p>
+    </form>
+    <div class="filter-field page-size-filter">
+      <label for="sites-page-size">Sites par page</label>
+      <select id="sites-page-size" [formControl]="size">
+        @for (value of sizes(); track value) { <option [ngValue]="value">{{ value }}</option> }
+      </select>
+    </div>
+  </div>
 </section>
 @if (urlNotice()) { <p role="status">{{ urlNotice() }}</p> }
 @if (wildcardSearch()) { <p>Les caractères % et _ sont interprétés comme des jokers par la recherche serveur.</p> }

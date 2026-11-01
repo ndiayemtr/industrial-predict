@@ -47,6 +47,8 @@ describe('Site editing page', () => {
     read().flush(site); await settle(); expect(root().textContent).toContain('Chargement de la référence');
     parent().flush(company); await settle();
     expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Modifier le site');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Informations du site', 'Informations de suivi']);
     expect(component.editor()!.form.getRawValue()).toEqual({ company_id: 7, name: site.name, code: site.code, description: site.description });
     expect(root().querySelector('select')).toBeNull(); expect(root().querySelector('.company-reference')?.textContent).toContain('PETROSEN');
     expect(root().querySelector('.company-reference')?.textContent?.match(/PETROSEN/g)).toHaveLength(1);
