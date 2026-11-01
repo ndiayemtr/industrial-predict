@@ -18,6 +18,26 @@ describe('EquipmentForm creation contract', () => {
   }
   function fill() { parents(); component.form.patchValue({ name: ' Pompe 日本 ', code: ' Code-É ', equipment_type: ' Type Libre ' }); }
 
+  it.each([false, true])('preserves section, editable field order and action types in edit mode %s', editMode => {
+    fixture.componentRef.setInput('editMode', editMode); fixture.detectChanges(); TestBed.tick(); fixture.detectChanges();
+    expect(root().querySelector('fieldset > legend > h2')?.textContent).toBe('Rattachement et informations de l’équipement');
+    expect([...root().querySelectorAll('.fields-grid input, .fields-grid select, .fields-grid textarea')].map(control => control.id))
+      .toEqual(['equipment-name', 'equipment-code', 'equipment-equipment_type', 'equipment-status', 'equipment-criticality', 'equipment-description']);
+    expect(root().querySelector('.description-field textarea')?.id).toBe('equipment-description');
+    expect(root().querySelector('#equipment-company_id') !== null).toBe(!editMode);
+    expect(root().querySelector('#equipment-site_id') !== null).toBe(!editMode);
+    const actions = [...root().querySelectorAll<HTMLButtonElement>('.actions button')];
+    expect(actions.map(action => action.textContent?.trim())).toEqual(['Annuler', editMode ? 'Enregistrer les modifications' : 'Créer l’équipement']);
+    expect(actions.map(action => action.type)).toEqual(['button', 'submit']);
+    const cancel = vi.fn(), submit = vi.fn(), update = vi.fn();
+    component.cancelled.subscribe(cancel); component.submitted.subscribe(submit); component.updated.subscribe(update);
+    actions[0].click();
+    expect(cancel).toHaveBeenCalledOnce(); expect(submit).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
+    fixture.componentRef.setInput('saving', true); fixture.detectChanges();
+    expect(actions.every(action => action.disabled)).toBe(true);
+    expect(actions[1].textContent).toBe('Enregistrement en cours…');
+    actions[0].click(); expect(cancel).toHaveBeenCalledOnce();
+  });
   it('starts without parents, with visible backend defaults and accessible required controls', () => {
     expect(component.form.controls.company_id.value).toBeNull(); expect(component.form.controls.site_id.value).toBeNull();
     expect(component.form.controls.status.value).toBe('operational'); expect(component.form.controls.criticality.value).toBe('medium');

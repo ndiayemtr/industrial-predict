@@ -64,6 +64,8 @@ describe('Equipment edit - isolated HTTP writes and real parent chain', () => {
     expect(root().querySelector('.tracking-information')?.textContent).toContain('16/10/2026 à 11:51 UTC');
     expect(editor().form.contains('created_at')).toBe(false); expect(editor().form.contains('updated_at')).toBe(false);
     expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Modifier l’équipement');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Rattachement et informations de l’équipement', 'Informations de suivi']);
     expect(component.listQuery()).toMatchObject({ company_id: 99, site_id: 88, search: 'Pompe', page: 3, page_size: 50, status: 'operational', criticality: 'low' });
     http.expectNone(() => true);
   });

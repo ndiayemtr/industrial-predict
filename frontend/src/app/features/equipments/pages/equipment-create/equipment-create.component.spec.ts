@@ -49,7 +49,8 @@ describe('Equipment creation - isolated HTTP writes', () => {
 
   it('matches new before detail and never selects catalog defaults or requests equipment automatically', async () => {
     await open(); read('companies').flush(companies); await settle();
-    expect(root().querySelector('h1')?.textContent).toBe('Nouvel équipement industriel'); expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Nouvel équipement industriel');
+    expect([...root().querySelectorAll('h2')].map(title => title.textContent)).toEqual(['Rattachement et informations de l’équipement']); expect(root().querySelectorAll('h1')).toHaveLength(1);
     expect(editor().form.controls.company_id.value).toBeNull(); expect(editor().form.controls.site_id.value).toBeNull();
     expect(component.canLeave()).toBe(true); await submit(); expect(document.activeElement?.id).toBe('equipment-company_id'); http.expectNone(() => true);
   });

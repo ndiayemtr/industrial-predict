@@ -59,6 +59,8 @@ describe('Equipment read-only detail and real parent chain', () => {
   });
   it('uses semantic read-only content, one h1 and keyboard-accessible business links without technical IDs or fake predictions', async () => {
     await loaded(); expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Détail équipement');
+    expect(root().querySelector('#equipment-information-title')?.textContent).toBe('Informations de l’équipement');
     expect(values().map(([label]) => label)).toEqual(['Nom', 'Code métier', 'Type d’équipement', 'Statut', 'Criticité', 'Description', 'Site industriel', 'Entreprise de rattachement', 'Création', 'Dernière modification']);
     expect(values().map(([, value]) => value)).not.toContain('12'); expect(values().map(([, value]) => value)).not.toContain('9'); expect(values().map(([, value]) => value)).not.toContain('7');
     expect(root().querySelectorAll('form,input,select,button')).toHaveLength(0);

@@ -42,6 +42,11 @@ describe('Equipments list, references and URL', () => {
   it('requires explicit selections and provides a real create link without delete actions', async () => {
     await open(); request('companies').flush(catalog); await settle();
     expect(component.company.value).toBeNull(); expect(component.site.value).toBeNull(); expect(component.site.disabled).toBe(true);
+    expect(root().querySelectorAll('h1')).toHaveLength(1);
+    expect(root().querySelector('h1')?.textContent).toBe('Équipements industriels');
+    expect([...root().querySelectorAll('#equipment-context-title, #equipment-results-title')].map(title => title.textContent)).toEqual(['Entreprise et site', 'Équipements du site']);
+    expect([...root().querySelectorAll('.filters input, .filters select')].map(control => control.id))
+      .toEqual(['equipments-company', 'equipments-site', 'equipments-search', 'equipments-status', 'equipments-criticality', 'equipments-size']);
     expect(root().querySelector('#companies-help')).not.toBeNull(); expect(root().querySelector('#sites-help')).not.toBeNull();
     expect(root().querySelector('#equipments-company')?.getAttribute('aria-describedby')).toBe('companies-help');
     expect(root().querySelector('#equipments-site')?.getAttribute('aria-describedby')).toBe('sites-help');
