@@ -73,8 +73,8 @@
     </div>
   </div>
   <form novalidate (submit)="$event.preventDefault()" aria-label="Période UTC des mesures">
-    <h3>Période UTC facultative</h3>
-    <p id="period-help">Début inclus, fin exclue. Heures en UTC, précision possible jusqu'à 6 décimales.</p>
+    <h3 class="period-title">Période UTC facultative</h3>
+    <p id="period-help">Début inclus, fin exclue. Heures en UTC. Une date doit être accompagnée d’une heure.</p>
     <div class="period-layout">
       <fieldset class="period-bound">
         <legend>Début inclus (UTC)</legend>
@@ -85,9 +85,7 @@
           <div><label for="measurements-start-time">Heure UTC de début</label>
             <input id="measurements-start-time" type="time" step="1" [formControl]="start.controls.time"
               [attr.aria-describedby]="fieldErrors()['start-time'] ? 'period-help start-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-time'] ? 'true' : null" /></div>
-          <div><label for="measurements-start-fraction">Fraction de début</label>
-            <input id="measurements-start-fraction" type="text" inputmode="numeric" [formControl]="start.controls.fraction" placeholder="Facultative"
-              [attr.aria-describedby]="fieldErrors()['start-fraction'] ? 'period-help start-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-fraction'] ? 'true' : null" spellcheck="false" /></div>
+
         </div>
       </fieldset>
       <fieldset class="period-bound">
@@ -99,11 +97,24 @@
           <div><label for="measurements-end-time">Heure UTC de fin</label>
             <input id="measurements-end-time" type="time" step="1" [formControl]="end.controls.time"
               [attr.aria-describedby]="fieldErrors()['end-time'] ? 'period-help end-time-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-time'] ? 'true' : null" /></div>
+
+        </div>
+      </fieldset>
+      <details class="advanced-precision">
+        <summary>Précision avancée</summary>
+        <p>Les fractions complètent les secondes saisies en UTC, avec jusqu’à 6 décimales. Leur ouverture ou fermeture ne modifie aucune valeur.</p>
+        <fieldset class="period-bound">
+          <legend>Fractions de seconde (UTC)</legend>
+          <div class="fraction-controls">
+          <div><label for="measurements-start-fraction">Fraction de début</label>
+            <input id="measurements-start-fraction" type="text" inputmode="numeric" [formControl]="start.controls.fraction" placeholder="Facultative"
+              [attr.aria-describedby]="fieldErrors()['start-fraction'] ? 'period-help start-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['start-fraction'] ? 'true' : null" spellcheck="false" /></div>
           <div><label for="measurements-end-fraction">Fraction de fin</label>
             <input id="measurements-end-fraction" type="text" inputmode="numeric" [formControl]="end.controls.fraction" placeholder="Facultative"
               [attr.aria-describedby]="fieldErrors()['end-fraction'] ? 'period-help end-fraction-error' : 'period-help'" [attr.aria-invalid]="fieldErrors()['end-fraction'] ? 'true' : null" spellcheck="false" /></div>
-        </div>
-      </fieldset>
+          </div>
+        </fieldset>
+      </details>
       <div class="period-feedback" role="alert" aria-atomic="true">
         @for (field of errorFields(); track field) {
           <p class="field-error" [id]="field + '-error'">{{ field.startsWith('start-') ? 'Début' : 'Fin' }} : {{ fieldErrors()[field] }}</p>

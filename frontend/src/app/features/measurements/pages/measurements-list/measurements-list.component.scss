@@ -1,6 +1,8 @@
 @use '../../../../../styles/tokens' as tokens;
 @use '../../../../../styles/actions' as actions;
 
+// Scope the shared header override to this Measurements page.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 
 .filters, .results {
@@ -10,12 +12,18 @@
 .results { container: measurement-results / inline-size; }
 .scroll-help { display: none; }
 @container measurement-results (width < 38rem) { .scroll-help { display: block; } }
-.parents, .criteria, .period-layout, .bound-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
-label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
-form, .criteria { margin-top: tokens.$space-lg; }
-h3 { font-size: 1rem; margin: tokens.$space-lg 0 tokens.$space-sm; }
-input, select { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+:is(.parents, .criteria, .period-layout, .bound-controls, .fraction-controls) { display: grid; grid-template-columns: minmax(0, 1fr); gap: tokens.$space-md; }
+label { display: block; }
+label, legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
+form, .criteria { margin-top: tokens.$space-xl; }
+form { min-width: 0; }
+.filters { padding: tokens.$space-lg; }
+.filters > h2 { margin-bottom: tokens.$space-lg; }
+:is(.parents, .criteria) { gap: tokens.$space-lg tokens.$space-xl; }
+:is(.parents, .criteria, .bound-controls, .fraction-controls) > div { min-width: 0; }
+
 input, select {
+  display: block; width: 100%; min-width: 0; box-sizing: border-box;
   min-height: 2.75rem; max-width: 100%; padding: tokens.$space-sm tokens.$space-md;
   border: tokens.$border-width solid tokens.$text-secondary; border-radius: tokens.$border-radius;
   font: inherit; background: tokens.$surface-background; color: tokens.$text-primary;
@@ -28,7 +36,14 @@ a:focus-visible, input:focus-visible, select:focus-visible, .table-scroll:focus-
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 
-h2 { margin-top: 0; font-size: 1.25rem; }
+h2, .period-title {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
+h2 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); }
+.period-title { margin-bottom: tokens.$space-md; font-size: 1.125rem; }
 .table-scroll { overflow-x: auto; max-width: 100%; }
 table { width: 100%; min-width: 38rem; table-layout: fixed; border-collapse: collapse; }
 caption { text-align: left; padding-bottom: tokens.$space-md; }
@@ -37,40 +52,38 @@ time { font-variant-numeric: tabular-nums; }
 .badge { display: inline-block; padding: tokens.$space-xs; border-radius: tokens.$border-radius; background: tokens.$content-background; }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; gap: tokens.$space-sm; margin-top: tokens.$space-lg; }
 .pagination p { flex: 1 1 10rem; }
-.period-layout, .bound-controls { align-items: end; }
-.period-actions { display: flex; flex-wrap: wrap; gap: tokens.$space-sm; }
-.period-bound { min-width: 0; margin: 0; padding: 0; border: 0; }
-.period-bound legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
-.bound-controls { gap: tokens.$space-sm; }
+:is(.period-layout, .bound-controls) { align-items: end; }
+.period-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: tokens.$space-md; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+
 .bound-controls input { padding-inline: tokens.$space-sm; }
 .bound-controls label { font-size: tokens.$font-size-small; }
 @media (min-width: 48rem) {
-  .parents, .criteria, .period-layout, .bound-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.parents, .criteria, .period-layout, .bound-controls, .fraction-controls) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .period-actions { grid-column: 1 / -1; }
 }
 @media (max-width: 30rem) {
-  .filters, .results { padding: tokens.$space-sm; }
+  .results { padding: tokens.$space-sm; }
+  .filters { padding: tokens.$space-md; }
   th, td { padding: tokens.$space-xs; font-size: tokens.$font-size-small; }
   .pagination p { flex-basis: 100%; order: -1; }
 }
 
-@media (min-width: 75rem) { .parents { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-
-@media (min-width: 48rem) {
-  .period-actions { grid-column: 1 / -1; }
-  .bound-date { grid-column: 1 / -1; }
-}
 @media (min-width: 75rem) {
-  .period-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: tokens.$space-sm; }
-  .bound-controls { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); }
-  .bound-date { grid-column: auto; }
+  .parents { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .period-layout { gap: tokens.$space-lg; }
 }
+
 
 .measurement-reference { display: inline-flex; align-items: center; min-height: 2.75rem; max-width: 100%; color: tokens.$navigation-active; }
 
-.filters .field-error { color: #9b1c1c; }
+.filters .field-error { color: #9b1c1c; margin: 0; }
 
 .period-feedback { grid-column: 1 / -1; min-height: 2.75rem; }
 .period-feedback:empty { display: none; }
 .bound-controls [aria-invalid='true'] { border-color: #9b1c1c; }
 
-.period-feedback p { margin: 0; }
+
+details { grid-column: 1 / -1; min-width: 0; padding: tokens.$space-sm tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; }
+summary { cursor: pointer; min-height: 2.5rem; align-content: center; font-weight: 600; }
+summary:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }

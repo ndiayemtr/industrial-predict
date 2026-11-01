@@ -29,7 +29,9 @@ describe('Measurement read-only detail and actual industrial references',()=>{
   const fieldValues=()=>[...root().querySelectorAll('.measurement-fields > div')].map(el=>[el.querySelector('dt')!.textContent!,el.querySelector('dd')!.textContent!.trim()]);
 
   it('renders exactly the five real fields with explicit UTC and original ISO source',async()=>{
-    await loaded();expect(fieldValues().map(([label])=>label)).toEqual(['Identifiant de la mesure','Identifiant du capteur','Horodatage UTC','Valeur','Qualité déclarée']);
+    await loaded();expect(root().querySelector('h1')?.textContent).toBe('Détail mesure');
+    expect([...root().querySelectorAll('#measurement-information-title, #measurement-references-title')].map(title=>title.textContent)).toEqual(['Informations de la mesure','Rattachement industriel réel']);
+    expect(fieldValues().map(([label])=>label)).toEqual(['Identifiant de la mesure','Identifiant du capteur','Horodatage UTC','Valeur','Qualité déclarée']);
     expect(root().querySelector('time')?.textContent).toBe('22/10/2026 à 12:00:00.123456 UTC');expect(root().querySelector('time')?.getAttribute('datetime')).toBe(measurement.timestamp);
     expect(root().querySelector('.source-timestamp')?.textContent).toBe(measurement.timestamp);expect(root().querySelector('.measurement-value')?.textContent).toBe('-2,5');
     expect(root().textContent).toContain('Manquante');expect(root().textContent).toContain('ne certifie pas la fiabilité physique');

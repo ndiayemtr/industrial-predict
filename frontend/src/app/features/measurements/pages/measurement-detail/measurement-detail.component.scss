@@ -1,6 +1,8 @@
 @use '../../../../../styles/actions' as actions;
 @use '../../../../../styles/tokens' as tokens;
 
+// Scope the shared header override to this Measurements page.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; color: tokens.$text-primary; overflow-wrap: anywhere; }
 .measurement-back { @include actions.navigation-action(); }
 a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
@@ -8,7 +10,12 @@ a:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 
   margin-top: tokens.$space-lg; padding: tokens.$space-md; background: tokens.$surface-background;
   border: tokens.$border-width solid tokens.$border-color; border-radius: tokens.$border-radius;
 }
-h2 { margin-top: 0; font-size: 1.25rem; }
+h2 {
+  margin: 0 0 tokens.$space-sm; padding-left: .8rem;
+  border-left: 3px solid tokens.$navigation-active;
+  font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 700;
+  line-height: 1.35; color: tokens.$text-primary;
+}
 h3 { font-size: 1rem; margin-top: tokens.$space-lg; }
 dl { display: grid; gap: tokens.$space-lg; margin: 0; }
 dl > div { min-width: 0; }

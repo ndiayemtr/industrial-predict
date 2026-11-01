@@ -34,6 +34,46 @@ describe('Measurements list, four selections and applied URL',()=>{
     expect(root().querySelector('#equipment-help')).toBeNull();expect(root().querySelector('#sensor-help')).not.toBeNull();expect(c.sensor.value).toBeNull();expect(c.sensor.enabled).toBe(true);http.expectNone(()=>true);
     c.sensor.setValue(17);await settle();chain();read('measurements').flush(page);await settle();expect(c.facade.state().status).toBe('success');expect(root().querySelectorAll('.parents [id$="-help"]')).toHaveLength(0);
   });
+  it('folds precision by default and preserves exact UTC drafts, offsets and fractions across disclosure toggles',async()=>{
+    const start='2026-10-22T17:30:00.123456+05:30',end='2026-10-22T13:00:00.000001Z';
+    await ready('&start_time='+encodeURIComponent(start)+'&end_time='+encodeURIComponent(end));
+    expect(root().querySelector('h1')?.textContent).toBe('Mesures');
+    expect([...root().querySelectorAll('#measurement-context-title, .period-title, #measurement-results-title')].map(title=>title.textContent))
+      .toEqual(['Entreprise, site, équipement et capteur','Période UTC facultative','Historique du capteur']);
+    const details=root().querySelector<HTMLDetailsElement>('.advanced-precision')!,summary=details.querySelector('summary')!;
+    expect(details.open).toBe(false);expect(summary.textContent).toBe('Précision avancée');
+    expect(details.querySelectorAll('input')).toHaveLength(2);
+    expect(root().querySelectorAll('.period-layout > .period-bound input')).toHaveLength(4);
+    const draft=[c.start.getRawValue(),c.end.getRawValue()],url=TestBed.inject(Router).url;
+    summary.click();expect(details.open).toBe(true);await settle();
+    summary.click();expect(details.open).toBe(false);await settle();
+    expect([c.start.getRawValue(),c.end.getRawValue()]).toEqual(draft);expect(TestBed.inject(Router).url).toBe(url);
+    expect(c.start.controls.fraction.value).toBe('123456');expect(c.end.controls.fraction.value).toBe('000001');http.expectNone(()=>true);
+    root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click();await settle();
+    expect(params()['start_time']).toBe(start);expect(params()['end_time']).toBe(end);http.expectNone(()=>true);
+    c.end.controls.fraction.setValue('000002');
+    root().querySelector<HTMLButtonElement>('.period-actions .primary')!.click();await settle();
+    const req=read('measurements');expect(req.request.params.get('start_time')).toBe(start);
+    expect(req.request.params.get('end_time')).toBe('2026-10-22T13:00:00.000002Z');req.flush(page);await settle();
+  });
+  it('reveals and focuses an invalid fraction while keeping its feedback accessible after closing advanced precision',async()=>{
+    await ready();c.start.setValue({date:'2026-10-22',time:'12:00:00',fraction:'1234567'});await settle();
+    const details=root().querySelector<HTMLDetailsElement>('.advanced-precision')!;
+    expect(details.open).toBe(false);c.applyPeriod();await settle();
+    expect(details.open).toBe(true);expect(document.activeElement?.id).toBe('measurements-start-fraction');
+    details.querySelector<HTMLElement>('summary')!.click();expect(details.open).toBe(false);await settle();
+    const error=root().querySelector('#start-fraction-error')!;
+    expect(error.closest('details')).toBeNull();expect(error.closest('.period-feedback')?.getAttribute('role')).toBe('alert');
+    expect(error.textContent).toContain('0 à 6 chiffres');
+    expect(root().querySelector('#measurements-start-fraction')?.getAttribute('aria-describedby')).toContain('start-fraction-error');
+    expect(c.start.controls.fraction.value).toBe('1234567');http.expectNone(()=>true);
+  });
+  it('keeps missing-hour validation in the primary controls without inventing a time or opening precision',async()=>{
+    await ready();c.start.controls.date.setValue('2026-10-22');c.applyPeriod();await settle();
+    expect(root().querySelector<HTMLDetailsElement>('.advanced-precision')!.open).toBe(false);
+    expect(root().querySelector('#start-time-error')?.textContent).toContain('heure UTC');
+    expect(c.start.controls.time.value).toBe('');expect(params()['start_time']).toBeUndefined();http.expectNone(()=>true);
+  });
   it('renders real microseconds, negative values, quality and current unit with an active detail link',async()=>{
     await ready();expect([...root().querySelectorAll('thead th')].map(el=>el.textContent)).toEqual(['Horodatage UTC','Valeur','Unité actuelle','Qualité','Référence']);
     expect(root().querySelector('time')?.textContent).toBe('22/10/2026 à 12:00:00.123456 UTC');expect(root().querySelector('time')?.getAttribute('datetime')).toBe(row.timestamp);
@@ -170,7 +210,7 @@ describe('Measurements list, four selections and applied URL',()=>{
 
   it('places the two temporal actions after the six controls in a dedicated row without changing their semantics',async()=>{
     await ready();const layout=root().querySelector('.period-layout')!;
-    expect([...layout.children].map(el=>el.tagName)).toEqual(['FIELDSET','FIELDSET','DIV','DIV']);
+    expect([...layout.children].map(el=>el.tagName)).toEqual(['FIELDSET','FIELDSET','DETAILS','DIV','DIV']);
     expect(layout.querySelectorAll('.period-bound input')).toHaveLength(6);
     const actions=layout.querySelector('.period-actions')!;
     expect(actions.previousElementSibling?.classList.contains('period-feedback')).toBe(true);expect(actions.querySelector('input')).toBeNull();
@@ -178,7 +218,7 @@ describe('Measurements list, four selections and applied URL',()=>{
     expect(buttons.map(el=>el.textContent?.trim())).toEqual(['Appliquer la période','Effacer les critères']);
     expect(buttons[0].type).toBe('button');expect(buttons[0].classList.contains('primary')).toBe(true);
     expect(buttons[1].type).toBe('button');expect(buttons[1].classList.contains('primary')).toBe(false);
-    expect([...layout.querySelectorAll('legend')].map(el=>el.textContent)).toEqual(['Début inclus (UTC)','Fin exclue (UTC)']);
+    expect([...layout.querySelectorAll('legend')].map(el=>el.textContent)).toEqual(['Début inclus (UTC)','Fin exclue (UTC)','Fractions de seconde (UTC)']);
   });
 
  it('keeps incomplete initial input and implicit submission silent until Apply is activated', async () => {

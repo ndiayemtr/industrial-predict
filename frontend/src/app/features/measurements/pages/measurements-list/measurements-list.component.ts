@@ -205,7 +205,10 @@ export class MeasurementsListComponent {
     const period = this.validatePeriodDraft();
     if (!period) {
       const field = Object.keys(this.fieldErrors())[0];
-      this.element.nativeElement.querySelector<HTMLInputElement>('#measurements-' + field)?.focus();
+      const input = this.element.nativeElement.querySelector<HTMLInputElement>('#measurements-' + field);
+      const details = input?.closest<HTMLDetailsElement>('details');
+      if (details) details.open = true;
+      input?.focus();
       return;
     }
     const query = this.facade.query();
