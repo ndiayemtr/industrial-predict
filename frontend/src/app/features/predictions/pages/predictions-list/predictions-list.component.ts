@@ -157,7 +157,15 @@ export class PredictionsListComponent {
   applyFilters(): void {
     const period = this.validateDraft();
     if (!period) {
-      afterNextRender(() => this.element.nativeElement.querySelector<HTMLElement>('#predictions-feedback')?.focus(), { injector: this.injector });
+      afterNextRender(() => {
+        const field = ['start-fraction', 'end-fraction'].find(key => this.fieldErrors()[key]);
+        const input = field ? this.element.nativeElement.querySelector<HTMLInputElement>('#predictions-' + field) : null;
+        if (input) {
+          const details = input.closest<HTMLDetailsElement>('details');
+          if (details) details.open = true;
+          input.focus();
+        } else this.element.nativeElement.querySelector<HTMLElement>('#predictions-feedback')?.focus();
+      }, { injector: this.injector });
       return;
     }
     let query = this.facade.query();

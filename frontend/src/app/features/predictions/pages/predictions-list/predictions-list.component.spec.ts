@@ -117,6 +117,34 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     }
   });
 
+  it('keeps precision folded and preserves equal inclusive bounds, source offsets and fractions through toggles and application', async () => {
+    const start='2026-10-23T17:30:00.123456+05:30',end='2026-10-23T12:00:00.123456Z';
+    await ready(base+'&start_time='+encodeURIComponent(start)+'&end_time='+encodeURIComponent(end));
+    expect(root().querySelector('h1')?.textContent).toBe('Prédictions');
+    expect([...root().querySelectorAll('#predictions-context-title, .section-title, #predictions-results-title')].map(title=>title.textContent))
+      .toEqual(['Entreprise, site et équipement','Filtres de l’historique','Période de prédiction (UTC)','Historique des prédictions']);
+    const details=root().querySelector<HTMLDetailsElement>('.advanced-precision')!,summary=details.querySelector<HTMLElement>('summary')!;
+    expect(details.open).toBe(false);expect(summary.textContent).toBe('Précision avancée');
+    expect(details.querySelectorAll('input')).toHaveLength(2);expect(root().querySelector('.period-layout')?.querySelectorAll('input')).toHaveLength(4);
+    const draft=[c.start.getRawValue(),c.end.getRawValue()],applied={...url()};
+    summary.click();expect(details.open).toBe(true);await settle();summary.click();expect(details.open).toBe(false);await settle();
+    expect([c.start.getRawValue(),c.end.getRawValue()]).toEqual(draft);expect(url()).toEqual(applied);expect(c.draft()).toBe(false);http.expectNone(()=>true);
+    c.predictionType.setValue('anomaly');await settle();expect(c.draft()).toBe(true);http.expectNone(()=>true);
+    c.applyFilters();await settle();parents();const request=list();
+    expect(request.request.params.get('start_time')).toBe(start);expect(request.request.params.get('end_time')).toBe(end);
+    expect(request.request.params.get('prediction_type')).toBe('anomaly');request.flush(page);await settle();expect(c.draft()).toBe(false);
+  });
+  it.each(['start','end'] as const)('opens precision and focuses the invalid %s fraction while preserving feedback when folded', async bound => {
+    await ready();c[bound].setValue({date:'2026-10-23',time:'12:00:00',fraction:'1234567'});await settle();
+    const details=root().querySelector<HTMLDetailsElement>('.advanced-precision')!;expect(details.open).toBe(false);
+    c.applyFilters();await settle();expect(details.open).toBe(true);expect(document.activeElement?.id).toBe('predictions-'+bound+'-fraction');
+    details.querySelector<HTMLElement>('summary')!.click();expect(details.open).toBe(false);await settle();
+    const error=root().querySelector('#predictions-error-'+bound+'-fraction')!;
+    expect(error.closest('details')).toBeNull();expect(error.closest('#predictions-feedback')?.getAttribute('role')).toBe('alert');
+    expect(error.textContent?.trim()).not.toBe('');expect(c[bound].controls.fraction.value).toBe('1234567');
+    expect(root().querySelector('#predictions-'+bound+'-fraction')?.getAttribute('aria-describedby')).toContain('predictions-error-'+bound+'-fraction');
+    http.expectNone(()=>true);
+  });
   it('never chooses a single available option and validates each explicit selection', async () => {
     await open();
     req('companies').flush(catalog);
@@ -179,7 +207,7 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     );
     const reset = root().querySelector<HTMLButtonElement>('.reset-selection')!;
     expect(reset.type).toBe('button');
-    expect(reset.textContent).toBe('Recommencer la sélection');
+    expect(reset.textContent?.trim()).toBe('Recommencer la sélection');
     expect(reset.previousElementSibling?.classList.contains('parents')).toBe(true);
     expect(root().querySelector('.scroll-help')?.textContent).toBe(
       'Faites défiler le tableau horizontalement.',
@@ -242,7 +270,7 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     expect(root().querySelector('#prediction-panel-17')?.getAttribute('aria-labelledby')).toBe(
       button.id,
     );
-    expect(root().querySelector('#prediction-panel-17 .anomaly-notice')?.textContent).toBe(
+    expect(root().querySelector('#prediction-panel-17 .anomaly-notice')?.textContent?.trim()).toBe(
       'L’indice d’anomalie n’est pas une probabilité de panne.',
     );
     expect(root().querySelector('.detail-row td')?.getAttribute('colspan')).toBe('6');
@@ -403,6 +431,7 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     expect(c.start.controls.time.value).toBe('');
     expect(c.feedback()).not.toBe('');
     expect(document.activeElement?.id).toBe('predictions-feedback');
+    expect(root().querySelector<HTMLDetailsElement>('.advanced-precision')!.open).toBe(false);
     expect(root().querySelector('#predictions-start-time')?.getAttribute('aria-invalid')).toBe(
       'true',
     );

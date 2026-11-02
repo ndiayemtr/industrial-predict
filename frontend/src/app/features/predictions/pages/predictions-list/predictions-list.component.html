@@ -56,7 +56,7 @@
     Recommencer la sélection
   </button>
   <form novalidate (submit)="$event.preventDefault()" aria-label="Filtres des prédictions">
-    <h3>Filtres de l’historique</h3>
+    <h3 class="section-title">Filtres de l’historique</h3>
     <div class="criteria">
       <div>
         <label for="predictions-type">Type de prédiction</label>
@@ -101,12 +101,8 @@
         </select>
       </div>
     </div>
-    <h3>Période de prédiction (UTC)</h3>
-    <p id="predictions-period-help">
-      Début inclus, fin incluse ; égalité permise. Saisissez la date et l’heure UTC, avec les
-      secondes et jusqu’à six décimales facultatives. Aucun horaire par défaut ; les offsets des
-      sources inchangées sont conservés.
-    </p>
+    <h3 class="section-title">Période de prédiction (UTC)</h3>
+    <p id="predictions-period-help">Début inclus, fin incluse ; égalité permise. Saisissez la date et l’heure UTC ensemble, sans horaire par défaut.</p>
     <div class="period-layout">
       @for (bound of bounds; track bound.key) {
         <fieldset class="period-bound">
@@ -145,6 +141,18 @@
                 "
               />
             </div>
+
+          </div>
+        </fieldset>
+      }
+    </div>
+    <details class="advanced-precision">
+      <summary>Précision avancée</summary>
+      <p>Les secondes et fractions jusqu’à six chiffres sont conservées. Les offsets des sources inchangées restent inchangés. L’ouverture ou la fermeture ne modifie aucune valeur.</p>
+      <div class="period-layout">
+        @for (bound of bounds; track bound.key) {
+          <fieldset class="period-bound">
+            <legend>{{ bound.label }}</legend>
             <div>
               <label [for]="'predictions-' + bound.key + '-fraction'"
                 >Fraction (0 à 6 chiffres)</label
@@ -165,10 +173,10 @@
                 "
               />
             </div>
-          </div>
-        </fieldset>
-      }
-    </div>
+          </fieldset>
+        }
+      </div>
+    </details>
     <div id="predictions-feedback" tabindex="-1" role="alert" aria-atomic="true">
       @if (feedback()) {
         <p>{{ feedback() }}</p>

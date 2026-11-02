@@ -1,33 +1,43 @@
 @use '../../../../../styles/tokens' as tokens;
-@use '../../../../../styles/actions' as actions;
 
+// Keep the shared page header override local to Predictions.
+:host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; overflow-wrap: anywhere; color: tokens.$text-primary; }
 .filters, .results { margin-top: tokens.$space-lg; padding: tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; background: tokens.$surface-background; }
-h2 { margin-top: 0; font-size: 1.25rem; }
-h3, form { margin-top: tokens.$space-lg; }
-h3 { font-size: 1rem; }
-.parents, .criteria, .period-layout, .bound-controls { display: grid; gap: tokens.$space-md; grid-template-columns: minmax(0, 1fr); }
-label { display: block; font-weight: 600; margin-bottom: tokens.$space-sm; }
-input, select { display: block; box-sizing: border-box; width: 100%; min-width: 0; min-height: 2.75rem; padding: tokens.$space-sm; border: 1px solid tokens.$text-secondary; border-radius: tokens.$border-radius; font: inherit; color: tokens.$text-primary; background: tokens.$surface-background; }
-button { @include actions.navigation-action(); cursor: pointer; }
-.predictions-equipment { @include actions.navigation-action(); }
+h2, .section-title { margin: 0 0 tokens.$space-md; padding-left: .8rem; border-left: 3px solid tokens.$navigation-active; font-weight: 700; line-height: 1.35; }
+h2 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); }
+.section-title, form { margin-top: tokens.$space-xl; }
+.section-title { font-size: 1.125rem; }
+:is(.parents, .criteria, .period-layout, .bound-controls) { display: grid; gap: tokens.$space-md; grid-template-columns: minmax(0, 1fr); }
+label { display: block; }
+label, legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
+.filters { padding: tokens.$space-lg; }
+:is(.parents, .criteria) { gap: tokens.$space-lg tokens.$space-xl; }
+:is(.parents, .criteria, .bound-controls) > div, form { min-width: 0; }
+// Share only existing local control geometry; preserve each action state below.
+input, select, button, .predictions-equipment { box-sizing: border-box; min-width: 0; min-height: 2.75rem; border: 1px solid tokens.$text-secondary; border-radius: tokens.$border-radius; font: inherit; color: tokens.$text-primary; background: tokens.$surface-background; }
+input, select { display: block; width: 100%; padding: tokens.$space-sm; }
+button, .predictions-equipment { display: inline-flex; align-items: center; justify-content: center; gap: tokens.$space-sm; max-width: 100%; padding: tokens.$space-sm tokens.$space-md; font-weight: 600; line-height: tokens.$line-height-body; text-decoration: none; text-align: center; overflow-wrap: anywhere; }
+:is(button, .predictions-equipment) span { min-width: 0; }
+:is(button, .predictions-equipment):hover { background: tokens.$content-background; text-decoration: none; }
+:is(button, .predictions-equipment):focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 2px; }
+button { cursor: pointer; }
 button.primary { background: tokens.$navigation-active; color: tokens.$sidebar-text; border-color: tokens.$navigation-active; }
 button:not(:disabled):hover { background: tokens.$content-background; color: tokens.$text-primary; }
 button:not(:disabled):active { background: tokens.$border-color; }
-button.primary:not(:disabled):hover, button.primary:not(:disabled):active { background: tokens.$sidebar-background; color: tokens.$sidebar-text; }
+button.primary:not(:disabled):is(:hover, :active) { background: tokens.$sidebar-background; color: tokens.$sidebar-text; }
 button:disabled, select:disabled { cursor: not-allowed; color: tokens.$text-secondary; background: tokens.$content-background; }
-input:focus-visible, select:focus-visible, .table-scroll:focus-visible, #predictions-feedback:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+:is(input, select, summary):focus-visible, .table-scroll:focus-visible, #predictions-feedback:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
 p { line-height: tokens.$line-height-body; }
 .filters p, .scroll-help, .context { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
 .selection-help { margin: tokens.$space-xs 0 tokens.$space-md; }
 .reset-selection { margin-top: tokens.$space-md; }
 .filters #predictions-level-help { color: tokens.$text-primary; margin: tokens.$space-sm 0 0; line-height: 1.5; }
-.period-bound { min-width: 0; padding: 0; border: 0; margin: 0; }
-legend { font-weight: 600; margin-bottom: tokens.$space-sm; }
+fieldset { min-width: 0; padding: 0; border: 0; margin: 0; }
+
 .actions, .pagination { display: flex; gap: tokens.$space-sm; flex-wrap: wrap; align-items: center; margin-top: tokens.$space-md; }
 .pagination p { flex: 1 1 10rem; }
 .actions { justify-content: flex-start; align-items: flex-start; }
-.actions button { flex: 0 1 auto; }
 .filters .field-error, .filters #predictions-feedback > p { color: #9b1c1c; }
 [aria-invalid='true'] { border-color: #9b1c1c; }
 #predictions-feedback:empty { display: none; }
@@ -58,12 +68,14 @@ th:last-child { width: 14%; text-align: right; }
 .alert-unknown { color: tokens.$text-secondary; background: tokens.$surface-background; border-style: dashed; }
 .details-cell { text-align: right; }
 button.details-toggle { min-width: 6.5rem; justify-content: space-between; color: #163d87; background: #eff4ff; border-color: #afc4ea; }
-button.details-toggle:not(:disabled):hover, button.details-toggle.is-open { color: #163d87; background: #dfeafe; }
+button.details-toggle:is(:not(:disabled):hover, .is-open) { color: #163d87; background: #dfeafe; }
 .details-indicator { font-size: 1.125rem; line-height: 1; }
 .detail-row > td { padding: tokens.$space-md; background: tokens.$content-background; }
 time { font-variant-numeric: tabular-nums; }
 .filters { container: prediction-filters / inline-size; }
-@container prediction-filters (min-width: 34rem) { .bound-controls { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); } }
+@container prediction-filters (min-width: 34rem) { .bound-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @container prediction-filters (min-width: 48rem) { .period-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 48rem) { .parents, .criteria { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 30rem) { .filters, .results { padding: tokens.$space-sm; } .pagination p { flex-basis: 100%; order: -1; } }
+@media (max-width: 30rem) { .results { padding: tokens.$space-sm; } .filters { padding: tokens.$space-md; } .pagination p { flex-basis: 100%; order: -1; } }
+
+summary { cursor: pointer; min-height: 2.5rem; align-content: center; font-weight: 600; }
