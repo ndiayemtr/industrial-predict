@@ -11,6 +11,7 @@ def main(argv=None):
     parser.add_argument('--config',required=True)
     parser.add_argument('--instance',required=True)
     parser.add_argument('--serve',action='store_true')
+    parser.add_argument('--port',type=int,choices=(8001,8011),default=8001)
     args=parser.parse_args(argv)
     try:
         settings=load_settings(args.config)
@@ -19,7 +20,7 @@ def main(argv=None):
             raise ValueError('Explicit local serving acknowledgement required')
         from app.p101_local_demo.api import create_app
         import uvicorn
-        uvicorn.run(create_app(settings),host='127.0.0.1',port=8001,proxy_headers=False,
+        uvicorn.run(create_app(settings),host='127.0.0.1',port=args.port,proxy_headers=False,
                     server_header=False,access_log=False)
         return 0
     except Exception:

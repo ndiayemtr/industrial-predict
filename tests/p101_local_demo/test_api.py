@@ -5,6 +5,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 import json
 import os
+import re
 from pathlib import Path
 import socket
 import subprocess
@@ -329,21 +330,77 @@ def test_method_middleware_rejects_without_dependency(settings,method):
 def test_dedicated_proxy_and_loopback_launchers():
     proxy=json.loads((ROOT/'frontend/proxy.p101.conf.json').read_text(encoding='utf-8'))
     assert proxy=={'/api/v1/**':{'target':'http://127.0.0.1:8001','changeOrigin':True}}
+    isolated=json.loads((ROOT/'frontend/proxy.p101-isolated.conf.json').read_text(encoding='utf-8'))
+    assert isolated=={'/api/v1/**':{'target':'http://127.0.0.1:8011','changeOrigin':True}}
     usual=json.loads((ROOT/'frontend/proxy.conf.json').read_text(encoding='utf-8'))
     assert usual['/api/v1/**']['target']=='http://127.0.0.1:8000'
     script=(ROOT/'frontend/scripts/serve-p101.ps1').read_text(encoding='utf-8')
-    assert '--host 127.0.0.1 --port 4201 --proxy-config proxy.p101.conf.json' in script
-    backend=(ROOT/'backend/app/p101_local_demo/serve_api.py').read_text(encoding='utf-8')
-    assert "host='127.0.0.1',port=8001" in backend
+    assert 'param([switch]$Isolated)' in script
+    branches=re.search(r'if \(\$Isolated\) \{([^{}]+)\} else \{([^{}]+)\}',script)
+    assert branches is not None
+    prefix='& node node_modules/@angular/cli/bin/ng.js serve --configuration development --host 127.0.0.1'
+    assert branches[1].strip()==prefix+' --port 4211 --proxy-config proxy.p101-isolated.conf.json'
+    assert branches[2].strip()==prefix+' --port 4201 --proxy-config proxy.p101.conf.json'
+    assert script.count('& node ')==2
+    assert "Test-Path -LiteralPath 'node_modules/@angular/cli/bin/ng.js' -PathType Leaf" in script
+    assert not re.search(r'(?im)^\s*(?:&\s*)?(?:npx|npm|pnpm|yarn|Invoke-WebRequest|Invoke-RestMethod|curl|wget)\b',script)
     display=(ROOT/'frontend/src/app/features/predictions/utils/prediction-display.ts').read_text(encoding='utf-8')
     assert "anomaly: 'Indice d’anomalie'" in display
     assert "item.prediction_type === 'failure_risk' && validProbability" in display
 
 
-def test_launcher_ack_required_without_server(settings,monkeypatch):
+@pytest.mark.parametrize('port_args,expected_port',[([],8001),(['--port','8001'],8001),(['--port','8011'],8011)])
+def test_launcher_approved_ports_without_server(settings,monkeypatch,port_args,expected_port):
+    import uvicorn
+    calls=[]
+    app=object()
     monkeypatch.setattr(serve_api,'load_settings',lambda path:settings)
-    assert serve_api.main(['--config','fictitious.json','--instance',settings.instance_uuid])==1
-    assert serve_api.main(['--config','fictitious.json','--instance','wrong','--serve'])==1
+    def factory(value):
+        assert value is settings
+        calls.append('factory')
+        return app
+    def run(value,**kwargs):
+        assert value is app
+        calls.append(kwargs)
+    monkeypatch.setattr(api,'create_app',factory)
+    monkeypatch.setattr(uvicorn,'run',run)
+    assert serve_api.main(['--config','fictitious.json','--instance',settings.instance_uuid,'--serve']+port_args)==0
+    assert calls==['factory',dict(host='127.0.0.1',port=expected_port,proxy_headers=False,
+                                  server_header=False,access_log=False)]
+
+
+@pytest.mark.parametrize('port',['0','-1','5432','8000','8012','65536','not-a-port'])
+def test_launcher_unapproved_ports_before_config(monkeypatch,port):
+    def forbidden(*a,**k): pytest.fail('Invalid CLI must be rejected before configuration lookup')
+    monkeypatch.setattr(serve_api,'load_settings',forbidden)
+    with pytest.raises(SystemExit) as exc:
+        serve_api.main(['--config','fictitious.json','--instance','unused','--serve','--port',port])
+    assert exc.value.code==2
+
+
+def test_launcher_host_cannot_be_overridden(monkeypatch):
+    def forbidden(*a,**k): pytest.fail('Host override must be rejected before configuration lookup')
+    monkeypatch.setattr(serve_api,'load_settings',forbidden)
+    with pytest.raises(SystemExit) as exc:
+        serve_api.main(['--config','fictitious.json','--instance','unused','--serve','--host','0.0.0.0'])
+    assert exc.value.code==2
+
+
+@pytest.mark.parametrize('port_args',[[],['--port','8001'],['--port','8011']])
+@pytest.mark.parametrize('failure',['missing_serve','wrong_instance','invalid_destination','invalid_config'])
+def test_launcher_ack_required_without_server(settings,monkeypatch,port_args,failure):
+    def forbidden(*a,**k): pytest.fail('Invalid launch must not construct the app')
+    monkeypatch.setattr(api,'create_app',forbidden)
+    monkeypatch.setattr(serve_api,'load_settings',lambda path:settings)
+    args=['--config','fictitious.json','--instance',settings.instance_uuid]+port_args
+    if failure!='missing_serve': args.append('--serve')
+    if failure=='wrong_instance': args[3]='wrong'
+    elif failure=='invalid_destination':
+        monkeypatch.setattr(serve_api,'load_settings',lambda path:replace(settings,database='industrial_predict_dev'))
+    elif failure=='invalid_config':
+        def invalid(path): raise ValueError('Invalid synthetic configuration')
+        monkeypatch.setattr(serve_api,'load_settings',invalid)
+    assert serve_api.main(args)==1
 
 
 def test_fresh_import_and_app_creation_cannot_load_dev_or_ml():
