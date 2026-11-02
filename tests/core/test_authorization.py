@@ -2,11 +2,13 @@
 
 import ast
 from dataclasses import FrozenInstanceError, replace
+from enum import Enum
 from pathlib import Path
 import subprocess
 import sys
 import textwrap
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,6 +19,7 @@ from app.core.authorization import (
     CompanyMembership, MembershipState, Permission, Role, VerifiedIdentity,
     decide_authorization,
 )
+from app.core import authorization as policy
 
 
 def identity():
@@ -134,6 +137,103 @@ class AuthorizationTests(unittest.TestCase):
                                  (Role.COMPANY_ADMIN, Permission.MEMBERSHIPS_MANAGE)):
             self.assertIs(self.decide(memberships=(membership(permission=permission, role=role),),
                                      permission=permission).effect, AuthorizationEffect.ALLOW)
+
+    def test_analyze_is_distinct_and_policy_is_versioned(self):
+        self.assertEqual(Permission.PREDICTIONS_ANALYZE.value, "predictions:analyze")
+        self.assertIsNot(Permission.PREDICTIONS_ANALYZE, Permission.PREDICTIONS_READ)
+        self.assertEqual(POLICY_VERSION, "company-authorization-v2")
+
+    def test_admin_explicit_analyze_grant_is_allowed(self):
+        grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        result = self.decide(memberships=(grant,), permission=Permission.PREDICTIONS_ANALYZE)
+        self.assertEqual(result, AuthorizationDecision(
+            AuthorizationEffect.ALLOW, 7, Permission.PREDICTIONS_ANALYZE))
+
+    def test_admin_role_or_read_permission_does_not_grant_analysis(self):
+        for permissions in (frozenset(), frozenset((Permission.PREDICTIONS_READ,)),
+                            frozenset(p for p in Permission if p is not Permission.PREDICTIONS_ANALYZE)):
+            with self.subTest(permissions=permissions):
+                grant = replace(membership(role=Role.COMPANY_ADMIN), permissions=permissions)
+                self.assert_denied(memberships=(grant,), permission=Permission.PREDICTIONS_ANALYZE)
+        self.assert_denied(memberships=(), permission=Permission.PREDICTIONS_ANALYZE)
+
+    def test_analyze_grant_does_not_grant_read(self):
+        grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        self.assert_denied(memberships=(grant,), permission=Permission.PREDICTIONS_READ)
+
+    def test_non_admin_analyze_grant_invalidates_snapshot(self):
+        for role in (Role.READER, Role.TECHNICIAN):
+            with self.subTest(role=role):
+                grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=role)
+                self.assert_denied(memberships=(grant,), permission=Permission.PREDICTIONS_ANALYZE)
+                poisoned = replace(grant, permissions=grant.permissions | frozenset((Permission.PREDICTIONS_READ,)))
+                self.assert_denied(memberships=(poisoned,), permission=Permission.PREDICTIONS_READ)
+
+    def test_analyze_denies_missing_or_non_active_account(self):
+        grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        callers = (None, {"user_id": 17}, replace(identity(), account_state=AccountState.SUSPENDED),
+                   replace(identity(), account_state="inactive"))
+        for caller in callers:
+            with self.subTest(caller=type(caller).__name__):
+                self.assert_denied(identity=caller, memberships=(grant,), permission=Permission.PREDICTIONS_ANALYZE)
+
+    def test_analyze_denies_inactive_membership_or_foreign_company(self):
+        grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        self.assert_denied(memberships=(replace(grant, state=MembershipState.INACTIVE),),
+                           permission=Permission.PREDICTIONS_ANALYZE)
+        self.assert_denied(memberships=(grant,), company_id=8, permission=Permission.PREDICTIONS_ANALYZE)
+        self.assert_denied(memberships=(replace(grant, user_id=18),), permission=Permission.PREDICTIONS_ANALYZE)
+
+    def test_analyze_is_never_pooled_between_companies(self):
+        read = membership(permission=Permission.PREDICTIONS_READ, role=Role.COMPANY_ADMIN)
+        analyze = membership(company=8, permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        members = (read, analyze)
+        self.assert_denied(memberships=members, company_id=7, permission=Permission.PREDICTIONS_ANALYZE)
+        self.assert_denied(memberships=members, company_id=8, permission=Permission.PREDICTIONS_READ)
+        self.assertIs(self.decide(memberships=members, company_id=8,
+                                 permission=Permission.PREDICTIONS_ANALYZE).effect, AuthorizationEffect.ALLOW)
+
+    def test_analyze_denies_duplicate_or_incoherent_memberships(self):
+        grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        snapshots = ((grant, grant), (grant, replace(grant, state=MembershipState.INACTIVE)),
+                     (replace(grant, role="company_admin"),), (replace(grant, company_id=True),),
+                     (replace(grant, permissions=frozenset(("predictions:analyze",))),),
+                     (grant, replace(grant, company_id=8, user_id=18)))
+        for members in snapshots:
+            with self.subTest(members=members):
+                self.assert_denied(memberships=members, permission=Permission.PREDICTIONS_ANALYZE)
+
+    def test_analyze_strings_and_unknown_permissions_are_not_grants(self):
+        grant = membership(permission=Permission.PREDICTIONS_ANALYZE, role=Role.COMPANY_ADMIN)
+        for permission in ("predictions:analyze", "predictions:unknown", None, True):
+            with self.subTest(permission=permission):
+                self.assertIsNone(self.assert_denied(memberships=(grant,), permission=permission).permission)
+
+    def test_historical_permission_matrix_is_preserved(self):
+        reads = {Permission.COMPANIES_READ, Permission.ASSETS_READ,
+                 Permission.MEASUREMENTS_READ, Permission.PREDICTIONS_READ}
+        ceilings = {Role.READER: reads, Role.TECHNICIAN: reads | {Permission.MAINTENANCE_WRITE},
+                    Role.COMPANY_ADMIN: reads | {Permission.MAINTENANCE_WRITE, Permission.MEMBERSHIPS_MANAGE}}
+        historical = reads | {Permission.MAINTENANCE_WRITE, Permission.MEMBERSHIPS_MANAGE}
+        for role, ceiling in ceilings.items():
+            for permission in historical:
+                with self.subTest(role=role, permission=permission):
+                    grant = membership(permission=permission, role=role)
+                    expected = AuthorizationEffect.ALLOW if permission in ceiling else AuthorizationEffect.DENY
+                    self.assertIs(self.decide(memberships=(grant,), permission=permission).effect, expected)
+                    self.assert_denied(memberships=(replace(grant, permissions=frozenset()),), permission=permission)
+
+    def test_extending_enum_alone_does_not_expand_role_ceilings(self):
+        extended = Enum("ExtendedPermission", {
+            **{permission.name: permission.value for permission in Permission},
+            "FUTURE_OPERATION": "future:operation",
+        }, type=str)
+        with patch.object(policy, "Permission", extended):
+            for role in Role:
+                with self.subTest(role=role):
+                    self.assertNotIn(extended.FUTURE_OPERATION, policy._role_permissions(role))
+                    grant = membership(permission=extended.FUTURE_OPERATION, role=role)
+                    self.assert_denied(memberships=(grant,), permission=extended.FUTURE_OPERATION)
 
     def test_default_is_explicit_denial(self):
         self.assertEqual(decide_authorization(), AuthorizationDecision(AuthorizationEffect.DENY, None, None))

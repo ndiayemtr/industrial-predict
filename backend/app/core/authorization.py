@@ -1,15 +1,17 @@
-"""Pure authorization policy v1; these data objects do not authenticate anyone.
+"""Pure authorization policy v2; these data objects do not authenticate anyone.
 
 Only a future trusted server component may supply identity and memberships after
 verification. Client ids, roles or booleans are never evidence. No I/O or runtime
 binding is performed here; membership freshness/revocation remain server duties.
+predictions:analyze is Python-only until the SQL permission CHECK is separately
+migrated and qualified. Defining it here neither installs nor grants it in DEV.
 """
 
 from dataclasses import dataclass
 from enum import Enum
 
 
-POLICY_VERSION = "company-authorization-v1"
+POLICY_VERSION = "company-authorization-v2"
 
 
 class AccountState(str, Enum):
@@ -27,6 +29,7 @@ class Permission(str, Enum):
     ASSETS_READ = "assets:read"
     MEASUREMENTS_READ = "measurements:read"
     PREDICTIONS_READ = "predictions:read"
+    PREDICTIONS_ANALYZE = "predictions:analyze"
     MAINTENANCE_WRITE = "maintenance:write"
     MEMBERSHIPS_MANAGE = "memberships:manage"
 
@@ -82,14 +85,18 @@ def _identity_text(value: object) -> bool:
 
 
 def _role_permissions(role: Role) -> frozenset[Permission]:
-    # Roles cap explicit grants; a role alone never grants a permission.
+    # Explicit ceilings only: extending Permission must never expand a role.
+    # A ceiling is not a grant; decide_authorization requires a stored grant too.
     read = frozenset((Permission.COMPANIES_READ, Permission.ASSETS_READ,
                       Permission.MEASUREMENTS_READ, Permission.PREDICTIONS_READ))
     if role is Role.READER:
         return read
     if role is Role.TECHNICIAN:
         return read | frozenset((Permission.MAINTENANCE_WRITE,))
-    return frozenset(Permission)  # Called only after exact Role validation.
+    if role is Role.COMPANY_ADMIN:
+        return read | frozenset((Permission.MAINTENANCE_WRITE, Permission.MEMBERSHIPS_MANAGE,
+                                 Permission.PREDICTIONS_ANALYZE))
+    return frozenset()
 
 
 def decide_authorization(
