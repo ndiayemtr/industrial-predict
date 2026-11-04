@@ -1,6 +1,7 @@
 # INT-3C2B — offline B2B PostgreSQL qualification contracts
 
-This directory is a standalone, standard-library-only foundation. It contains no
+The INT-3C2B contracts/validation base uses only the standard library. The INT-3C2C
+extension below adds offline cryptographic verification. This directory contains no
 collector, SQL, Docker client, process launcher, operational signature, migration
 loader or executor. No application module is imported. Existing execution guards,
 DEV, P101 and OIDC are unchanged. Namespace-package imports use the existing
@@ -124,3 +125,98 @@ These tests do not validate Docker isolation, PostgreSQL installation/durability
 TLS, real approval or application authentication. The next step is review of the
 contracts and a separate specification of independent authority/evidence sources;
 no PostgreSQL qualification or deployment follows automatically.
+
+## INT-3C2C — offline authority and evidence foundations
+
+`authority.py` uses Ed25519 verification from `cryptography`; `evidence.py` uses
+its X.509 server-certificate policy verifier. `test_authority_evidence.py` generates
+ephemeral signing keys and a synthetic EC CA/leaf chain in memory only. There are
+no private key bytes, PEM credentials, signing API or production keys in the repo.
+No transport or acquisition implementation is supplied. The original INT-3C2B
+contracts, unconditional execution/attestation refusals and Alembic guards remain
+unchanged.
+
+Dependency availability was checked without installation: the main backend venv
+has no cryptography/PyJWT; the existing
+`D:/projets/industrial-predict-oidc-m1b-venv` has cryptography 50.0.2 and pytest 9.1.1.
+The extension imports crypto lazily and rejects verification if unavailable. Its
+crypto tests require that dependency and do not silently substitute or skip real
+signature checks. No dependency declaration or shared environment is changed.
+
+### Trust and signed intentions
+
+`ApprovalVerifier` receives a nonempty immutable tuple of `TrustedKey` records and
+a separate `MemoryReplayRegistry`. No submitted `Campaign`, `Approval` or
+`SignedApproval` can supply a public key, key source, algorithm or trust callback.
+Authority/key pairs and public keys are unique in the injected trust snapshot.
+The fixed path verifies raw 64-byte Ed25519 signatures with the independently
+configured public key. Unknown, revoked, duplicate, out-of-window and malformed
+keys/approvals fail with the existing constant public diagnostic.
+
+`signing_bytes` produces the versioned Ed25519 intention bytes, not a signature.
+It reuses the INT-3C2B canonical approval and adds an approval UUID, key ID,
+initial/final revisions, exact publication references and initial-state digest.
+The approval already binds campaign/destination inventory, operation, plan and UTC
+validity window. Verification checks a separately supplied expected initial-state
+digest. `evidence_fingerprint` can reference the complete injected evidence/policy
+snapshot, but cannot make those observations real. A valid signature proves the
+key signed these exact bytes, not human consent, current server identity or that
+the declared initial state actually exists.
+
+The replay registry consumes (authority ID, approval UUID) only after successful
+verification. A lock provides atomic single use in this registry within one
+process. There is no persistence, reset, release or retry API. Another registry or
+process cannot know the old consumption; no durable anti-replay guarantee is made.
+Trust-root origin, live revocation, durable replay and lost process-state recovery
+remain unmet operational prerequisites. Keys are logically separate arguments;
+their physical delivery/storage independence is a deployment responsibility,
+not something an injected Python object proves.
+
+`SignatureReview.signature_verified` describes the offline verification path.
+Its `authenticated`, `real_attested` and `execution_authorized` properties all
+remain false. A manually constructed result is not a proof. Even a valid signature
+cannot enable `request_execution`, which still refuses without inspecting inputs.
+
+### Three injected adapters, no collectors
+
+`ObservationSource` is an unwired protocol. `collect_real_evidence` refuses before
+calling any source. The sole protected comparison entry point `review_evidence`
+revalidates all nine INT-3C2B observations, then uses separate Docker, PostgreSQL
+and TLS comparison adapters. Supplemental tuples are closed, bounded and revalidated.
+
+- Docker compares engine/context endpoint fingerprint, container/image, the exact
+  network, named-volume creation identity and inventory. Context/image/creation
+  expectations come from the separately supplied `CollectorPolicy`. Existing
+  exclusions, internal-only network and no published port profile remain intact.
+- PostgreSQL compares the base destination, role, cluster, instance, version and
+  revision, plus role-specific privilege claims. Runtime claims admit only the
+  session writes and row-lock column rights required by the store, no sequence
+  grant, DDL, membership or business write capability. Admin/migrator/observer
+  profiles are explicit. These are not observations of effective PostgreSQL ACLs.
+- TLS checks the injected DER leaf/intermediates with cryptography's server policy
+  at explicit `now`, against the independently supplied trusted CA and campaign
+  hostname. The CA DER hash must match the approved campaign. Merely asserting
+  `chain_verified=true` cannot bypass parsing, signature, hostname or expiry
+  checks. Certificate sizes and chain depth are bounded; extra/trailing DER is
+  rejected. No certificate or CA is read from disk.
+
+An offline valid certificate chain does not prove a handshake took place or bind
+that certificate to an actual PostgreSQL connection. PID/connection/provenance
+matching remains declarative. No network revocation lookup, CRL/OCSP policy,
+tamper-resistant evidence source or observe/use race protection is provided.
+Changing a field to `real` is refused; hand-built objects never obtain a real
+attestation. The profile still excludes actual certificate-delivery mounts and is
+not deployable as-is. Opaque repr and guarded diagnostics cover the new protected
+entry points; frame locals, external diagnostics and caller-retained data remain
+outside that guarantee.
+
+One grouped offline campaign, including the existing local contract tests:
+
+```powershell
+& D:/projets/industrial-predict-oidc-m1b-venv/Scripts/python.exe -B -m pytest tests/b2b_postgres_qualification -q -p no:cacheprovider
+```
+
+Next minimum step: review the trust/canonical-intention and evidence profiles,
+then specify a durable authority/replay boundary and independent collectors in a
+separately authorized mission. No bootstrap or migration execution follows from
+this foundation.
