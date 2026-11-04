@@ -21,7 +21,7 @@ d'invitation opérationnelle, de session ou de CRUD administratif complet.
 - Permission : PK (membership_id, permission). Le rôle est répété et lié par FK
   composite au rôle de l'appartenance : impossible de contourner le plafond SQL
   en déclarant une permission company_admin sur une appartenance reader.
-  CHECK SQL fermé sur les six permissions et leurs rôles autorisés. Un rôle sans
+  CHECK SQL fermé sur les permissions historiques et predictions:analyze (company_admin uniquement) et leurs rôles autorisés. Un rôle sans
   ligne de permission n'accorde rien. Les FK sont RESTRICT, sans suppression cascade.
 
 Les noms ORM suivent les tables métier sans schema ; la future destination doit
@@ -79,3 +79,12 @@ privilèges SQL minimaux, destination/transport/search_path vérifiés, autorit�
 liaison réelle et qualification PostgreSQL de l'unicité concurrente, des blocages,
 de la suspension concurrente et des commits incertains. Les gardes Alembic restent
 inconditionnellement fermées. Aucun Docker, Google, bootstrap, DEV ou P101 raccordé.
+
+## Offline schema evolution INT-3C1K
+
+The final ORM adds uq_external_identities_id_user and admits the explicit
+company_admin-only predictions:analyze ceiling. These changes are described by
+new b2b_0001_sessions and b2b_0002_analyze publications, never by editing the
+published account revision. No grant is automatic. The final schema is not
+installed or qualified; all execution guards remain closed. Existing account
+SQLite tests exercise final metadata only, not either migration or PostgreSQL.

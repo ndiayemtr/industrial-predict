@@ -25,10 +25,13 @@ The nine historical sources remain in their original directory, with pinned
 SHA-256 fingerprints over UTF-8/LF source (checkout CRLF is normalized). Safe graph
 inspection uses AST metadata, never revision imports. `revision_manifest.json`
 is the closed positive list of recognized publications: revision, parent, exact
-backend-relative path, SHA-256 and scope. It contains exactly two revisions:
+backend-relative path, SHA-256 and scope. It contains exactly four revisions:
 `12e2fc65f372` descends from `09ac8101e9fe`, and `4b7e2a91c6d0` extends it
 with public.local_users, public.external_identities, public.company_memberships
-and public.membership_permissions. Unknown keys, duplicate keys/entries,
+and public.membership_permissions. b2b_0001_sessions extends the account revision
+with public.application_sessions and the composite identity/user key;
+b2b_0002_analyze extends it with the existing membership permission CHECK change.
+Unknown keys, duplicate keys/entries,
 external paths, altered hashes, redirects and extra files/directories in
 `versions/` are rejected. `.gitkeep` is the only non-revision file allowed there.
 No expected hash is derived automatically from directory discovery.
@@ -39,7 +42,7 @@ validate the independently pinned account AST, then include the manifest and
 sources in the snapshot. A matching manifest is
 recognition of a versioned publication, NOT proof of administrative approval.
 Changing both the manifest and source cannot enable execution or Python loading.
-The two-location loading strategy is reserved for a later reviewed activation
+Any operational loading strategy is reserved for a later reviewed activation
 lot; it is not an operational configuration today. P101/local-demo paths stay intact.
 An empty reference-to-reference plan is useful for offline contract checks only;
 it cannot execute or bootstrap business tables.
@@ -104,3 +107,37 @@ with ORM metadata without importing the revision or invoking Alembic.
 
 No execution guard has been enabled: env.py and INI remain unchanged. This lot
 adds no migrations runner, administrative authority or database provisioning.
+
+## INT-3C1K — offline B2B sessions and analysis ceiling
+
+New fixed publications, with independent full-AST pins and manifest UTF-8/LF
+source hashes:
+
+- b2b_0001_sessions follows 4b7e2a91c6d0. Scope: public.external_identities
+  (UNIQUE id,user_id) and public.application_sessions (13 columns, named PK,
+  three RESTRICT FKs including the composite identity/user FK, nine CHECKs,
+  two secondary indexes). No session or account row is inserted.
+- b2b_0002_analyze follows b2b_0001_sessions. Scope: only
+  public.membership_permissions. The existing CHECK is replaced, preserving
+  all historical combinations and admitting predictions:analyze only for
+  company_admin. Role ceilings are not grants; an explicit active, company-scoped
+  membership permission remains necessary. No INSERT or grant operation occurs.
+
+The aggregate preflight scope includes the session table. Historical graph
+resolution still starts at 09ac8101e9fe; no arbitrary initial state or executor
+is added. Existing OIDC/account publications and historical hashes stay unchanged.
+Tests compare the old publication to its historical shape and the new operations
+to final ORM metadata; changing the final ORM does not rewrite publication history.
+
+The two new downgrade bodies always raise. A separately reviewed retention and
+approval policy is required; no silent DROP, CASCADE, grant deletion or downgrade
+activation is supplied. env.py, inert INI, untrusted ApprovalDeclaration and
+request_execution refusal remain intact. No runtime signatures or authority exist.
+
+Before a later activation lot: immutable reviewed release, independent destination
+inventory and authenticated content/destination-bound approval, real verify-full
+transport/CA and server identity checks, exact initial schema/version, minimal
+separate owner/runtime roles, one bounded externally owned transaction, effect
+verification and confirmed commit. Lost commit acknowledgement is uncertain and
+must not trigger an automatic retry. No changes to DEV launchers or their expected
+09ac8101e9fe revision are included. No general executable loader is introduced.

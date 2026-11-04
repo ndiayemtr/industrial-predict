@@ -32,7 +32,7 @@ def functions():
 
 def test_publication_extends_only_oidc_head_and_all_hashes_are_verified():
     published=guards.read_manifest()
-    assert len(published)==2
+    assert len(published)==4
     assert published[1].revision=='4b7e2a91c6d0' and published[1].parent=='12e2fc65f372'
     assert published[1].schema_scope==tuple('public.'+n for n in TABLES)
     assert hashlib.sha256(PATH.read_bytes()).hexdigest()==published[1].sha256
@@ -53,7 +53,12 @@ def test_literal_migration_exactly_matches_independent_orm_metadata():
         constraints=[(kind,args,options) for kind,args,options in items if kind!='Column']
         expected=[]
         for c in table.constraints:
-            if isinstance(c,CheckConstraint): expected.append(('CheckConstraint',(str(c.sqltext),),{'name':c.name}))
+            if name=="external_identities" and c.name=="uq_external_identities_id_user": continue
+            if isinstance(c,CheckConstraint):
+                expression=str(c.sqltext)
+                if c.name=='ck_membership_permissions_role_cap':
+                    expression=expression.replace("permission IN ('memberships:manage', 'predictions:analyze')", "permission = 'memberships:manage'")
+                expected.append(('CheckConstraint',(expression,),{'name':c.name}))
             elif isinstance(c,ForeignKeyConstraint):
                 expected.append(('ForeignKeyConstraint',(tuple(c.column_keys),tuple('public.'+e.target_fullname for e in c.elements)),{'name':c.name,'ondelete':'RESTRICT'}))
             elif isinstance(c,PrimaryKeyConstraint): expected.append(('PrimaryKeyConstraint',tuple(x.name for x in c.columns),{}))

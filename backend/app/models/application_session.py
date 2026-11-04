@@ -16,8 +16,9 @@ class ApplicationSessionRecord(Base):
     __table_args__ = (
         PrimaryKeyConstraint("secret_digest", name="pk_application_sessions"),
         ForeignKeyConstraint(["user_id"], ["local_users.id"], name="fk_application_sessions_user", ondelete="RESTRICT"),
-        ForeignKeyConstraint(["external_identity_id"], ["external_identities.id"],
-                             name="fk_application_sessions_external_identity", ondelete="RESTRICT"),
+        ForeignKeyConstraint(["external_identity_id", "user_id"],
+                             ["external_identities.id", "external_identities.user_id"],
+                             name="fk_application_sessions_external_identity_user", ondelete="RESTRICT"),
         ForeignKeyConstraint(["replaced_by"], ["application_sessions.secret_digest"],
                              name="fk_application_sessions_replacement", ondelete="RESTRICT"),
         *(CheckConstraint(f"{column} ~ '^[0-9a-f]{{64}}$'", name=f"ck_application_sessions_{column}_hex")

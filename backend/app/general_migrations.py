@@ -47,9 +47,15 @@ HISTORICAL_SOURCES = (
 ALLOWED_ENVIRONMENTS = frozenset({"oidc-migration-test"})
 OIDC_SCOPE = ("public.oidc_transactions",)
 ACCOUNT_SCOPE = ("public.local_users", "public.external_identities", "public.company_memberships", "public.membership_permissions")
-SCHEMA_SCOPE = OIDC_SCOPE + ACCOUNT_SCOPE
+SESSION_SCOPE = ("public.external_identities", "public.application_sessions")
+ANALYSIS_SCOPE = ("public.membership_permissions",)
+SCHEMA_SCOPE = OIDC_SCOPE + ACCOUNT_SCOPE + ("public.application_sessions",)
+SESSION_REVISION = "b2b_0001_sessions"
+ANALYSIS_REVISION = "b2b_0002_analyze"
 ACCOUNT_REVISION = "4b7e2a91c6d0"
 ACCOUNT_AST_SHA256 = "6e56f6b7cc92a4315c77a2d8b64ecc5e62163d59c30470dc24426759bf0ac424"
+SESSION_AST_SHA256 = "e475b5dfa0f1413ea528ea4ebb918b04ef8136f948014f213235ab0d59420bc1"
+ANALYSIS_AST_SHA256 = "ca8f74cf7fc00aab9c966fa4d170ecef3b29a72e50f4f46062102ba598d94d3a"
 MANIFEST_PATH = GENERAL_DIRECTORY / "revision_manifest.json"
 
 
@@ -203,17 +209,20 @@ def _manifest(source):
     data = json.loads(source, object_pairs_hook=_unique_object)
     _require(type(data) is dict and set(data) == {"format", "revisions"})
     _require(data["format"] == "general-revisions-v1")
-    # Exactly two reviewed publications, in their fixed linear order. No directory
+    # Exactly four reviewed publications, in their fixed linear order. No directory
     # discovery or manifest recomputation can approve another AST profile.
-    _require(type(data["revisions"]) is list and len(data["revisions"]) == 2)
+    _require(type(data["revisions"]) is list and len(data["revisions"]) == 4)
     result = []
     for entry, (revision, parent, suffix, scope) in zip(data["revisions"], (
         ("12e2fc65f372", HISTORICAL_HEAD, "create_oidc_transactions", OIDC_SCOPE),
         (ACCOUNT_REVISION, "12e2fc65f372", "create_professional_accounts", ACCOUNT_SCOPE),
+        (SESSION_REVISION, ACCOUNT_REVISION, "", SESSION_SCOPE),
+        (ANALYSIS_REVISION, SESSION_REVISION, "", ANALYSIS_SCOPE),
     )):
         _require(type(entry) is dict and set(entry) == {"revision", "parent", "path", "sha256", "schema_scope"})
         _require(entry["revision"] == revision and entry["parent"] == parent)
-        _require(entry["path"] == f"general_migrations/versions/{revision}_{suffix}.py")
+        filename = f"{revision}_{suffix}.py" if suffix else f"{revision}.py"
+        _require(entry["path"] == f"general_migrations/versions/{filename}")
         _require(type(entry["sha256"]) is str and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]))
         _require(type(entry["schema_scope"]) is list and entry["schema_scope"] == list(scope))
         result.append(PublishedRevision(revision, parent, entry["path"], entry["sha256"], scope))
@@ -335,6 +344,22 @@ def validate_account_source(source: str, *, revision: str, parent: str):
 
 
 @_guarded
+def validate_session_source(source: str, *, revision: str, parent: str):
+    """Recognize one reviewed AST; a recomputed manifest never approves changes."""
+    _require(revision == SESSION_REVISION and parent == ACCOUNT_REVISION)
+    tree = ast.parse(source)
+    _require(hashlib.sha256(ast.dump(tree, include_attributes=False).encode()).hexdigest() == SESSION_AST_SHA256)
+
+
+@_guarded
+def validate_analysis_source(source: str, *, revision: str, parent: str):
+    """Closed CHECK replacement, with no INSERT, grant or executable extension."""
+    _require(revision == ANALYSIS_REVISION and parent == SESSION_REVISION)
+    tree = ast.parse(source)
+    _require(hashlib.sha256(ast.dump(tree, include_attributes=False).encode()).hexdigest() == ANALYSIS_AST_SHA256)
+
+
+@_guarded
 def resolve_upgrade(revisions: tuple[RevisionDescription, ...], initial: str, final: str) -> tuple[str, ...]:
     """Pure graph resolution, not approval; synthetic future nodes are supported."""
     _require(type(revisions) is tuple and all(type(r) is RevisionDescription for r in revisions))
@@ -386,7 +411,12 @@ def inspect_sources() -> SourceSnapshot:
     for entry in published:
         recognized = next(r for r in graph if r.path == entry.path)
         _require((recognized.revision, recognized.parent) == (entry.revision, entry.parent))
-        validator = validate_oidc_source if entry.revision == "12e2fc65f372" else validate_account_source
+        validator = {
+            "12e2fc65f372": validate_oidc_source,
+            ACCOUNT_REVISION: validate_account_source,
+            SESSION_REVISION: validate_session_source,
+            ANALYSIS_REVISION: validate_analysis_source,
+        }[entry.revision]
         validator(next(source for path, _, source in sources if path == BACKEND / entry.path),
                   revision=entry.revision, parent=entry.parent)
     for path in (GENERAL_DIRECTORY / "alembic.ini", GENERAL_DIRECTORY / "env.py", Path(__file__).resolve()):

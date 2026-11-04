@@ -1,7 +1,8 @@
 # B2B application sessions — offline persistence foundation
 
 No engine, schema, route, cookie or DEV binding is created by these modules.
-Import the model explicitly. Existing model exports and migrations are unchanged.
+Import the model explicitly. Existing model exports and all previously published revisions are unchanged.
+Two new general revisions are published offline; their execution remains disabled.
 
 ## Schema to migrate later
 
@@ -18,19 +19,36 @@ CHECKs pin the version, hex formats, temporal ordering, exact absolute lifetime,
 revocation ordering and non-self replacement only after revocation. Indexes cover
 user enumeration and absolute expiry. No cleanup/purge executor is included.
 
-The independent user and external-identity FKs do NOT prove that the identity
-belongs to that user. The adapter verifies that exact pair at creation and every
-read under user/external-link locks. Direct SQL can still create an inconsistent
-pair; the adapter rejects it. A future database-level composite FK would require
-a new UNIQUE(id,user_id) on external_identities, corresponding ORM changes and
-explicitly reviewed migration scope; no existing model is changed here.
+The final ORM and offline revision b2b_0001_sessions enforce the pair
+(external_identity_id, user_id) with a composite FK to external_identities(id,
+user_id), backed by the new uq_external_identities_id_user constraint. The direct
+user FK and replacement self-FK remain RESTRICT. The old single identity FK is
+replaced, not duplicated. The adapter still checks exact issuer/subject and active
+account state under locks: the FK does not authenticate or prove an active account.
+These are declared constraints, not installed/qualified PostgreSQL guarantees.
 
-The future general revision must follow **4b7e2a91c6d0**, after the published OIDC
-and professional-account revisions. Do not edit either published revision.
-Prepare the new schema revision, source fingerprints/manifest, scope and approval
-mechanism in a separate mission. Current general guards only recognize the old
-scope and keep MigrationExecutionDisabled unconditional, including after
-preflight. No create_all, manual SQL or alternate Alembic loader is a substitute.
+The general chain extends 4b7e2a91c6d0 with b2b_0001_sessions, then
+b2b_0002_analyze. The latter changes only the permission CHECK: explicit
+predictions:analyze grants are admitted only for company_admin. It creates no
+grants, memberships, accounts or sessions. Published OIDC/account revisions stay
+byte-for-byte unchanged. Manifests recognize four fixed publications; independent
+AST pins reject changed operations even with a recomputed source hash.
+
+Both new downgrade bodies refuse unconditionally. A later reviewed retention and
+approval procedure must precede any destructive session removal or CHECK rollback
+with analysis grants. A work failure before commit and an approved post-deployment
+downgrade are distinct operations. No automatic deletion or privilege removal.
+
+On an empty-data database already at 4b7e2a91c6d0, the session table is created
+empty; existing accounts/identities need no backfill. A database without the
+prerequisite schema is not a valid starting point. Unexpected existing objects
+must fail rather than be hidden by IF NOT EXISTS. PostgreSQL DDL locking, data
+preservation and transactional behavior still need isolated qualification.
+
+The current general guards keep MigrationExecutionDisabled unconditional,
+including after preflight. No create_all, manual SQL or alternate Alembic loader
+is a substitute. No timestamp-isfinite hardening is added in this minimal lot;
+PostgreSQL infinity handling remains an explicit qualification/hardening topic.
 
 ## Authority and operations
 
@@ -107,3 +125,19 @@ none of PostgreSQL durability, lock behavior or successful schema installation.
 
 No OIDC transaction storage, caller-session pure contract, permission policy,
 Angular, main assembly or session endpoint is modified or installed by this lot.
+
+## INT-3C1K offline publication boundary
+
+The session PK makes secret_digest unique; csrf_digest is independently generated,
+not globally UNIQUE. No sequence is needed by this adapter. touch/revoke update
+only allowed columns. rotate inserts the successor before updating the predecessor,
+so the replacement FK need not be deferred. The replacement FK alone does not
+prove matching user, identity, or absolute expiry; application checks remain required.
+
+Qualification must use separate real connections for expiry after lock waits,
+rotation/revocation/create races, account suspension and relinking; fresh reads
+after commit; rollback/uncertain commit; FK/CHECK/UNIQUE failures and minimal
+privileges. UPDATE(id) used to permit row locking is a real write capability,
+not a lock-only privilege. Verify business equipment/measurement fingerprints
+are unchanged, and grants for company A never authorize company B. Offline DDL,
+AST, SQLite account tests and simulated session tests are not PostgreSQL evidence.

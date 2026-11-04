@@ -224,7 +224,7 @@ with ExitStack() as guards:
                          "ck_application_sessions_times", "ck_application_sessions_rotation",
                          "ck_application_sessions_revocation", "ck_application_sessions_contract",
                          "ck_application_sessions_secret_digest_hex", "ck_application_sessions_csrf_digest_hex",
-                         "REFERENCES external_identities (id)", "REFERENCES local_users (id)",
+                         "REFERENCES external_identities (id, user_id)", "REFERENCES local_users (id)",
                          "REFERENCES application_sessions (secret_digest)", "ON DELETE RESTRICT"):
             self.assertIn(fragment, ddl)
         self.assertEqual({index.name for index in TABLE.indexes},

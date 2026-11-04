@@ -171,3 +171,49 @@ def test_invalid_user_ids_rejected_before_sql(value):
     session=Mock()
     with pytest.raises(AccountRepositoryRejected): ProfessionalAccountRepository(session).memberships_for_user(user_id=value)
     assert session.mock_calls==[]
+
+
+@pytest.mark.parametrize("role", ["reader", "technician", "company_admin"])
+@pytest.mark.parametrize("permission", list(Permission))
+def test_sql_ceiling_preserves_history_and_only_admin_can_analyze(db, role, permission):
+    allowed = {"companies:read", "assets:read", "measurements:read", "predictions:read"}
+    if role in ("technician", "company_admin"):
+        allowed.add("maintenance:write")
+    if role == "company_admin":
+        allowed.update(("memberships:manage", "predictions:analyze"))
+    db.add(MembershipRecord(id=10, user_id=2, company_id=1, state="active", role=role))
+    db.flush()
+    db.add(MembershipPermissionRecord(membership_id=10, role=role, permission=permission.value))
+    if permission.value in allowed:
+        db.flush()
+    else:
+        with pytest.raises(IntegrityError):
+            db.flush()
+        db.rollback()
+
+
+def test_analysis_requires_explicit_active_company_scoped_grant(db):
+    from app.core.authorization import VerifiedIdentity
+    identity = VerifiedIdentity(2, KEY.issuer, "second-user", AccountState.ACTIVE)
+    membership = MembershipRecord(id=10, user_id=2, company_id=1, state="active", role="company_admin")
+    db.add(membership)
+    db.flush()
+    repo = ProfessionalAccountRepository(db)
+    def decision(company):
+        return decide_authorization(identity=identity, memberships=repo.memberships_for_user(user_id=2),
+                                    company_id=company, permission=Permission.PREDICTIONS_ANALYZE).effect
+    assert decision(1) is AuthorizationEffect.DENY
+    db.add(MembershipPermissionRecord(membership_id=10, role="company_admin", permission="predictions:analyze"))
+    db.flush()
+    assert decision(1) is AuthorizationEffect.ALLOW
+    assert decision(2) is AuthorizationEffect.DENY
+    membership.state = "inactive"
+    db.flush()
+    assert decision(1) is AuthorizationEffect.DENY
+
+
+def test_forged_admin_analysis_role_does_not_escalate_reader_membership(db):
+    db.add(MembershipPermissionRecord(membership_id=1, role="company_admin", permission="predictions:analyze"))
+    with pytest.raises(IntegrityError):
+        db.flush()
+    db.rollback()

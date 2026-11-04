@@ -21,6 +21,25 @@
         "public.company_memberships",
         "public.membership_permissions"
       ]
+    },
+    {
+      "revision": "b2b_0001_sessions",
+      "parent": "4b7e2a91c6d0",
+      "path": "general_migrations/versions/b2b_0001_sessions.py",
+      "sha256": "64da06799a0c0d5033343ec91d6a5539d6cdef98ffc9a74f3d64a6a8beb1fe66",
+      "schema_scope": [
+        "public.external_identities",
+        "public.application_sessions"
+      ]
+    },
+    {
+      "revision": "b2b_0002_analyze",
+      "parent": "b2b_0001_sessions",
+      "path": "general_migrations/versions/b2b_0002_analyze.py",
+      "sha256": "ae59ca35458ca475e01057f025ff5b8e9f91af7e18301a0e6e3817454cb575fe",
+      "schema_scope": [
+        "public.membership_permissions"
+      ]
     }
   ]
 }

@@ -92,9 +92,9 @@ def test_guarded_config_is_inert_even_after_source_validation():
 def test_real_historical_graph_and_pinned_sources_without_running_env():
     snapshot = module.inspect_sources()
     historical = tuple(r for r in snapshot.revisions if r.revision in module.HISTORICAL_CHAIN)
-    assert len(historical) == 9 and len(snapshot.revisions) == 11
+    assert len(historical) == 9 and len(snapshot.revisions) == 13
     assert {r.revision for r in historical} == set(module.HISTORICAL_CHAIN)
-    assert len(snapshot.sources) == 15  # eleven revisions, manifest, config, env, guards
+    assert len(snapshot.sources) == 17  # thirteen revisions, manifest, config, env, guards
     graph = RevisionMap(lambda: iter(Revision(r.revision, r.parent) for r in historical))
     assert graph.heads == (module.HISTORICAL_HEAD,)
     assert len(list(graph.iterate_revisions(module.HISTORICAL_HEAD, "base"))) == 9
@@ -427,3 +427,17 @@ with ExitStack() as guards:
     result = subprocess.run([sys.executable, "-B", "-I", "-c", script, str(module.BACKEND)],
                             cwd=module.BACKEND.parent, env=env, capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_full_b2b_plan_never_authenticates_or_touches_injected_connection(intent, declaration):
+    snapshot = module.inspect_sources()
+    full = replace(intent, final_revision=module.ANALYSIS_REVISION,
+                   sequence=module.resolve_upgrade(snapshot.revisions, module.HISTORICAL_HEAD, module.ANALYSIS_REVISION))
+    claim = replace(declaration, intent=full)
+    report = module.preflight(full, claim, now=NOW)
+    assert report.sources_match and report.declaration_matches
+    assert not report.authenticated and not report.execution_enabled
+    connection = Mock(spec=Connection)
+    with pytest.raises(module.MigrationExecutionDisabled):
+        module.request_execution(full, claim, now=NOW, connection=connection)
+    assert connection.mock_calls == []

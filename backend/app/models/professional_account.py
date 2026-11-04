@@ -30,6 +30,7 @@ class ExternalIdentityRecord(Base):
         # alone fit a PostgreSQL index. No truncation/normalization is permitted.
         CheckConstraint("octet_length(issuer) + octet_length(subject) <= 2048", name="ck_external_identities_key_bytes"),
         UniqueConstraint("issuer", "subject", name="uq_external_identities_key"),
+        UniqueConstraint("id", "user_id", name="uq_external_identities_id_user"),
         ForeignKeyConstraint(["user_id"], ["local_users.id"], name="fk_external_identities_user", ondelete="RESTRICT"),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -66,7 +67,7 @@ class MembershipPermissionRecord(Base):
             "(role IN ('reader', 'technician', 'company_admin') AND permission IN "
             "('companies:read', 'assets:read', 'measurements:read', 'predictions:read')) OR "
             "(role IN ('technician', 'company_admin') AND permission = 'maintenance:write') OR "
-            "(role = 'company_admin' AND permission = 'memberships:manage')",
+            "(role = 'company_admin' AND permission IN ('memberships:manage', 'predictions:analyze'))",
             name="ck_membership_permissions_role_cap"),
     )
     membership_id: Mapped[int] = mapped_column(Integer, primary_key=True)
