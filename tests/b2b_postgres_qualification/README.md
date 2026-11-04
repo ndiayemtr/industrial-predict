@@ -1,9 +1,9 @@
 # INT-3C2B — offline B2B PostgreSQL qualification contracts
 
 The INT-3C2B contracts/validation base uses only the standard library. The INT-3C2C
-extension below adds offline cryptographic verification. This directory contains no
-collector, SQL, Docker client, process launcher, operational signature, migration
-loader or executor. No application module is imported. Existing execution guards,
+extension below adds offline cryptographic verification. INT-3C2D adds explicit
+read-only collection code and a temporary-test ledger, described separately below.
+No migration loader or executor exists. No application module is imported. Existing execution guards,
 DEV, P101 and OIDC are unchanged. Namespace-package imports use the existing
 pytest `pythonpath = backend tests` setting; no package bootstrap is necessary.
 
@@ -220,3 +220,176 @@ Next minimum step: review the trust/canonical-intention and evidence profiles,
 then specify a durable authority/replay boundary and independent collectors in a
 separately authorized mission. No bootstrap or migration execution follows from
 this foundation.
+
+## INT-3C2D — future collection paths and temporary durable ledger
+
+New files: `collectors.py`, `durable.py`, `test_collectors_registry.py`. The earlier
+contracts, cryptographic verifier, injected-only adapters and execution refusals
+are unchanged. Only this README is changed outside the three new files. No CLI,
+SQL/TLS connection or real resource is contacted during this implementation/test
+mission. There is no command-line entry point or automatic collection at import.
+
+### Docker consultation code
+
+`DockerCollector.collect()` can invoke an explicitly supplied absolute Docker CLI
+path in a future authorized mission. Its fixed commands are context/info and
+container/image/network/volume inspect, with selected JSON templates only. It never
+requests Config.Env, full config, logs, secret contents or mutations. The context
+endpoint must be approved by hash and local npipe/unix; no remote fallback exists.
+Engine and full resource IDs are compared, not inferred from names. The collector
+checks both containers, approved image identities, the exact internal network and
+members, the PostgreSQL volume, no published ports/binds/extra mounts, restart and
+privilege settings, readonly roots, and exact positive memory/CPU/shm limits.
+Unknown/incomplete/duplicate-key JSON fails. CLI errors are not logged or exposed.
+Each call has a bounded timeout and results are refused beyond the collection
+budget. Captured output is size-checked after subprocess completion; it is not a
+streaming hard memory limit. The approved CLI binary and local context files
+remain external trust boundaries. No binary provenance or daemon authenticity is
+proved by these tests. The expanded runner-image/resource expectations must also
+be bound into any future approved inventory, not discarded from the report.
+
+### PostgreSQL and TLS: deliberately no default driver
+
+`PostgresCollector` contains only fixed identity, revision, privilege and column
+metadata queries. It requires startup default_transaction_read_only, explicit
+BEGIN READ ONLY, statement/lock timeouts and a final rollback/close. It checks
+destination, session/effective role, PostgreSQL 17.10, the new campaign marker
+`app.b2b_qualification_instance_id`, absence of the DEV marker, installed revision
+and the existing role-specific privilege profile. No business rows are selected.
+The privilege profile assumes the referenced B2B tables already exist; it is not
+a pre-bootstrap observation profile. All operations and cleanup errors are
+sanitized by the protected public entry point. Credentials have opaque repr and
+are passed separately, never as a DSN or log text.
+
+`BoundPostgresTransport` must return dict rows and supply a `TlsBinding` for that
+exact connection object, with successful verify-full/SCRAM authentication and
+peer certificate captured from its actual TLS socket. The collector checks the
+binding before and after SQL, verifies the injected certificate chain/name/CA
+offline, and correlates SQL/TLS packets with the same PID and connection UUID.
+An unrelated socket, certificate, hostname or unverified transport is refused.
+
+**No concrete transport satisfying this contract is supplied or qualified.**
+The checked crypto test venv has neither psycopg nor pg8000. The historical
+psycopg configuration and SQL TLS flags do not expose/prove the same-connection
+peer certificate needed here. No ctypes, second TLS probe or invented libpq
+attribute is used as a substitute. With no transport, collection fails closed.
+A future reviewed driver adapter must demonstrate actual peer capture and
+authentication, connection/statement deadlines (including cleanup), no ambient
+fallback and sensitive-parameter handling before any real SQL campaign. A fake
+transport can lie; object-identity comparison and synthetic certificates do not
+authenticate a real server. All collection reports remain Offline/unattested;
+the old `collect_real_evidence` and `require_real_attestation` still always refuse.
+
+### Durable single-use reservations in isolated test storage
+
+`initialize_test_registry` initializes only a supplied empty, local temporary
+directory named `b2bq-registry-*`. It excludes symlinks/junctions, the package
+directory and DEV/P101/OIDC path names; it does not create parent directories.
+The root is a separately trusted storage location, never part of the submitted
+campaign. Names/path checks do not establish ACL ownership or physical isolation.
+No registry is initialized outside temporary test fixtures in this mission.
+
+`DurableApprovalRegistry.consume_verified` reuses the actual fixed Ed25519 path
+on the raw signed intention with out-of-band trust keys. It accepts neither a
+favorable boolean/provider verdict nor a manually constructed SignatureReview.
+The signed campaign, destination/content digest and operation are retained as
+metadata; no passwords, signatures or private keys are stored.
+
+An exclusive, fsynced `.claim` file reserves (authority ID, approval UUID) before
+the SQLite INSERT/commit. Its existence alone refuses another consumption,
+including if the database write/acknowledgement fails. SQLite uses a unique key,
+BEGIN IMMEDIATE, bounded busy timeout and synchronous=FULL. Fixed statements only
+maintain a minimal history. No arbitrary SQL API or application DB URL exists.
+No reservation is ever released automatically. A `.uncertain` marker quarantines
+ambiguous outcomes; a reservation with no database record also reports uncertain.
+An uncertain state refuses every outcome transition. Consumed approvals may get
+one declared terminal outcome, but that declaration is not proof an operation ran.
+
+Tests exercise three spawned processes competing for one signed approval, fresh
+registry objects after consumption, and lost acknowledgements both before and
+after the SQLite commit. Replay stays refused. This establishes process-restart
+behavior while the independent filesystem is retained, not power-loss recovery,
+multi-host/distributed consistency, protection from a privileged storage editor
+or durable human-authority provenance. The extra reservation/quarantine files
+are intentional fail-closed protection, not a transaction spanning two stores.
+Filesystem/ACL loss, failed quarantine writes, deletion of the registry or
+untrusted path replacement require an external stop/reconciliation policy;
+no automated repair/retry is supplied. Windows mode bits are not an ACL proof.
+Production storage provisioning and ownership are outside this lot.
+
+INT-3C2D-FIX1 serializes each approval's consumption, inspection, quarantine
+publication and outcome changes with a persistent `.lock` file and an OS-owned
+exclusive lock (Windows byte-range lock; POSIX flock). The fixed order is approval
+lock, then SQLite transaction. Acquisition is nonblocking: contention or failure
+refuses the call, with no sleep, retry or SQLite access. Quarantine is checked
+under that lock and again after BEGIN IMMEDIATE. The lock covers commit failure,
+quarantine publication and database close; reservations/markers/lock files are
+never deleted automatically. Presence checks distinguish missing files from I/O
+or permission failures. An outcome-path error quarantines even when SQLite could
+not be opened. Reports describe serialized decisions, not execution attestations.
+The lock protocol requires all writers to use this implementation and trusted
+local filesystem locking; old processes must not access the same registry.
+Storage/ACL loss or a failed quarantine write still requires external stop and
+reconciliation; no OS lock proves power-loss durability or resists storage tampering.
+
+The deterministic regression uses multiprocessing events: B observes no marker
+and pauses before the approval lock; A publishes uncertainty, fails its SQLite
+commit and closes the transaction; B resumes and must refuse success. It checks
+the retained reservation/quarantine, absence of favorable SQLite history and the
+same refusal after reopening. Separate tests exercise interprocess lock contention
+without SQLite access and a quarantine-read permission failure. No scheduler
+timing or arbitrary sleeps select the interleaving.
+
+INT-3C2D-FIX2 removes the separate unlock call. Closing the descriptor is the only
+release operation; it is attempted once. The lock context never publishes
+quarantine, including on acquisition/close errors, and never retries an ambiguous
+descriptor (it might already have been closed and reused). Transaction-error
+quarantine publication remains inside established lock ownership, before release.
+Thus there is no cleanup handler that can race a new owner by publishing a marker
+after effective release. A close failure before effective release may leave the
+lock held until process exit; contenders fail closed rather than repairing it.
+
+Cleanup failure refuses the current call's normal return with the constant
+`B2B_REGISTRY_CLEANUP_FAILED` diagnostic. The write APIs expose
+`RegistryCleanupError.phase` (`sqlite_close` or `lock_close`) and `commit_status`
+as metadata only. SQLite writes track `not_attempted`, `uncertain` while commit is
+unacknowledged, and `confirmed` only after commit returns. A failed close before
+commit does not prove rollback; transaction uncertainty/quarantine remains.
+A failed close after an unacknowledged commit does not resolve that uncertainty.
+A failed SQLite close after an acknowledged commit preserves the confirmed
+database state and refuses the normal return, without inventing a rollback,
+deleting history, or publishing a new operation-uncertainty marker. Read/setup
+paths still sanitize failures through their existing protected entry points.
+No cleanup exception is silently discarded by the SQLite close helper.
+
+If descriptor close fails after a successful body, `lock_close` reports
+`not_assessed`: the lock context does not infer the database result from release.
+An already active uncertainty is retained; if SQLite cleanup also failed, its
+commit-status metadata is preserved. No automatic retry/re-execution follows.
+A different process may proceed only after independently acquiring the OS lock
+and checking the retained quarantine and database state. A cleanup error alone
+does not fabricate an uncertain operation or undo an acknowledged commit.
+
+The primitives cannot prove whether a failed descriptor close released ownership,
+nor provide a durable, registry-wide stop for every such local cleanup fault.
+If that stronger policy is required, the minimum protocol addition is a durable
+release-pending fence published under the lock, retained until independent
+reconciliation; it must not be automatically cleared after release. That protocol
+is not implemented or claimed here. Trusted local OS locking, storage ownership,
+power-loss behavior and externally enforced stop/reconciliation remain prerequisites.
+
+FIX2 tests inject descriptor-close errors before and after actual release, using
+events so another process attempts an outcome while close is unresolved. They
+check returned errors, database history, absence of post-release quarantine,
+retained transaction uncertainty after reopening and replay refusal. SQLite-close
+tests cover failures before commit, lost acknowledgements before/after commit,
+and acknowledged commits, for both consumption and outcome writes. Leaked test
+descriptors are released only by fixture cleanup, never by registry retry code.
+
+The grouped tests use only injected CLI/SQL/TLS results and temporary local
+SQLite/filesystem/IPC resources. Private test signing keys remain in memory; child
+processes receive public trust material and synthetic signatures only. No general
+suite, actual Docker, PostgreSQL or network endpoint is used. A future first real
+campaign could inspect an independently provisioned B2B Docker inventory after
+human authorization. SQL/TLS collection remains blocked until the concrete bound
+transport above is implemented and qualified. Neither path authorizes migrations.
