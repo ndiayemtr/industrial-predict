@@ -32,7 +32,7 @@ def functions():
 
 def test_publication_extends_only_oidc_head_and_all_hashes_are_verified():
     published=guards.read_manifest()
-    assert len(published)==4
+    assert len(published)==5
     assert published[1].revision=='4b7e2a91c6d0' and published[1].parent=='12e2fc65f372'
     assert published[1].schema_scope==tuple('public.'+n for n in TABLES)
     assert hashlib.sha256(PATH.read_bytes()).hexdigest()==published[1].sha256

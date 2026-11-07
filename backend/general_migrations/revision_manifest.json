@@ -40,6 +40,19 @@
       "schema_scope": [
         "public.membership_permissions"
       ]
+    },
+    {
+      "revision": "p101_0001_operations",
+      "parent": "b2b_0002_analyze",
+      "path": "general_migrations/versions/p101_0001_operations.py",
+      "sha256": "db3876b5cc2be0cff37f20ecebabe51821b5289fec1a8ceed96651b091cca46f",
+      "schema_scope": [
+        "public.p101_prediction_operations",
+        "public.prediction_records",
+        "public.p101_operation_append_only",
+        "public.p101_prediction_immutable",
+        "public.p101_operation_validate"
+      ]
     }
   ]
 }

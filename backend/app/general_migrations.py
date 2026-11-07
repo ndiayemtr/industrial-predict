@@ -49,13 +49,18 @@ OIDC_SCOPE = ("public.oidc_transactions",)
 ACCOUNT_SCOPE = ("public.local_users", "public.external_identities", "public.company_memberships", "public.membership_permissions")
 SESSION_SCOPE = ("public.external_identities", "public.application_sessions")
 ANALYSIS_SCOPE = ("public.membership_permissions",)
-SCHEMA_SCOPE = OIDC_SCOPE + ACCOUNT_SCOPE + ("public.application_sessions",)
+OPERATION_SCOPE = ("public.p101_prediction_operations", "public.prediction_records",
+                   "public.p101_operation_append_only", "public.p101_prediction_immutable",
+                   "public.p101_operation_validate")
+SCHEMA_SCOPE = OIDC_SCOPE + ACCOUNT_SCOPE + ("public.application_sessions",) + OPERATION_SCOPE
 SESSION_REVISION = "b2b_0001_sessions"
 ANALYSIS_REVISION = "b2b_0002_analyze"
+OPERATION_REVISION = "p101_0001_operations"
 ACCOUNT_REVISION = "4b7e2a91c6d0"
 ACCOUNT_AST_SHA256 = "6e56f6b7cc92a4315c77a2d8b64ecc5e62163d59c30470dc24426759bf0ac424"
 SESSION_AST_SHA256 = "e475b5dfa0f1413ea528ea4ebb918b04ef8136f948014f213235ab0d59420bc1"
 ANALYSIS_AST_SHA256 = "ca8f74cf7fc00aab9c966fa4d170ecef3b29a72e50f4f46062102ba598d94d3a"
+OPERATION_AST_SHA256 = "e3ff0160f36c039a107377b10054f7d7f5393282fcf362f87e6fadf663fcaeb0"
 MANIFEST_PATH = GENERAL_DIRECTORY / "revision_manifest.json"
 
 
@@ -209,15 +214,16 @@ def _manifest(source):
     data = json.loads(source, object_pairs_hook=_unique_object)
     _require(type(data) is dict and set(data) == {"format", "revisions"})
     _require(data["format"] == "general-revisions-v1")
-    # Exactly four reviewed publications, in their fixed linear order. No directory
+    # Exactly five reviewed publications, in their fixed linear order. No directory
     # discovery or manifest recomputation can approve another AST profile.
-    _require(type(data["revisions"]) is list and len(data["revisions"]) == 4)
+    _require(type(data["revisions"]) is list and len(data["revisions"]) == 5)
     result = []
     for entry, (revision, parent, suffix, scope) in zip(data["revisions"], (
         ("12e2fc65f372", HISTORICAL_HEAD, "create_oidc_transactions", OIDC_SCOPE),
         (ACCOUNT_REVISION, "12e2fc65f372", "create_professional_accounts", ACCOUNT_SCOPE),
         (SESSION_REVISION, ACCOUNT_REVISION, "", SESSION_SCOPE),
         (ANALYSIS_REVISION, SESSION_REVISION, "", ANALYSIS_SCOPE),
+        (OPERATION_REVISION, ANALYSIS_REVISION, "", OPERATION_SCOPE),
     )):
         _require(type(entry) is dict and set(entry) == {"revision", "parent", "path", "sha256", "schema_scope"})
         _require(entry["revision"] == revision and entry["parent"] == parent)
@@ -360,6 +366,19 @@ def validate_analysis_source(source: str, *, revision: str, parent: str):
 
 
 @_guarded
+def validate_operation_source(source: str, *, revision: str, parent: str):
+    """Recognize one literal journal/trigger publication; never interpret its SQL.
+
+    This independent full-AST pin also covers every PL/pgSQL body. Rehashing a
+    manifest cannot approve additional raw SQL, triggers or runtime effects.
+    Recognition never authorizes Alembic loading or execution.
+    """
+    _require(revision == OPERATION_REVISION and parent == ANALYSIS_REVISION)
+    tree = ast.parse(source)
+    _require(hashlib.sha256(ast.dump(tree, include_attributes=False).encode()).hexdigest() == OPERATION_AST_SHA256)
+
+
+@_guarded
 def resolve_upgrade(revisions: tuple[RevisionDescription, ...], initial: str, final: str) -> tuple[str, ...]:
     """Pure graph resolution, not approval; synthetic future nodes are supported."""
     _require(type(revisions) is tuple and all(type(r) is RevisionDescription for r in revisions))
@@ -416,6 +435,7 @@ def inspect_sources() -> SourceSnapshot:
             ACCOUNT_REVISION: validate_account_source,
             SESSION_REVISION: validate_session_source,
             ANALYSIS_REVISION: validate_analysis_source,
+            OPERATION_REVISION: validate_operation_source,
         }[entry.revision]
         validator(next(source for path, _, source in sources if path == BACKEND / entry.path),
                   revision=entry.revision, parent=entry.parent)

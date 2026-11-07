@@ -5,6 +5,7 @@ from app.models.sensor import Sensor
 from app.models.measurement import Measurement
 from app.models.maintenance_record import MaintenanceRecord
 from app.models.prediction_record import PredictionRecord
+from app.models.p101_prediction_operation import P101PredictionOperation
 from app.models.maintenance_recommendation import MaintenanceRecommendation
 
 
@@ -16,5 +17,6 @@ __all__ = [
     "Measurement",
     "MaintenanceRecord",
     "PredictionRecord",
+    "P101PredictionOperation",
     "MaintenanceRecommendation",
 ]

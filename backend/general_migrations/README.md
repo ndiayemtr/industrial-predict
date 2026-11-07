@@ -25,12 +25,19 @@ The nine historical sources remain in their original directory, with pinned
 SHA-256 fingerprints over UTF-8/LF source (checkout CRLF is normalized). Safe graph
 inspection uses AST metadata, never revision imports. `revision_manifest.json`
 is the closed positive list of recognized publications: revision, parent, exact
-backend-relative path, SHA-256 and scope. It contains exactly four revisions:
+backend-relative path, SHA-256 and scope. It contains exactly five revisions:
 `12e2fc65f372` descends from `09ac8101e9fe`, and `4b7e2a91c6d0` extends it
 with public.local_users, public.external_identities, public.company_memberships
 and public.membership_permissions. b2b_0001_sessions extends the account revision
 with public.application_sessions and the composite identity/user key;
 b2b_0002_analyze extends it with the existing membership permission CHECK change.
+p101_0001_operations follows b2b_0002_analyze with the P101 operation journal,
+three trigger functions and retention/coherence triggers, including a trigger
+on prediction_records. See P101-DEV-3C.md for exact semantics and deployment limits.
+FIX1 adds the nullable prediction_records.p101_operation_id association, paired
+UNIQUE targets and reciprocal deferred composite FKs. The prediction retention
+trigger uses only OLD.p101_operation_id IS NOT NULL; unjournaled predictions,
+including P101, retain their existing UPDATE/DELETE and cascade behavior.
 Unknown keys, duplicate keys/entries,
 external paths, altered hashes, redirects and extra files/directories in
 `versions/` are rejected. `.gitkeep` is the only non-revision file allowed there.

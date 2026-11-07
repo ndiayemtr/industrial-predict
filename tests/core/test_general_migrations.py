@@ -92,9 +92,9 @@ def test_guarded_config_is_inert_even_after_source_validation():
 def test_real_historical_graph_and_pinned_sources_without_running_env():
     snapshot = module.inspect_sources()
     historical = tuple(r for r in snapshot.revisions if r.revision in module.HISTORICAL_CHAIN)
-    assert len(historical) == 9 and len(snapshot.revisions) == 13
+    assert len(historical) == 9 and len(snapshot.revisions) == 14
     assert {r.revision for r in historical} == set(module.HISTORICAL_CHAIN)
-    assert len(snapshot.sources) == 17  # thirteen revisions, manifest, config, env, guards
+    assert len(snapshot.sources) == 18  # fourteen revisions, manifest, config, env, guards
     graph = RevisionMap(lambda: iter(Revision(r.revision, r.parent) for r in historical))
     assert graph.heads == (module.HISTORICAL_HEAD,)
     assert len(list(graph.iterate_revisions(module.HISTORICAL_HEAD, "base"))) == 9
