@@ -251,6 +251,7 @@
     </select>
   </div>
 </section>
+<app-p101-simulation [equipment]="simulationEquipment()" />
 <section class="results" aria-labelledby="predictions-results-title" [attr.aria-busy]="busy()">
   <h2 id="predictions-results-title">Historique des prédictions</h2>
   @if (canFilter()) {

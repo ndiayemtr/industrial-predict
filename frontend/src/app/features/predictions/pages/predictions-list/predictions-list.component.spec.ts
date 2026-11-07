@@ -6,6 +6,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { PREDICTION_ROUTES } from '../../predictions.routes';
 import { PredictionsListComponent } from './predictions-list.component';
 import { PredictionRead } from '../../models/prediction.model';
+import { of } from 'rxjs';
+import { P101_SIMULATION_RUNNER, simulationFixture } from '../../simulation/p101-simulation.fixtures';
 
 const company = {
   id: 7,
@@ -101,6 +103,7 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: P101_SIMULATION_RUNNER, useValue: () => of(simulationFixture('anomaly')) },
         provideRouter([{ path: 'predictions', children: PREDICTION_ROUTES }]),
       ],
     });
@@ -115,6 +118,22 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     } finally {
       TestBed.resetTestingModule();
     }
+  });
+
+  it('keeps simulation isolated from persisted rows, API requests, filters and the business facade', async () => {
+    await ready();
+    const table = root().querySelector('tbody')!.innerHTML;
+    const persisted = c.facade.state();
+    const currentUrl = TestBed.inject(Router).url;
+    const panel = root().querySelector('app-p101-simulation')!;
+    expect(panel.textContent).toContain('Simulation - données fictives');
+    expect(panel.textContent).toContain('Pompe test');
+    panel.querySelector<HTMLButtonElement>('button')!.click(); await settle();
+    expect(panel.querySelector('h3')?.textContent).toContain('Anomalie détectée');
+    expect(root().querySelector('tbody')!.innerHTML).toBe(table);
+    expect(c.facade.state()).toBe(persisted);
+    expect(TestBed.inject(Router).url).toBe(currentUrl);
+    http.expectNone(() => true);
   });
 
   it('keeps precision folded and preserves equal inclusive bounds, source offsets and fractions through toggles and application', async () => {

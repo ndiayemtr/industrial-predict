@@ -1,0 +1,60 @@
+<section class="simulation" aria-labelledby="p101-simulation-title" [attr.aria-busy]="state().status === 'running'">
+  <div class="heading">
+    <h2 id="p101-simulation-title">Analyse P101 - démonstration</h2>
+    <strong class="simulation-badge">Simulation - données fictives</strong>
+  </div>
+  <p>Explorez des exemples locaux. Les mesures de l’équipement choisi ne sont pas analysées et aucune prédiction n’est enregistrée.</p>
+  <p id="p101-simulation-selection" class="equipment-context">
+    @if (equipment(); as selected) {
+      Équipement choisi pour la démonstration : <strong>{{ selected.label }}</strong>.
+    } @else {
+      Sélectionnez une entreprise, un site et un équipement dans les sélecteurs de cette page.
+    }
+  </p>
+  <div class="controls">
+    <div class="scenario">
+      <label for="p101-simulation-scenario">Scénario fictif</label>
+      <select id="p101-simulation-scenario" [formControl]="scenario">
+        @for (option of scenarios; track option.id) { <option [value]="option.id">{{ option.label }}</option> }
+      </select>
+    </div>
+    <button type="button" class="primary" (click)="simulate()" [disabled]="!canSimulate()" aria-describedby="p101-simulation-selection">
+      Simuler une analyse
+    </button>
+  </div>
+  <div class="simulation-output" aria-live="polite" aria-atomic="true">
+    @let current = state();
+    @switch (current.status) {
+      @case ('idle') { <p class="state-message">Simulation non lancée. Choisissez un scénario fictif, puis lancez la démonstration.</p> }
+      @case ('running') { <p class="state-message" role="status">Simulation en cours…</p> }
+      @case ('error') { <p class="error-message" role="alert">La simulation locale n’a pas abouti. Choisissez un autre scénario ou réessayez. Aucune prédiction enregistrée.</p> }
+      @case ('completed') {
+        @let result = current.result;
+        <div class="example-result">
+          @switch (result.status) {
+            @case ('computed') {
+              <h3>{{ result.score === 1 ? 'Anomalie détectée' : 'Aucune anomalie' }} - exemple fictif</h3>
+            }
+            @case ('abstained') { <h3>Abstention (Abstained) - exemple fictif</h3> }
+            @case ('rejected') { <h3>Rejet (Rejected) - exemple fictif</h3> }
+          }
+          <p>{{ result.reason }}</p>
+          <dl class="metrics">
+            <div><dt>Température cible fictive</dt><dd>{{ result.target.value }} {{ result.target.unit }}</dd></div>
+            <div><dt>Moyenne historique fictive</dt><dd>{{ result.statistics ? result.statistics.mean + ' °C' : 'Non disponible' }}</dd></div>
+            <div><dt>Seuil de déviation fictif</dt><dd>{{ result.statistics ? result.statistics.threshold + ' °C' : 'Non disponible' }}</dd></div>
+            <div><dt>Écart absolu à la moyenne</dt><dd>{{ result.statistics ? result.statistics.absolute_deviation + ' °C' : 'Non disponible' }}</dd></div>
+            @if (result.status === 'computed') {
+              <div><dt>Indice binaire fictif</dt><dd class="binary-score">{{ result.score }}</dd></div>
+              <div><dt>Alerte fictive</dt><dd>{{ result.is_alert ? 'Oui' : 'Non' }}</dd></div>
+            } @else {
+              <div><dt>Indice binaire</dt><dd>Non produit</dd></div>
+            }
+          </dl>
+          <p class="interpretation">L’indice 0 ou 1 décrit uniquement l’exemple d’anomalie ; il ne représente pas une probabilité de panne.</p>
+        </div>
+      }
+    }
+  </div>
+  <p class="provenance"><strong>Provenance fictive :</strong> {{ provenance }}</p>
+</section>

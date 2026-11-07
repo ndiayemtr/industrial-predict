@@ -19,12 +19,14 @@ import { PredictionReferenceCatalog } from '../../utils/prediction-reference-cat
 import { PredictionDetailsComponent } from '../../components/prediction-details/prediction-details.component';
 import { predictionPresentation } from '../../utils/prediction-display';
 import { predictionNavigationParams } from '../../utils/prediction-navigation';
+import { P101SimulationComponent } from '../../components/p101-simulation/p101-simulation.component';
+import { SimulationEquipment } from '../../models/p101-simulation.model';
 
 type ScopeKey = 'company_id' | 'site_id' | 'equipment_id';
 
 @Component({
   selector: 'app-predictions-list', standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PredictionDetailsComponent],
+  imports: [RouterLink, ReactiveFormsModule, PageHeaderComponent, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PredictionDetailsComponent, P101SimulationComponent],
   providers: [PredictionsListFacade], changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './predictions-list.component.html', styleUrl: './predictions-list.component.scss'
 })
@@ -79,6 +81,11 @@ export class PredictionsListComponent {
     if (!query || !equipment || !site || !company || query.equipment_id !== equipment.id || query.site_id !== site.id
       || query.company_id !== company.id || equipment.site_id !== site.id || site.company_id !== company.id) return null;
     return this.router.createUrlTree(['/equipments', equipment.id], { queryParams: predictionNavigationParams(query) });
+  });
+  readonly simulationEquipment = computed<SimulationEquipment | null>(() => {
+    if (this.busy() || !this.equipmentDestination()) return null;
+    return { companyId: this.facade.company()!.id, siteId: this.facade.site()!.id,
+      id: this.facade.equipment()!.id, label: this.referenceLabel(this.facade.equipment()!) };
   });
   readonly page = computed(() => this.facade.query()?.page ?? 1);
   readonly pageSize = computed(() => this.facade.query()?.page_size ?? 20);

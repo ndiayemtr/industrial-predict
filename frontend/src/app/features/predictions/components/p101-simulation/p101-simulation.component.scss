@@ -1,0 +1,27 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; color: tokens.$text-primary; }
+.simulation { margin-top: tokens.$space-lg; padding: tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; background: tokens.$surface-background; }
+.heading, .controls { display: flex; flex-wrap: wrap; gap: tokens.$space-md; align-items: center; }
+h2 { flex: 1 1 18rem; margin: 0; padding-left: .8rem; border-left: 3px solid tokens.$navigation-active; font-size: 1.25rem; }
+h3 { margin: 0 0 tokens.$space-sm; font-size: 1.1rem; }
+p { line-height: tokens.$line-height-body; overflow-wrap: anywhere; }
+.simulation-badge { padding: tokens.$space-xs tokens.$space-sm; border: 1px solid #d6b16a; border-radius: tokens.$border-radius; background: #fffbeb; color: #784719; font-size: tokens.$font-size-small; }
+.equipment-context, .provenance { color: tokens.$text-secondary; }
+.controls { align-items: flex-end; }
+.scenario { flex: 1 1 16rem; max-width: 28rem; }
+label { display: block; margin-bottom: tokens.$space-xs; font-weight: 600; }
+select, button { box-sizing: border-box; max-width: 100%; padding: tokens.$space-sm tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; font: inherit; }
+select { width: 100%; background: tokens.$surface-background; color: tokens.$text-primary; }
+button { font-weight: 600; cursor: pointer; background: tokens.$navigation-active; color: tokens.$sidebar-text; }
+button:not(:disabled):hover { background: tokens.$sidebar-background; }
+button:disabled { cursor: not-allowed; color: tokens.$text-secondary; background: tokens.$content-background; }
+:is(button, select):focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+.simulation-output { margin-top: tokens.$space-md; }
+.state-message, .example-result { padding: tokens.$space-md; border-radius: tokens.$border-radius; background: tokens.$content-background; }
+.error-message { padding: tokens.$space-md; border-left: 3px solid #9b1c1c; color: #9b1c1c; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: tokens.$space-md; margin: tokens.$space-md 0; }
+.metrics div { min-width: 0; }
+dt { color: tokens.$text-secondary; font-size: tokens.$font-size-small; }
+dd { margin: tokens.$space-xs 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.interpretation, .provenance { font-size: tokens.$font-size-small; }
