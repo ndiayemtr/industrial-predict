@@ -1,5 +1,22 @@
 # P101-DEV-3D-RUNNER-1 — préparation fermée de la première campagne
 
+## Actualisation EXEC-1 - 9 novembre 2026
+
+RUNNER-1 reste la référence publiée de préparation. Le noyau
+[EXEC-1](EXEC-1.md), implémenté et testé hors ligne, ajoute la compilation fermée
+des 14 migrations, des intentions Ed25519 et des réservations anti-rejeu locales,
+ainsi que l'orchestration transactionnelle sur backend simulé. Sa validation
+initiale de 48 tests n'est pas une qualification PostgreSQL réelle. La revue
+corrige l'échappement DB-API des `%` dans le rendu SQL natif, avec tests ciblés.
+
+`run_live` reste interdit ; le CLI ci-dessous reste fermé, le runner non qualifié
+et le writer métier désactivé. Aucun changement DEV, P101 historique ou OIDC,
+Angular ou API. L'objectif reste une prédiction P101 persistée et consultable
+dans Angular DEV, après campagne isolée et intégration séparément autorisées.
+Les artefacts, l'autorité humaine, le stockage anti-rejeu administré, le backend
+RW, le catalogue/ACL réel et la relecture indépendante restent à qualifier.
+Les sections suivantes conservent le périmètre initial RUNNER-1.
+
 Ce lot ajoute uniquement de nouveaux fichiers de qualification et une définition
 de build **incomplète et désactivée**. Il ne rend pas opérationnels les migrations,
 INSERT ou lectures métier. Aucun Docker, PostgreSQL, téléchargement ou build.

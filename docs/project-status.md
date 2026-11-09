@@ -6,6 +6,13 @@ Projet en développement actif.
 
 ## Branche actuelle
 
+Contrôle local du 9 novembre 2026 : `feature/auth-b2b-identity-access`, HEAD
+`d3b9c5860bef40812a5df57a81b25229b5a0732b` (RUNNER-1), index vide avant la revue.
+EXEC-1 et son actualisation documentaire sont en préparation de commit ; aucune
+vérification distante ni nouvelle publication dans cette revue.
+
+### Référence historique UI 9.7 - 25 octobre 2026
+
 `feature/frontend-predictions`, HEAD `edb7b6c5e1bc1e8f17ba6f5ed4668c0fe2a6e3f2`,
 contrôlé le 25 octobre 2026, dépôt propre avant UI 9.7.
 main et origin/main locaux : `05545a88dcd45940f00c1c029d9e567a9c5a4cee`.
@@ -15,6 +22,37 @@ commité. UI 9.1 déjà dans main, non recomptée. UI 9.7 prépare sept document
 (six synchronisés, un rapport nouveau), sans commit ni fusion.
 
 À mettre à jour à chaque changement de branche.
+
+## P101 - qualification PostgreSQL isolée EXEC-1
+
+EXEC-1 est implémenté et testé **hors ligne uniquement**, non commité au présent
+contrôle. Références locales : INFRA-3 `bd5d82a`, RUNNER-1 `d3b9c58`.
+Le nouveau noyau compile les 14 révisions épinglées sans importer leurs modules
+Python ; les opérations inconnues sont refusées. Ed25519 lie campagne,
+destination, ressources, sources, SQL et état initial attendu. Réservation locale
+exclusive anti-rejeu, transactions et relecture sont disponibles sur le seul
+backend simulé. L'acquittement perdu reste incertain, sans retry automatique.
+
+Validation initiale : **48 tests ciblés réussis en 34,70 s**, avec réseau,
+PostgreSQL et Docker interdits. La revue a identifié un défaut P2 de rendu
+`%%ROWTYPE` issu de l'échappement DB-API ; le dialecte de rendu est corrigé pour
+préserver le SQL natif `%ROWTYPE`, sans modifier les migrations. Les vérifications
+ciblées de cette correction sont consignées dans le [rapport EXEC-1](../tests/p101_postgres_qualification/EXEC-1.md).
+Ces résultats ne démontrent ni acceptation des DDL, ni contraintes, concurrence
+ou persistance sur PostgreSQL réel.
+
+**Exécution réelle interdite :** `run_live` et le CLI RUNNER-1 restent fermés,
+runner non qualifié sur PostgreSQL réel, writer métier désactivé. Aucun changement
+DEV, P101 historique ou OIDC, ni Angular/API. Le backend simulé enregistre le DDL
+et fabrique ses lignes attendues ; il ne remplace pas un moteur SQL.
+
+Blocages avant campagne : base et wheels/lock du runner approuvés par hashes,
+autorité humaine et racines de confiance réellement administrées, stockage local
+anti-rejeu avec ACL et reprise qualifiées, inventaire réel frais, backend TLS/SCRAM
+RW, collecte complète de catalogue/ACL avec référence indépendante, verrouillage
+et relecture des sources, observateur PostgreSQL réellement indépendant.
+L'objectif métier reste une prédiction P101 persistée puis consultable dans
+Angular DEV, après qualification isolée et autorisation distincte d'intégration.
 
 ## Backend
 
@@ -936,8 +974,9 @@ Aucune validation applicative relancée pour cette documentation.
 
 ## Prochaine action
 
-Valider le [dossier UI 9.7](ui-9.7-predictions-delivery.md), puis autoriser
-séparément le commit documentaire et la fusion fast-forward. Aucun commit,
-push, merge ou rebase réalisé. Le chantier ML proposé dans la
-[roadmap](roadmap.md) reste distinct et non commencé, sans date de livraison.
-Les prochaines étapes des rapports historiques restent datées.
+Valider la revue et l'actualisation documentaire
+[EXEC-1](../tests/p101_postgres_qualification/EXEC-1.md), puis autoriser séparément
+leur commit. Lever ensuite les prérequis de qualification isolée de la
+[roadmap](roadmap.md), sans activer le writer ni écrire dans DEV. Aucun commit,
+push, merge ou rebase dans cette revue. Les actions UI 9.7 et autres rapports
+historiques ci-dessus restent des références datées, sans nouvelle recette.

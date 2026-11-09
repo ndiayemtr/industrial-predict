@@ -305,12 +305,29 @@ sélectivité et pagination multiligne non démontrés. B-PRE-01 à B-PRE-11,
 sécurité absente, seed Sensor 1, budget 500 kB et réserves d'accessibilité/
 navigateurs conservés. Pas de validation pour production SaaS.
 
-### Proposition future - Intégration ML - Génération, validation et persistance contrôlées des prédictions
+### Intégration ML - préparation P101 hors ligne, exécution réelle à qualifier
 
-Chantier distinct, **non commencé**, sans date de livraison. La présence de
-services ML backend et d'une page de consultation ne prouve pas un pipeline
-opérationnel ni une alimentation automatique de l'historique.
-Prérequis à instruire avant une éventuelle autorisation :
+Au 9 novembre 2026, INFRA-3 et RUNNER-1 servent de fondations à EXEC-1, implémenté
+et testé hors ligne, en revue avant commit. La présence de services ML et d'une
+page de consultation ne prouve toujours pas un pipeline opérationnel. L'objectif
+est une prédiction P101 persistée dans PostgreSQL puis consultable dans Angular
+DEV, sans date de livraison annoncée.
+
+- [x] Transport de collecte TLS INFRA-3 préparé, sans qualification réseau réelle.
+- [x] Plans RUNNER-1 et compilateur fermé EXEC-1 pour les 14 révisions reconnues.
+- [x] Signatures Ed25519, anti-rejeu local et orchestration testés dans le périmètre simulé.
+- [ ] Verrouillage des artefacts, base d'image et dépendances du runner.
+- [ ] Autorité humaine opérationnelle, stockage anti-rejeu administré et inventaire frais.
+- [ ] Backend TLS/SCRAM RW, catalogue/ACL complet et référence indépendante.
+- [ ] Verrouillage des sources, insertion réelle atomique et relecture indépendante.
+- [ ] Première campagne PostgreSQL isolée explicitement autorisée et qualifiée.
+- [ ] Intégration métier/Angular DEV après autorisation distincte.
+
+`run_live` reste interdit, le runner n'est pas qualifié sur PostgreSQL réel et
+le writer métier reste désactivé. Aucun changement DEV, P101 historique, OIDC,
+Angular ou API dans ce lot. Voir le [statut P101](project-status.md#p101---qualification-postgresql-isolée-exec-1)
+et le [dossier EXEC-1](../tests/p101_postgres_qualification/EXEC-1.md).
+Prérequis métier conservés avant une éventuelle intégration :
 
 - Disponibilité des mesures industrielles.
 - Provenance et qualité des datasets.

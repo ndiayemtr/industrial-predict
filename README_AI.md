@@ -31,6 +31,28 @@ Construire une plateforme professionnelle permettant notamment :
 - recommandations de maintenance prédictive
 - historique des recommandations
 
+## P101 - préparation de qualification PostgreSQL, EXEC-1
+
+Au 9 novembre 2026, la branche `feature/auth-b2b-identity-access` est à
+`d3b9c5860bef40812a5df57a81b25229b5a0732b` (RUNNER-1). EXEC-1 est implémenté
+et testé hors ligne, en revue avant commit. Le compilateur reconnaît exactement
+14 révisions approuvées et produit du SQL sans importer le Python des migrations.
+Signatures Ed25519, réservations anti-rejeu et transactions sont implémentées
+pour le backend simulé uniquement ; une signature ne vaut pas consentement
+opérationnel déjà obtenu. Les 48 tests initiaux ne qualifient aucun serveur réel.
+
+`run_live` refuse toujours ; le runner n'est pas qualifié sur PostgreSQL réel
+et le writer métier reste désactivé. Aucun changement des environnements DEV,
+P101 historique ou OIDC, ni d'Angular ou des API. L'objectif à atteindre reste
+une prédiction P101 réellement persistée et consultable dans Angular DEV ;
+aucune disponibilité de ce nouveau parcours n'est annoncée.
+
+Avant une campagne isolée : artefacts du runner verrouillés, autorité humaine et
+racines de confiance opérationnelles, stockage anti-rejeu administré, backend
+TLS/SCRAM RW, catalogue/ACL réels, sources verrouillées et observateur indépendant.
+Voir le [statut actuel](docs/project-status.md#p101---qualification-postgresql-isolée-exec-1)
+et la [revue EXEC-1](tests/p101_postgres_qualification/EXEC-1.md).
+
 ## Stack principale
 
 L'environnement permanent de développement utilise `industrial_predict_dev` sur

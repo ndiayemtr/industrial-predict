@@ -726,6 +726,40 @@ prediction_records
 maintenance_recommendations
 ```
 
+## Qualification P101 isolée - noyau EXEC-1 hors ligne
+
+Le parcours P101 vers Angular DEV est un objectif futur : calcul existant,
+prédiction et journal atomiquement persistés, puis consultation via une intégration
+explicitement autorisée. Aucun nouveau parcours HTTP ou writer n'est activé ici.
+
+Sous `tests/p101_postgres_qualification`, EXEC-1 sépare :
+
+- compilation des 14 sources épinglées par décodeur AST fermé et rendu PostgreSQL
+  Alembic hors ligne ; aucun import/exécution du Python des révisions ;
+- intentions Ed25519 liées aux ressources, destination, sources et SQL, avec
+  réservations locales anti-rejeu exclusives et persistantes entre objets ;
+- noyau transactionnel et comparateur de relecture sur backend **simulé uniquement**.
+
+Le plan prévoit une transaction unique pour le seed synthétique puis la réservation
+complète du journal avant la prédiction associée, sous contraintes différées. Un commit perdu
+reste incertain ; aucun retry automatique. La relecture compare contenu complet,
+associations et empreintes, avec objets session/socket et PID distincts dans le
+simulateur. Ces doubles ne prouvent pas une indépendance PostgreSQL réelle.
+
+`run_live`, les entrées RUNNER-1, les gardes Alembic et le writer métier restent
+fermés. Le modèle `p101_prediction_operations` et le SQL compilé ne prouvent pas
+que la table est installée. Le runner n'est pas qualifié sur PostgreSQL réel.
+Aucun environnement DEV, P101 historique ou OIDC n'est modifié.
+
+Avant activation : artefacts immuables et lock transitif, consentement humain et
+racines de confiance administrées, stockage local avec ACL/reprise qualifiées,
+inventaire frais, backend RW avec certificat sur sa propre session TLS/SCRAM,
+catalogue/ACL normalisés et approuvés, verrouillage des sources et observateur
+indépendant. La signature seule n'apporte aucune approbation opérationnelle acquise.
+Voir [EXEC-1](../tests/p101_postgres_qualification/EXEC-1.md) pour le contrat de rendu
+SQL natif et les limites exactes des simulations. Aucune équivalence d'exécution
+sur PostgreSQL n'est démontrée par la validation hors ligne.
+
 ## Tests
 
 Le backend utilise `pytest`.

@@ -1,0 +1,19 @@
+{
+  "format": "p101-exec1-dependency-references-v1",
+  "build_enabled": false,
+  "extends": "dependencies.json",
+  "compiler": {"SQLAlchemy": "2.0.52", "alembic": "1.19.1"},
+  "authorization": {"cryptography": "50.0.2"},
+  "additional_dependency_references": {
+    "greenlet": "3.5.5",
+    "typing_extensions": "4.16.0",
+    "Mako": "1.4.1",
+    "MarkupSafe": "3.0.3"
+  },
+  "linux_artifact_hashes": [],
+  "blockers": [
+    "complete_platform_specific_transitive_lock_and_wheel_hashes_missing",
+    "approved_base_image_and_immutable_source_archive_missing",
+    "qualified_live_rw_backend_and_catalogue_baseline_missing"
+  ]
+}
