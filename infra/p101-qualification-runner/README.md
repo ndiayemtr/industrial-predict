@@ -1,5 +1,27 @@
 # Infrastructure du runner de qualification P101
 
+## Actualisation REAL-1
+
+[REAL-1](../../tests/p101_postgres_qualification/REAL-1.md) décrit un parcours
+préparé, mais FIX1 garde l'exécution réelle fermée faute de collecteur Docker
+authentifié distinct de la readiness signée. Le transport RW/TLS sur la même
+socket et le profil writer P101 restent préparés. Le nouveau
+Dockerfile.real1.in démarre operator en mode describe ; aucune exécution par défaut.
+La racine publique de confiance est un fichier root-owned embarqué, séparé des
+requêtes. Les configurations/artefacts de campagne résident dans le nouveau volume
+de registre, unique mount du runner ; les profils B2B précédents ne sont pas modifiés.
+
+Ce second volume neuf est indispensable au registre anti-rejeu durable avec une
+racine RO. P101ResourceCollector consulte les ressources sur l'hôte, sans monter
+Docker dans le runner ; son résultat reste `unverified_external` et une readiness
+signée ne l'atteste pas. `LiveGuard` refuse donc toute exécution réelle.
+Le sous-réseau candidat reste non approuvé. real1-dependencies.json et le modèle
+de Dockerfile n'inventent ni base par digest ni wheels/lock manquants : build
+désactivé, aucune reproductibilité démontrée. Aucun téléchargement ou provisionnement.
+
+Les listes de sources EXECUTION_SOURCES incluent les modules REAL-1 et le nouveau
+manifeste. Le reste de ce document décrit les lots préparatoires précédents.
+
 ## État au 9 novembre 2026
 
 EXEC-2 ajoute un backend SQL et un observateur au noyau existant, utilisables
@@ -8,8 +30,10 @@ précise le blocage : psycopg 3.3.4 n'expose pas le certificat serveur sur le m�
 canal SQL. Le connecteur réel et run_live restent fermés. Le manifeste
 exec2-dependencies.json fixe psycopg/psycopg-binary 3.3.4 comme références, sans
 wheels Linux ni hashes validés ; aucun build reproductible n'est revendiqué.
-Le catalogue collecté en SQL nécessite encore une baseline indépendante et une
-qualification des privilèges effectifs. Les sections suivantes rappellent EXEC-1.
+Le catalogue SQL inclut les drapeaux et politiques RLS ; toute RLS/politique est
+refusée et le rôle de comptage est requalifié sans SUPERUSER/BYPASSRLS sous verrou.
+Une baseline indépendante reste nécessaire. Ces contrôles sont testés hors ligne,
+pas qualifiés sur PostgreSQL réel. Les sections suivantes rappellent EXEC-1.
 
 RUNNER-1 fournit un modèle `Dockerfile.in` volontairement non constructible et un
 dossier de dépendances. EXEC-1 ajoute un compilateur pour les **14 migrations

@@ -1,5 +1,20 @@
 # P101-DEV-3D-RUNNER-1 — préparation fermée de la première campagne
 
+## Actualisation REAL-1
+
+[REAL-1](REAL-1.md) prépare le connecteur RW/TLS sur le même canal au noyau et au
+backend existants, via execute_approved et le module operator. FIX1 maintient
+l'exécution réelle fermée : le collecteur Docker ne fournit pas de provenance
+authentifiée distincte du signataire readiness ; une déclaration signée ne suffit
+pas à prouver l'état observé. Le catalogue capture les drapeaux/politiques RLS,
+refuse toute politique ou RLS, puis exige sous verrou un rôle non-SUPERUSER,
+non-BYPASSRLS et non propriétaire avant le comptage. Ces contrôles ne sont testés
+qu'hors ligne. Le profil P101 possède un rôle writer et un volume de registre
+distincts ; aucun profil B2B n'est élargi. run_live, le CLI RUNNER-1 et le writer
+métier restent fermés.
+Les sections historiques ci-dessous ne décrivent pas l'entrée REAL-1. Aucun
+PostgreSQL réel, build ou ressource n'est utilisé dans ce développement.
+
 ## Actualisation EXEC-2 - 9 novembre 2026
 
 [EXEC-2](EXEC-2.md) ajoute sql_backend.py, son observateur et offline_dbapi.py,

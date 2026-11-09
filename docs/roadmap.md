@@ -1,6 +1,22 @@
 # Industrial Predict AI - Roadmap
 
-## P101 EXEC-2 - préparation de la persistance isolée
+## P101 REAL-1 - première campagne sous approbation explicite
+
+Préparé hors ligne : extension RW du canal TLS INFRA-3, paramètres liés et JSON,
+entrée gardée au noyau existant, rôle P101 séparé et registre dédié. FIX1 laisse
+l'exécution réelle fermée faute de provenance Docker authentifiée distincte de la
+readiness signée. Le contrôle de vacuité refuse maintenant toute RLS/politique,
+vérifie le catalogue sous verrou et exige un rôle sans SUPERUSER/BYPASSRLS.
+Ces changements sont testés hors ligne seulement ; aucune preuve PostgreSQL réelle.
+
+Restent à fournir et qualifier : collecteur Docker authentifié avec provenance liée
+à la campagne/ressources/observations, image/lock/wheels Linux reproductibles, RepoDigest
+PG et version effective, ressources neuves, non-chevauchement des routes (sous-réseau
+candidat non approuvé), registre durable, baseline catalogue, certificats et clés
+administrés, signatures humaines. Aucune opération réelle dans ce lot ; la
+visibilité Angular DEV reste ultérieure. [REAL-1](../tests/p101_postgres_qualification/REAL-1.md).
+
+### P101 EXEC-2 — livraison historique
 
 Implémenté hors ligne : backend SQL réutilisant le noyau EXEC-1, transactions
 explicites, SQL figé des 14 révisions, insertion/relecture de fixtures et paire

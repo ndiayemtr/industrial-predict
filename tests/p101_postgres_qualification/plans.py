@@ -152,10 +152,12 @@ def review_catalogue_declaration(catalogue, *, expected_sha256):
     """
     b2b.digest(expected_sha256)
     b2b.require(type(catalogue) is dict and set(catalogue) == {'revision', 'columns',
-        'constraints', 'indexes', 'functions', 'triggers', 'sequences', 'ownership', 'acl'})
+        'constraints', 'indexes', 'functions', 'triggers', 'sequences', 'ownership', 'acl', 'rls'})
     b2b.require(catalogue['revision'] == 'p101_0001_operations')
-    for section in ('columns', 'constraints', 'indexes', 'functions', 'triggers', 'sequences', 'ownership', 'acl'):
+    for section in ('columns', 'constraints', 'indexes', 'functions', 'triggers', 'sequences', 'ownership', 'acl', 'rls'):
         b2b.require(type(catalogue[section]) is list and catalogue[section])
+    from p101_postgres_qualification.privileges import review_rls
+    review_rls(catalogue['rls'])
     constraints = catalogue['constraints']
     b2b.require(all(type(row) is dict and type(row.get('name')) is str for row in constraints))
     for name, kind in P101_CONSTRAINTS.items():

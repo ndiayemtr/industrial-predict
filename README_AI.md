@@ -31,7 +31,30 @@ Construire une plateforme professionnelle permettant notamment :
 - recommandations de maintenance prédictive
 - historique des recommandations
 
-## P101 - préparation de qualification PostgreSQL, EXEC-2
+## P101 - première qualification PostgreSQL sous garde, REAL-1
+
+Base locale du lot REAL-1 : `feature/auth-b2b-identity-access`, HEAD
+`f2620aa022a4aa8d215208018b2b2886b1bcd217` (EXEC-2 publié selon le contexte).
+REAL-1 prépare une entrée `execute_approved` au même noyau EXEC-1 et au backend
+EXEC-2. Le transport RW capture le certificat sur la même SSLSocket SQL et envoie
+des paramètres liés. FIX1 maintient cependant l'exécution réelle fermée : le
+collecteur Docker existant produit `unverified_external`, sans provenance
+authentifiée distincte du signataire readiness. Une déclaration signée ne prouve
+pas l'état observé et n'autorise aucune socket.
+
+Le rôle P101 est distinct du runtime B2B ; aucun élargissement de ce dernier.
+Un profil P101 séparé autorise uniquement le volume neuf du registre dans le
+runner RO. L'ancien `run_live`, le writer métier et Angular restent inchangés.
+Le catalogue refuse maintenant RLS active/forcée ou toute politique, puis
+requalifie le writer sans SUPERUSER/BYPASSRLS sous verrou avant les comptages.
+Les ressources, routes, baseline RLS/catalogue, certificats, artefacts Linux et
+autorisations humaines restent à fournir. Aucun PostgreSQL réel testé.
+[Parcours REAL-1](tests/p101_postgres_qualification/REAL-1.md). Validation antérieure :
+138 tests ciblés, puis 3 CLI et 5 artefacts/CLI ; la campagne FIX1 regroupe 105
+tests réussis, uniquement hors ligne. Aucun résultat ne qualifie PostgreSQL ni
+une provenance Docker réelle.
+
+### Référence historique EXEC-2
 
 Au 9 novembre 2026, la branche `feature/auth-b2b-identity-access` est à
 `542ba381c55793f3b9de86a33c18b96ebc9ec4af` (EXEC-1). EXEC-2 ajoute, sans commit,

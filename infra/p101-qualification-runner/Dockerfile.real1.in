@@ -1,0 +1,15 @@
+# TEMPLATE ONLY: no approved base or complete artifact lock has been supplied.
+FROM @APPROVED_LINUX_AMD64_BASE_PYTHON_3_12_10_PSQL_17_10_BY_DIGEST@
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/qualification/backend:/opt/qualification/tests
+WORKDIR /opt/qualification
+COPY requirements.lock /opt/qualification/requirements.lock
+COPY wheels/ /opt/wheels/
+RUN python -m pip install --no-index --no-deps --require-hashes --find-links=/opt/wheels -r requirements.lock
+# Public trust anchor only; no private key or password is embedded in this image.
+COPY --chmod=0444 trusted-keys.json /etc/p101-qualification/trusted-keys.json
+COPY backend/ /opt/qualification/backend/
+COPY tests/ /opt/qualification/tests/
+COPY infra/p101-qualification-runner/ /opt/qualification/infra/p101-qualification-runner/
+USER 10001:10001
+ENTRYPOINT ["python", "-B", "-m", "p101_postgres_qualification.operator"]
+CMD ["describe"]

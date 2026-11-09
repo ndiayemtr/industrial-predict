@@ -7,9 +7,9 @@ Projet en développement actif.
 ## Branche actuelle
 
 Contrôle local du 9 novembre 2026 : `feature/auth-b2b-identity-access`, HEAD
-`542ba381c55793f3b9de86a33c18b96ebc9ec4af` (EXEC-1), dépôt et index propres avant
-EXEC-2. Le contexte utilisateur indique EXEC-1 publié ; aucun accès distant dans
-ce lot. EXEC-2 est en développement hors ligne, sans commit ni publication.
+`f2620aa022a4aa8d215208018b2b2886b1bcd217` (EXEC-2), dépôt et index propres avant
+REAL-1. Le contexte utilisateur indique EXEC-1/EXEC-2 publiés ; aucun accès distant
+dans ce lot. REAL-1 est développé hors ligne, sans commit ni publication.
 
 ### Référence historique UI 9.7 - 25 octobre 2026
 
@@ -23,7 +23,36 @@ commité. UI 9.1 déjà dans main, non recomptée. UI 9.7 prépare sept document
 
 À mettre à jour à chaque changement de branche.
 
-## P101 - qualification PostgreSQL isolée EXEC-2
+## P101 - première exécution sous garde REAL-1
+
+Le même noyau et backend préparent une entrée execute_approved. Extension RW du
+protocole INFRA-3 : certificat du même canal SQL, SCRAM signé, paramètres Parse/Bind,
+résultats JSON et erreurs transactionnelles. FIX1 garde l'entrée réelle fermée :
+le collecteur Docker ne produit pas de provenance authentifiée distincte de la
+readiness signée, et une déclaration signée ne prouve pas l'état observé. Le rôle
+d'écriture P101 est séparé du runtime B2B. Le parcours SQL préparé prévoit verrous,
+vérification RLS et du rôle non-superuser/non-BYPASSRLS avant vacuité, paire atomique
+et relecture indépendante ; ces contrôles ne sont pas encore qualifiés sur PostgreSQL.
+
+Le profil P101 de runner exige un second volume neuf, uniquement pour le registre
+anti-rejeu : le profil B2B sans mount est conservé. run_live historique et writer
+métier restent fermés. FIX1 ajoute le contrôle des drapeaux et politiques RLS,
+et refuse tout rôle SUPERUSER/BYPASSRLS avant de compter les lignes. Aucun
+Docker/PostgreSQL, build, provisionnement ou migration réelle dans ce lot. La
+provenance Docker authentifiée, ressources/artefacts, route approuvée, baseline
+RLS/catalogue, TLS de campagne et consentements restent à fournir.
+[REAL-1](../tests/p101_postgres_qualification/REAL-1.md) donne les commandes
+proposées, formats et limites ; aucune qualification PostgreSQL réelle n'est annoncée.
+
+Validation REAL-1 : 138 tests ciblés réussis en 196,80 s, puis 3 tests CLI réussis
+en 6,41 s après refus explicite du repli getpass avec écho ; contrôle final
+artefacts/CLI : 5 tests réussis en 5,61 s, après lecture/hachage/analyse d'une
+unique capture du manifeste. Réseau, processus et
+serveurs réels interdits dans les tests ; les résultats ne qualifient pas PostgreSQL.
+Validation FIX1 : 105 tests ciblés regroupés réussis en 76,11 s sur les régressions
+REAL-1 et backend SQL ; uniquement hors ligne, sans Docker/PostgreSQL réel.
+
+### Référence historique EXEC-2
 
 EXEC-2 raccorde au noyau EXEC-1 un backend de commandes DB-API et un observateur :
 transactions explicites SERIALIZABLE RW / REPEATABLE READ RO, migrations compilées

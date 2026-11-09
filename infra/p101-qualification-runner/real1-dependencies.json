@@ -1,0 +1,15 @@
+{
+  "format": "p101-real1-dependency-references-v1",
+  "extends": "exec2-dependencies.json",
+  "build_enabled": false,
+  "execution_default_enabled": false,
+  "transport": "stdlib socket/ssl/struct + published INFRA-3 SCRAM",
+  "additional_python_packages": {},
+  "artifact_lock_format": "p101-real1-artifacts-v1",
+  "artifact_lock": null,
+  "blockers": [
+    "approved_linux_base_digest_and_complete_wheelhouse_not_supplied",
+    "reproduction_and_artifact_runtime_review_not_performed",
+    "fresh_campaign_and_signed_readiness_not_supplied"
+  ]
+}

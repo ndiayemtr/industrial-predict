@@ -34,7 +34,9 @@ def catalog_data():
         definition='synthetic') for name in plans.P101_TRIGGERS]
     return dict(revision='p101_0001_operations', constraints=constraints, functions=functions,
         triggers=triggers, **{name: [dict(synthetic=True)]
-            for name in ('columns', 'indexes', 'sequences', 'ownership', 'acl')})
+            for name in ('columns', 'indexes', 'sequences', 'ownership', 'acl')},
+        rls=[dict(table_name=name, row_security=False, force_row_security=False, policies=[])
+            for name in db.TABLES])
 
 
 def script_catalog(raw, cat):
@@ -50,7 +52,8 @@ def script_catalog(raw, cat):
         tgenabled=row['enabled'], tgdeferrable=row['deferrable'], tginitdeferred=row['deferred'],
         definition=row['definition']) for row in cat['triggers'])))
     for name, sql in (('columns', db.COLUMNS_SQL), ('indexes', db.INDEXES_SQL),
-                      ('sequences', db.SEQUENCES_SQL), ('ownership', db.OWNERS_SQL), ('acl', db.ACL_SQL)):
+                      ('sequences', db.SEQUENCES_SQL), ('ownership', db.OWNERS_SQL), ('acl', db.ACL_SQL),
+                      ('rls', db.RLS_SQL)):
         raw.add(sql, None, Response(tuple(cat[name])))
 
 

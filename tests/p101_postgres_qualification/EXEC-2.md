@@ -1,5 +1,11 @@
 # P101-DEV-3D-EXEC-2 — commandes SQL et observateur, hors ligne
 
+Évolution [REAL-1](REAL-1.md) : le backend admet désormais un connecteur de protocole
+RW/TLS explicitement gardé, au sein du même noyau. run_simulated reste hors réseau,
+run_live reste fermé ; ce dossier décrit la livraison EXEC-2 historique. Les
+blocages de transport RW et de profil writer ont leur implémentation dans REAL-1,
+sans qualification PostgreSQL réelle ni artefacts de campagne fournis.
+
 Base locale contrôlée : branche `feature/auth-b2b-identity-access`, HEAD
 `542ba381c55793f3b9de86a33c18b96ebc9ec4af` (EXEC-1 publié selon le contexte).
 Dépôt et index propres avant développement. Aucun contrôle distant dans ce lot.

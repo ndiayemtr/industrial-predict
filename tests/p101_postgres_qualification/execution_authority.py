@@ -9,11 +9,26 @@ from datetime import datetime, timedelta
 from hashlib import sha256
 from importlib.metadata import version
 import json
+import os
 from pathlib import Path
 
 from b2b_postgres_qualification import authority as existing, validation as v
 from b2b_postgres_qualification.contracts import Offline
 from b2b_postgres_qualification.durable import _exclusive, _present, _approval_lock
+
+STATUSES = ('refused', 'simulated_commit_confirmed', 'uncertain', 'simulated_rollback_confirmed',
+    'simulated_commit_verification_failed', 'commit_confirmed', 'rollback_confirmed', 'commit_verification_failed')
+
+
+def _sync_directory(root):
+    # Linux live runner: persist exclusive claim/outcome directory entries as well
+    # as file contents. Windows simulations retain their existing semantics.
+    if os.name == 'posix':
+        fd = os.open(root, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0) | getattr(os, 'O_NOFOLLOW', 0))
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -101,20 +116,21 @@ class ReplayReservations(Offline):
             # another approval, including if this write fails or its ack is lost.
             _exclusive(claim, json.dumps(dict(envelope=envelope_sha256,
                 approval_id=intent.approval_id), sort_keys=True).encode('ascii'))
+            _sync_directory(self._root)
 
     @v.guarded
     def finish(self, intent, *, envelope_sha256, status, evidence_sha256):
         claim = self._claim(intent.campaign_sha256, intent.operation)
         v.digest(envelope_sha256)
         v.digest(evidence_sha256)
-        v.require(status in ('refused', 'simulated_commit_confirmed', 'uncertain',
-            'simulated_rollback_confirmed', 'simulated_commit_verification_failed'))
+        v.require(status in STATUSES)
         with _approval_lock(claim):
             v.require(claim.is_file() and not claim.is_symlink() and not claim.is_junction())
             record = json.loads(claim.read_text(encoding='ascii'))
             v.require(record == dict(envelope=envelope_sha256, approval_id=intent.approval_id))
             _exclusive(claim.with_suffix('.outcome'), json.dumps(dict(status=status,
                 evidence_sha256=evidence_sha256), sort_keys=True).encode('ascii'))
+            _sync_directory(self._root)
 
     @v.guarded
     def inspect(self, campaign_sha256, operation):
@@ -129,6 +145,5 @@ class ReplayReservations(Offline):
             value = json.loads(outcome.read_text(encoding='ascii'))
             v.require(type(value) is dict and set(value) == {'status', 'evidence_sha256'})
             v.digest(value['evidence_sha256'])
-            v.require(value['status'] in ('refused', 'simulated_commit_confirmed', 'uncertain',
-                'simulated_rollback_confirmed', 'simulated_commit_verification_failed'))
+            v.require(value['status'] in STATUSES)
             return value['status']

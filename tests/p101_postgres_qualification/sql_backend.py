@@ -1,7 +1,7 @@
 """Concrete DB-API PostgreSQL commands for the existing EXEC-1 kernel.
 
-There is NO qualified live connector: the only admitted connection implementation
-is the non-network script double. This is SQL implementation, not SQL qualification.
+REAL-1 adds an explicitly authorized same-channel TLS connector. The default
+simulation entry still only accepts non-network doubles. No server qualification.
 """
 
 from copy import deepcopy
@@ -16,6 +16,8 @@ from b2b_postgres_qualification import collectors, evidence, validation as v
 from b2b_postgres_qualification.contracts import Offline, ExecutionDisabled, Observation, deny
 from p101_postgres_qualification import compiler, plans, scenario
 from p101_postgres_qualification.offline_dbapi import OfflineChannelPool, ScriptedConnection
+from p101_postgres_qualification.wire_transport import LiveConnector, WireConnection
+from p101_postgres_qualification import privileges
 
 
 BEGIN_RW = 'BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ WRITE'
@@ -28,6 +30,8 @@ TABLES = ('companies', 'sites', 'equipments', 'sensors', 'measurements', 'mainte
 BUSINESS_SQL = 'SELECT ' + ','.join(f'(SELECT count(*) FROM public.{name}) AS {name}' for name in TABLES)
 SEED_SELECTS = {table: f'SELECT row_to_json(t) AS record FROM public.{table} t WHERE id=%s FOR SHARE'
     for table in TABLES[:5]}
+LIVE_LOCK = 'LOCK TABLE ' + ','.join('public.' + name for name in TABLES) + ' IN SHARE ROW EXCLUSIVE MODE'
+LIVE_FUNCTIONS_SQL = plans.FUNCTIONS_SQL.replace('p.proconfig,', 'to_json(p.proconfig) AS proconfig,')
 COLUMNS_SQL = """SELECT c.relname AS table_name,a.attname AS name,
  format_type(a.atttypid,a.atttypmod) AS type,NOT a.attnotnull AS nullable,
  pg_get_expr(d.adbin,d.adrelid) AS default,a.attidentity AS identity,a.attgenerated AS generated
@@ -49,6 +53,17 @@ ACL_SQL = """SELECT 'relation' AS kind,c.relname AS name,COALESCE(c.relacl::text
  UNION ALL SELECT 'database',datname,COALESCE(datacl::text,'') FROM pg_database WHERE datname=current_database()
  UNION ALL SELECT 'function',p.proname,COALESCE(p.proacl::text,'') FROM pg_proc p
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' ORDER BY kind,name"""
+RLS_SQL = """SELECT c.relname AS table_name,c.relrowsecurity AS row_security,
+ c.relforcerowsecurity AS force_row_security,
+ COALESCE((SELECT json_agg(json_build_object('name',p.polname,'permissive',p.polpermissive,
+   'command',p.polcmd,'roles',(SELECT json_agg(CASE role_oid WHEN 0 THEN 'PUBLIC'
+      ELSE pg_get_userbyid(role_oid) END ORDER BY role_oid)
+      FROM unnest(p.polroles) AS assigned(role_oid)),
+   'using',pg_get_expr(p.polqual,p.polrelid),
+   'with_check',pg_get_expr(p.polwithcheck,p.polrelid)) ORDER BY p.polname)
+   FROM pg_policy p WHERE p.polrelid=c.oid),'[]'::json) AS policies
+ FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname='public' AND c.relkind IN ('r','p') ORDER BY c.relname"""
 
 
 class SqlFailure(Exception):
@@ -89,6 +104,7 @@ class SqlSession(Offline):
         self.revision_index, self.seed_index, self.body_index = 0, 0, 0
         self.values, self.seed_steps, self.seed_rows = {}, [], []
         self.operation, self.body, self.locked, self.ready = None, (), False, False
+        self.profiles_installed = False
 
 
 class PostgresBackend(Offline):
@@ -96,19 +112,28 @@ class PostgresBackend(Offline):
     def __init__(self, campaign, policy, *, expected_campaign, resources, release, operation, connector, clock):
         plans.require_campaign(campaign, expected_campaign)
         evidence._policy(campaign, policy)
-        v.require(type(connector) is OfflineChannelPool and callable(clock))
+        v.require(type(connector) in (OfflineChannelPool, LiveConnector) and callable(clock))
         v.require(operation in ('migrate', 'first-pair') and plans.exact_equal(release, compiler.compile_release()))
         self.campaign, self.policy, self.resources = campaign, policy, deepcopy(resources)
         self.release, self.operation, self.connector, self.clock = release, operation, connector, clock
         self.sessions = []
         self.expected_operation = None
+        self.live = type(connector) is LiveConnector
+        if self.live:
+            v.require(plans.exact_equal(connector.guard.executor.campaign, campaign)
+                and connector.guard.intent.operation == operation)
+        self.writer_role = campaign.roles[1] if operation == 'migrate' else campaign.database + '_p101_writer' if self.live else campaign.roles[2]
 
     def engine_inventory(self):
-        return deepcopy(self.resources)  # Injected offline inventory, not live Docker evidence.
+        if self.live:
+            # Configuration supplied to this backend is not a fresh Docker
+            # observation and must never be presented as one to the live path.
+            deny(ExecutionDisabled)
+        return deepcopy(self.resources)
 
     def _own(self, session):
         v.require(type(session) is SqlSession and session.owner is self and not session.closed
-            and type(session.raw) is ScriptedConnection and session.raw is session.physical
+            and type(session.raw) is (WireConnection if self.live else ScriptedConnection) and session.raw is session.physical
             and session.raw.socket is session.socket and session.pid == session.raw.info.backend_pid)
 
     def _call(self, session, sql, params=None, *, rows=False, limit=2, affected=None, expected_tag=None):
@@ -146,15 +171,15 @@ class PostgresBackend(Offline):
 
     @v.guarded
     def open(self, role, readonly):
-        v.require(type(self.connector) is OfflineChannelPool and type(readonly) is bool)
-        allowed = self.campaign.roles[3] if readonly else self.campaign.roles[1 if self.operation == 'migrate' else 2]
+        v.require(type(self.connector) is (LiveConnector if self.live else OfflineChannelPool) and type(readonly) is bool)
+        allowed = self.campaign.roles[3] if readonly else self.writer_role
         v.require(role == allowed)
-        raw = self.connector.open()
+        raw = self.connector.open(role, readonly) if self.live else self.connector.open()
         # Reusing the same physical DB-API object is refused before closing or querying it.
         v.require(not any(session.raw is raw for session in self.sessions))
         session = None
         try:
-            v.require(type(raw) is ScriptedConnection and raw.autocommit is True and not raw.closed
+            v.require(type(raw) is (WireConnection if self.live else ScriptedConnection) and raw.autocommit is True and not raw.closed
                 and not raw.broken and raw.info.transaction_status == TS.IDLE
                 and type(raw.info.backend_pid) is int and raw.info.backend_pid > 0)
             session = SqlSession(self, raw, role, readonly)
@@ -170,6 +195,10 @@ class PostgresBackend(Offline):
     def binding(self, session):
         self._own(session)
         raw = session.raw
+        if self.live:
+            binding = self.connector.binding(raw)
+            return collectors.TlsBinding(session, binding.socket_id, binding.driver_verified,
+                binding.auth_method, binding.verified_host, binding.certificate_der, binding.intermediates_der)
         v.require(raw.tls_verified is True and raw.auth_method == 'scram-sha-256'
             and raw.verified_host == self.campaign.host and raw.socket.fileno() > 0)
         certificate = raw.socket.getpeercert(binary_form=True)
@@ -198,6 +227,10 @@ class PostgresBackend(Offline):
             cluster=c.cluster_name, instance=c.instance_id, dev_marker=None,
             read_only='on' if session.readonly else 'off', pid=session.pid, elevated=False)
         v.require(plans.exact_equal(row, expected))
+        if self.live:
+            profiles = self._call(session, privileges.SQL, rows=True)
+            v.require(len(profiles) == 1)
+            privileges.review(profiles[0], kind='observer' if session.readonly else 'migrator' if self.operation == 'migrate' else 'writer')
         return row
 
     def begin(self, session):
@@ -207,6 +240,9 @@ class PostgresBackend(Offline):
         session.state = 'active'
         for sql in SET_TIMEOUTS:
             self._call(session, sql)
+        if self.live and not session.readonly and self.operation == 'first-pair':
+            # Must precede the first SELECT establishing a SERIALIZABLE snapshot.
+            self._call(session, LIVE_LOCK)
         rows = self._call(session, TRANSACTION_SQL, rows=True)
         expected = dict(isolation='repeatable read' if session.readonly else 'serializable',
             read_only='on' if session.readonly else 'off', pid=session.pid)
@@ -238,7 +274,7 @@ class PostgresBackend(Offline):
         revision = self._call(session, collectors.REVISION_SQL, rows=True)
         v.require(len(revision) == 1 and set(revision[0]) == {'version_num'})
         constraints = self._call(session, plans.CATALOG_SQL, rows=True, limit=512)
-        functions = self._call(session, plans.FUNCTIONS_SQL, rows=True, limit=128)
+        functions = self._call(session, LIVE_FUNCTIONS_SQL if self.live else plans.FUNCTIONS_SQL, rows=True, limit=128)
         triggers = self._call(session, plans.TRIGGERS_SQL, rows=True, limit=128)
         normalized = dict(revision=revision[0]['version_num'], constraints=[dict(schema=row['schema_name'],
             table=row['relname'], name=row['conname'], type=row['contype'], validated=row['convalidated'],
@@ -248,14 +284,37 @@ class PostgresBackend(Offline):
                 config=row['proconfig'], definition=row['definition']) for row in functions],
             triggers=[dict(table=row['relname'], name=row['tgname'], enabled=row['tgenabled'],
                 deferrable=row['tgdeferrable'], deferred=row['tginitdeferred'], definition=row['definition']) for row in triggers])
+        rls = self._call(session, RLS_SQL, rows=True, limit=1024)
+        privileges.review_rls(rls)
+        normalized['rls'] = rls
         for name, sql in (('columns', COLUMNS_SQL), ('indexes', INDEXES_SQL), ('sequences', SEQUENCES_SQL),
                           ('ownership', OWNERS_SQL), ('acl', ACL_SQL)):
             normalized[name] = self._call(session, sql, rows=True, limit=1024)
         return normalized
 
+    def install_profiles(self, session):
+        self._own(session)
+        v.require(self.live and self.operation == 'migrate' and session.state == 'active'
+            and not session.readonly and session.revision_index == 14 and not session.profiles_installed)
+        self.connector.guard.check()
+        # The schema USAGE grant is an admin bootstrap prerequisite. Object owners
+        # can grant this exact profile, explicitly covered by the signed program.
+        for sql in privileges.grant_plan(self.campaign)[1:]:
+            self._call(session, sql)
+        session.profiles_installed = True
+
     def business_empty(self, session):
         v.require(self.operation == 'first-pair' and session.state == 'active' and not session.readonly)
-        self._call(session, LOCK_SOURCES)
+        if not self.live:
+            self._call(session, LOCK_SOURCES)
+        else:
+            # The writer has no BYPASSRLS and owns none of the business tables.
+            # Recheck its effective role and all table policies under the table
+            # locks before treating ordinary COUNT(*) as an emptiness proof.
+            profiles = self._call(session, privileges.SQL, rows=True)
+            v.require(len(profiles) == 1)
+            privileges.review(profiles[0], kind='writer')
+        privileges.review_rls(self._call(session, RLS_SQL, rows=True, limit=1024))
         rows = self._call(session, BUSINESS_SQL, rows=True)
         empty = len(rows) == 1 and plans.exact_equal(rows[0], dict.fromkeys(TABLES, 0))
         session.locked = empty
@@ -297,7 +356,8 @@ class PostgresBackend(Offline):
             table = step.sql.split('public.', 1)[1].split(' ', 1)[0]
             columns = step.sql.split('(', 1)[1].split(')', 1)[0].split(',')
             expected = dict(zip(columns, step.parameters)) | {'id': identifier}
-            rows = self._call(session, SEED_SELECTS[table], (identifier,), rows=True)
+            query = SEED_SELECTS[table].removesuffix(' FOR SHARE') if self.live else SEED_SELECTS[table]
+            rows = self._call(session, query, (identifier,), rows=True)
             v.require(len(rows) == 1 and set(rows[0]) == {'record'} and type(rows[0]['record']) is dict)
             actual = deepcopy(rows[0]['record'])
             for name, value in expected.items():
@@ -342,6 +402,7 @@ class PostgresBackend(Offline):
         self._own(session)
         v.require(not session.readonly and session.state == 'active' and session.raw.info.transaction_status == TS.INTRANS
             and (session.revision_index == 14 if self.operation == 'migrate' else session.ready))
+        v.require(not self.live or self.operation != 'migrate' or session.profiles_installed)
         session.state = 'committing'  # Set BEFORE the one and only send.
         failure = None
         try:

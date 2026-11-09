@@ -1,6 +1,30 @@
 # Architecture - Industrial Predict AI
 
-## Qualification isolée P101 EXEC-2
+## Première campagne P101 REAL-1
+
+Le chemin reste CampaignExecutor → PostgresBackend. Une entrée dédiée
+execute_approved valide l'Intent Ed25519 existant, une readiness distincte et ses
+prérequis, réserve l'opération avant réseau et arme LiveConnector pour ce seul
+parcours. L'ancienne entrée run_live reste interdite. Le protocole RW réutilise
+les primitives TLS/SCRAM INFRA-3 sur la même SSLSocket ; valeurs liées via le
+protocole étendu, aucune seconde sonde TLS et aucun contournement psycopg.
+
+Le rôle `<database>_p101_writer` est propre à la campagne ; les profils B2B ne sont
+pas modifiés. Quatre GRANT fixes et signés sont exécutés après les 14 révisions
+dans leur transaction, sans rôle créé par l'exécuteur. Contrôle des droits effectifs,
+verrous avant snapshot, contraintes différées forcées, COMMIT unique de la paire,
+puis observation physique/PID distincte et comparaison complète restent au même
+endroit dans le noyau. Un acquittement incertain ne déclenche aucune nouvelle tentative.
+
+Un précontrôle P101 distinct lit l'Engine sur l'hôte, puis est revu/signé avant
+transfert au runner. Il exige un volume neuf de registre en plus du volume PG,
+permettant le ledger durable malgré la racine RO, sans socket Docker ni mount DEV.
+La readiness protège les déclarations approuvées ; elle ne prouve pas les routes
+ni les effets d'une panne électrique. Ceux-ci restent à qualifier indépendamment.
+Voir [REAL-1](../tests/p101_postgres_qualification/REAL-1.md) pour le contrat des
+artefacts, la racine publique immuable et les étapes opérateur. Aucun essai serveur.
+
+### Qualification isolée P101 EXEC-2 — livraison historique
 
 La chaîne de qualification reste distincte de l'application : CampaignExecutor
 EXEC-1 → PostgresBackend → commandes DB-API figées. Seul OfflineChannelPool est
@@ -770,11 +794,15 @@ associations et empreintes, avec objets session/socket et PID distincts dans le
 simulateur. Ces doubles ne prouvent pas une indépendance PostgreSQL réelle.
 
 `run_live`, les entrées RUNNER-1, les gardes Alembic et le writer métier restent
-fermés. Le modèle `p101_prediction_operations` et le SQL compilé ne prouvent pas
+fermés. REAL-1 refuse aussi `execute-approved` tant que le collecteur Docker ne
+fournit pas une provenance authentifiée distincte de la readiness signée. Le
+catalogue vérifie les drapeaux/politiques RLS et le rôle de comptage sans
+SUPERUSER/BYPASSRLS avant toute preuve de vacuité. Ces contrôles ne sont testés
+que hors ligne. Le modèle `p101_prediction_operations` et le SQL compilé ne prouvent pas
 que la table est installée. Le runner n'est pas qualifié sur PostgreSQL réel.
 Aucun environnement DEV, P101 historique ou OIDC n'est modifié.
 
-Avant activation : artefacts immuables et lock transitif, consentement humain et
+Avant activation : collecteur Docker authentifié lié à ses observations, artefacts immuables et lock transitif, consentement humain et
 racines de confiance administrées, stockage local avec ACL/reprise qualifiées,
 inventaire frais, backend RW avec certificat sur sa propre session TLS/SCRAM,
 catalogue/ACL normalisés et approuvés, verrouillage des sources et observateur

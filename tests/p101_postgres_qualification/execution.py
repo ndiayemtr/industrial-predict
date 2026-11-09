@@ -1,8 +1,9 @@
 """EXEC-1 kernel reused by EXEC-2's concrete SQL commands on sealed doubles.
 
 Compilation, crypto authorization, replay files and transaction algorithms are
-implemented. No qualified same-channel live connector exists: run_live
-refuses BEFORE touching supplied objects. No default network or CLI activation.
+implemented. REAL-1 prepares execute_approved, but LiveGuard refuses real execution
+until authenticated Docker collection provenance is available. run_live still
+refuses before touching supplied objects. No default network.
 """
 
 from copy import deepcopy
@@ -18,22 +19,25 @@ from p101_postgres_qualification import compiler, plans, scenario, runner
 from p101_postgres_qualification.execution_authority import Intent, ReplayReservations, verify_signature
 from p101_postgres_qualification.simulated_backend import SimulatedBackend
 from p101_postgres_qualification.sql_backend import PostgresBackend, CommitRejected
+from p101_postgres_qualification.wire_transport import LiveConnector
 
 
 EXECUTION_SOURCES = tuple('tests/p101_postgres_qualification/' + name for name in
     ('compiler.py', 'execution_authority.py', 'simulated_backend.py', 'execution.py',
-     'sql_backend.py', 'offline_dbapi.py')) + (
+     'sql_backend.py', 'offline_dbapi.py', 'wire_transport.py', 'live_authority.py',
+     'privileges.py', 'resources.py', 'operator.py')) + (
     'tests/b2b_postgres_qualification/authority.py', 'tests/b2b_postgres_qualification/durable.py',
     'infra/p101-qualification-runner/exec1-dependencies.json',
-    'infra/p101-qualification-runner/exec2-dependencies.json')
+    'infra/p101-qualification-runner/exec2-dependencies.json',
+    'infra/p101-qualification-runner/real1-dependencies.json')
 
 
-def resource_inventory(campaign, policy, *, runner_image_id):
+def resource_inventory(campaign, policy, *, runner_image_id, registry=None):
     """Expected normalized inventory, not Docker discovery or approval."""
     v.validate_campaign(campaign)
     evidence._policy(campaign, policy)
     v.digest(runner_image_id)
-    return dict(context=policy.context_name, endpoint_sha256=policy.endpoint_sha256,
+    result = dict(context=policy.context_name, endpoint_sha256=policy.endpoint_sha256,
         engine_id=campaign.engine_id, postgres_id=campaign.container_id, runner_id=campaign.runner_id,
         postgres_image_id=policy.image_id_sha256, postgres_repo_digest=campaign.image_sha256,
         runner_image_id=runner_image_id, network_id=campaign.network_id, network=campaign.network_name,
@@ -42,6 +46,17 @@ def resource_inventory(campaign, policy, *, runner_image_id):
         volume=campaign.volume_name, volume_created_at=policy.volume_created_at.isoformat(),
         privileged=False, readonly_roots=True, restart='no', extra_mounts=[],
         postgres_memory=1073741824, runner_memory=536870912, nano_cpus=1000000000)
+    if registry is not None:
+        v.require(type(registry) is dict and set(registry) == {'volume', 'created_at', 'mount_target'})
+        from datetime import datetime
+        created = datetime.fromisoformat(registry['created_at'])
+        v.utc(created)
+        v.require(registry['volume'] == campaign.database + '_exec_registry'
+            and registry['mount_target'] == '/var/lib/p101-qualification'
+            and registry['volume'] != campaign.volume_name)
+        result['registry'] = deepcopy(registry)
+        result['extra_mounts'] = [dict(type='volume', name=registry['volume'], destination=registry['mount_target'], rw=True)]
+    return result
 
 
 def _program_digest():
@@ -74,7 +89,7 @@ class CampaignExecutor(Offline):
         v.require(type(reservations) is ReplayReservations and callable(clock))
         v.require(type(resources) is dict and resources.get('engine_id') == campaign.engine_id)
         v.require(plans.exact_equal(resources, resource_inventory(campaign, policy,
-            runner_image_id=resources.get('runner_image_id'))))
+            runner_image_id=resources.get('runner_image_id'), registry=resources.get('registry'))))
         v.digest(catalogue_sha256)
         self.campaign, self.policy = campaign, policy
         self.resources, self.keys = deepcopy(resources), trusted_keys
@@ -130,20 +145,40 @@ class CampaignExecutor(Offline):
     def run_simulated(self, backend, intent, signature):
         # No callback/protocol object can smuggle a live SQL sink into this API.
         v.require(type(backend) in (SimulatedBackend, PostgresBackend) and type(intent) is Intent)
+        v.require(type(backend) is SimulatedBackend or backend.live is False)
+        return self._execute(backend, intent, signature, live=False)
+
+    @v.guarded
+    def execute_approved(self, guard, *, credentials):
+        """Explicit REAL-1 entry. No bool/DSN can replace the two signed envelopes."""
+        from p101_postgres_qualification.live_authority import LiveGuard
+        v.require(type(guard) is LiveGuard and guard.executor is self)
+        guard.check()
+        connector = LiveConnector(guard, credentials)
+        backend = PostgresBackend(self.campaign, self.policy, expected_campaign=self.campaign,
+            resources=self.resources, release=compiler.compile_release(), operation=guard.intent.operation,
+            connector=connector, clock=self.clock)
+        # _execute verifies approval and reserves before arming/opening any socket.
+        return self._execute(backend, guard.intent, guard.signature, live=True)
+
+    def _execute(self, backend, intent, signature, *, live):
         expected = self.expected_bindings(intent.operation)
         envelope = verify_signature(intent, signature, trusted_keys=self.keys,
             now=self.clock(), expected=expected)
-        v.require(plans.exact_equal(backend.engine_inventory(), self.resources))
+        if not live:
+            v.require(plans.exact_equal(backend.engine_inventory(), self.resources))
         v.require(plans.exact_equal(backend.campaign, self.campaign))
         release = compiler.compile_release()
         v.require(plans.exact_equal(release, backend.release))
         # The claim is immutable and precedes ALL SQL/session actions, not only COMMIT.
         self.reservations.reserve(intent, envelope_sha256=envelope)
+        if live:
+            backend.connector._armed = True
         writer, reader, commit_status = None, None, 'not_attempted'
         status, cleanup_failed, recording_failed = 'refused', False, False
         operation, transaction_started = None, False
         deadline = monotonic() + 30
-        role = self.campaign.roles[1 if intent.operation == 'migrate' else 2]
+        role = backend.writer_role if type(backend) is PostgresBackend else self.campaign.roles[1 if intent.operation == 'migrate' else 2]
         try:
             writer = backend.open(role, False)
             self._identity(backend, writer, role, False)
@@ -157,6 +192,8 @@ class CampaignExecutor(Offline):
                 for revision in release.revisions:
                     v.require(monotonic() < deadline)
                     backend.apply_revision(writer, revision)
+                if live:
+                    backend.install_profiles(writer)
                 plans.review_catalogue_declaration(backend.catalogue(writer), expected_sha256=self.catalogue_sha256)
             else:
                 plans.review_catalogue_declaration(backend.catalogue(writer), expected_sha256=self.catalogue_sha256)
@@ -183,10 +220,17 @@ class CampaignExecutor(Offline):
                         v.require(type(value) is int and 0 < value <= 2147483647)
                         values[step.returns] = value
                 backend.stage_pair(writer, operation, values['prediction_id'], values['operation_id'])
-            # Recheck trust window, certificate, SQL identity and resources before commit.
+            # Recheck trust window and SQL identity before commit. The configured
+            # resource object is not a Docker observation and is never compared as
+            # proof for the live path; LiveGuard remains fail-closed without an
+            # authenticated collector.
             verify_signature(intent, signature, trusted_keys=self.keys, now=self.clock(), expected=expected)
             self._identity(backend, writer, role, False)
-            v.require(plans.exact_equal(backend.engine_inventory(), self.resources) and monotonic() < deadline)
+            if live:
+                backend.connector.guard.check()
+            else:
+                v.require(plans.exact_equal(backend.engine_inventory(), self.resources))
+            v.require(monotonic() < deadline)
             commit_status = 'uncertain'  # BEFORE sending COMMIT; no rollback can resolve lost ACK.
             backend.commit(writer)
             commit_status = 'confirmed'
@@ -228,9 +272,13 @@ class CampaignExecutor(Offline):
                         backend.close(session)
                     except Exception:
                         cleanup_failed = True
+        if live:
+            backend.connector._armed = False
+            backend.connector._credentials.clear()
+            status = status.removeprefix('simulated_')
         digest = plans.fingerprint(dict(operation=intent.operation, campaign=expected['campaign_sha256'],
             envelope=envelope, status=status, commit_status=commit_status, cleanup_failed=cleanup_failed,
-            operation_key=operation.key if operation is not None else None))
+            operation_key=operation.key if operation is not None else None, mode='live' if live else 'simulation'))
         try:
             self.reservations.finish(intent, envelope_sha256=envelope, status=status, evidence_sha256=digest)
         except Exception:
@@ -239,5 +287,5 @@ class CampaignExecutor(Offline):
             operation.key if operation is not None else None)
 
     def run_live(self, *args, **kwargs):
-        # No qualified same-channel TLS connector or operational evidence is shipped.
+        # Legacy/default entry remains closed. REAL-1 uses execute_approved only.
         deny(ExecutionDisabled)
