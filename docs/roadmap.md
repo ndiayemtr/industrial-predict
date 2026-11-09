@@ -1,5 +1,19 @@
 # Industrial Predict AI - Roadmap
 
+## P101 EXEC-2 - préparation de la persistance isolée
+
+Implémenté hors ligne : backend SQL réutilisant le noyau EXEC-1, transactions
+explicites, SQL figé des 14 révisions, insertion/relecture de fixtures et paire
+P101, contrôle d'indépendance physique/PID et absence de retry après COMMIT incertain.
+Les résultats des doubles ne constituent aucune qualification PostgreSQL.
+
+Restent bloquants : certificat DER obtenu depuis le canal writer lui-même
+(API psycopg 3.3.4 insuffisante), baseline catalogue/privilèges indépendante,
+registre anti-rejeu qualifié, inventaire isolé frais et autorisation humaine,
+artefacts de runner reproductibles. run_live reste interdit. La première opération
+réelle et sa visibilité Angular DEV restent des étapes ultérieures séparément
+autorisées. Détails : [EXEC-2](../tests/p101_postgres_qualification/EXEC-2.md).
+
 ## Phase 1 - Core Platform
 
 [x] Database

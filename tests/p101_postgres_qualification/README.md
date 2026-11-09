@@ -1,5 +1,22 @@
 # P101-DEV-3D-RUNNER-1 — préparation fermée de la première campagne
 
+## Actualisation EXEC-2 - 9 novembre 2026
+
+[EXEC-2](EXEC-2.md) ajoute sql_backend.py, son observateur et offline_dbapi.py,
+raccordés au noyau EXEC-1 existant. Les commandes SQL paramétrées et les DDL natifs
+des 14 révisions sont préparés pour DB-API, exercés uniquement sur doubles scellés.
+Relecture complète des fixtures/paire, identifiants du writer, sockets/handles/PID,
+frontières transactionnelles et COMMIT incertain sont contrôlés. Le rapport
+conserve la clé d'opération sans autoriser de retry.
+
+L'API psycopg 3.3.4 ne fournit pas le DER du pair depuis le canal SQL utilisé.
+PsycopgBoundConnector et run_live refusent donc inconditionnellement. INFRA-3 reste
+RO et inchangé. Les inventaires/canaux des tests sont synthétiques ; aucune preuve
+de persistance ou de TLS réel. La baseline catalogue/privilèges, l'autorisation
+humaine, le registre durable administré et les artefacts Linux restent à qualifier.
+Les sections EXEC-1/RUNNER-1 ci-dessous décrivent leur livraison historique ;
+l'état courant et les dépendances supplémentaires sont dans EXEC-2.md.
+
 ## Actualisation EXEC-1 - 9 novembre 2026
 
 RUNNER-1 reste la référence publiée de préparation. Le noyau

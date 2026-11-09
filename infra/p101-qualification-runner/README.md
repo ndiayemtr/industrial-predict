@@ -2,6 +2,15 @@
 
 ## État au 9 novembre 2026
 
+EXEC-2 ajoute un backend SQL et un observateur au noyau existant, utilisables
+uniquement sur doubles sans réseau. Le nouveau [dossier EXEC-2](../../tests/p101_postgres_qualification/EXEC-2.md)
+précise le blocage : psycopg 3.3.4 n'expose pas le certificat serveur sur le même
+canal SQL. Le connecteur réel et run_live restent fermés. Le manifeste
+exec2-dependencies.json fixe psycopg/psycopg-binary 3.3.4 comme références, sans
+wheels Linux ni hashes validés ; aucun build reproductible n'est revendiqué.
+Le catalogue collecté en SQL nécessite encore une baseline indépendante et une
+qualification des privilèges effectifs. Les sections suivantes rappellent EXEC-1.
+
 RUNNER-1 fournit un modèle `Dockerfile.in` volontairement non constructible et un
 dossier de dépendances. EXEC-1 ajoute un compilateur pour les **14 migrations
 reconnues**, des intentions Ed25519, un registre anti-rejeu local et un noyau
@@ -20,6 +29,8 @@ des ressources DEV, P101 historiques ou OIDC, ni des API ou d'Angular.
 - `dependencies.json` : références de versions RUNNER-1, sans base ni wheels validés.
 - `exec1-dependencies.json` : références supplémentaires du compilateur et de la
   vérification cryptographique ; ce n'est pas un lock transitif complet.
+- `exec2-dependencies.json` : références DB-API supplémentaires et blocages ;
+  inclus avec sql_backend.py et offline_dbapi.py dans l'empreinte signée du noyau.
 - La liste RUNNER-1 des sources est étendue par EXEC-1 aux modules d'exécution et
   helpers B2B effectivement utilisés. Le contexte futur doit être assemblé depuis
   ces listes, sans copie du dépôt complet, secrets, .env, venv, .git ou données DEV.

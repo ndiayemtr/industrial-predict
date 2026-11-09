@@ -1,7 +1,7 @@
-"""EXEC-1 transaction kernel. Public execution currently accepts a sealed simulator.
+"""EXEC-1 kernel reused by EXEC-2's concrete SQL commands on sealed doubles.
 
 Compilation, crypto authorization, replay files and transaction algorithms are
-implemented. No qualified live RW/catalogue/fixture adapter exists: run_live
+implemented. No qualified same-channel live connector exists: run_live
 refuses BEFORE touching supplied objects. No default network or CLI activation.
 """
 
@@ -17,12 +17,15 @@ from b2b_postgres_qualification.collectors import TlsBinding
 from p101_postgres_qualification import compiler, plans, scenario, runner
 from p101_postgres_qualification.execution_authority import Intent, ReplayReservations, verify_signature
 from p101_postgres_qualification.simulated_backend import SimulatedBackend
+from p101_postgres_qualification.sql_backend import PostgresBackend, CommitRejected
 
 
 EXECUTION_SOURCES = tuple('tests/p101_postgres_qualification/' + name for name in
-    ('compiler.py', 'execution_authority.py', 'simulated_backend.py', 'execution.py')) + (
+    ('compiler.py', 'execution_authority.py', 'simulated_backend.py', 'execution.py',
+     'sql_backend.py', 'offline_dbapi.py')) + (
     'tests/b2b_postgres_qualification/authority.py', 'tests/b2b_postgres_qualification/durable.py',
-    'infra/p101-qualification-runner/exec1-dependencies.json')
+    'infra/p101-qualification-runner/exec1-dependencies.json',
+    'infra/p101-qualification-runner/exec2-dependencies.json')
 
 
 def resource_inventory(campaign, policy, *, runner_image_id):
@@ -59,6 +62,7 @@ class ExecutionReport(Offline):
     evidence_sha256: str
     cleanup_failed: bool
     recording_failed: bool
+    operation_key: str | None = None
 
 
 class CampaignExecutor(Offline):
@@ -125,7 +129,7 @@ class CampaignExecutor(Offline):
     @v.guarded
     def run_simulated(self, backend, intent, signature):
         # No callback/protocol object can smuggle a live SQL sink into this API.
-        v.require(type(backend) is SimulatedBackend and type(intent) is Intent)
+        v.require(type(backend) in (SimulatedBackend, PostgresBackend) and type(intent) is Intent)
         expected = self.expected_bindings(intent.operation)
         envelope = verify_signature(intent, signature, trusted_keys=self.keys,
             now=self.clock(), expected=expected)
@@ -195,6 +199,8 @@ class CampaignExecutor(Offline):
             backend.begin(reader)
             if operation is None:
                 plans.review_catalogue_declaration(backend.catalogue(reader), expected_sha256=self.catalogue_sha256)
+            elif type(backend) is PostgresBackend:
+                backend.verify_observer(writer, reader, operation)
             else:
                 scenario.review_pair(self.campaign, operation, expected_campaign=self.campaign,
                     writer_connection_id=str(uuid4()), reader_connection_id=str(uuid4()),
@@ -202,8 +208,10 @@ class CampaignExecutor(Offline):
             self._identity(backend, reader, self.campaign.roles[3], True)
             backend.rollback(reader)
             status = 'simulated_commit_confirmed'
-        except Exception:
-            if commit_status == 'uncertain':
+        except Exception as error:
+            if type(error) is CommitRejected and commit_status == 'uncertain':
+                commit_status, status = 'rejected', 'simulated_rollback_confirmed'
+            elif commit_status == 'uncertain':
                 status = 'uncertain'
             elif commit_status == 'confirmed':
                 status = 'simulated_commit_verification_failed'
@@ -221,13 +229,15 @@ class CampaignExecutor(Offline):
                     except Exception:
                         cleanup_failed = True
         digest = plans.fingerprint(dict(operation=intent.operation, campaign=expected['campaign_sha256'],
-            envelope=envelope, status=status, commit_status=commit_status, cleanup_failed=cleanup_failed))
+            envelope=envelope, status=status, commit_status=commit_status, cleanup_failed=cleanup_failed,
+            operation_key=operation.key if operation is not None else None))
         try:
             self.reservations.finish(intent, envelope_sha256=envelope, status=status, evidence_sha256=digest)
         except Exception:
             recording_failed = True  # Retained claim still blocks every new attempt.
-        return ExecutionReport(intent.operation, status, commit_status, digest, cleanup_failed, recording_failed)
+        return ExecutionReport(intent.operation, status, commit_status, digest, cleanup_failed, recording_failed,
+            operation.key if operation is not None else None)
 
     def run_live(self, *args, **kwargs):
-        # No approved concrete RW + full-catalogue + fixture-lock adapter is shipped.
+        # No qualified same-channel TLS connector or operational evidence is shipped.
         deny(ExecutionDisabled)

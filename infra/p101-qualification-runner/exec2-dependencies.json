@@ -1,0 +1,14 @@
+{
+  "format": "p101-exec2-dependency-references-v1",
+  "build_enabled": false,
+  "extends": "exec1-dependencies.json",
+  "sql_driver_reference": {"psycopg": "3.3.4", "psycopg-binary": "3.3.4"},
+  "live_connector_enabled": false,
+  "linux_artifact_hashes": [],
+  "blockers": [
+    "same_sql_channel_peer_certificate_capture_not_exposed_by_selected_psycopg_api",
+    "independent_catalogue_privilege_baseline_not_qualified",
+    "complete_platform_specific_lock_and_wheel_hashes_missing",
+    "approved_base_image_and_immutable_source_archive_missing"
+  ]
+}

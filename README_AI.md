@@ -31,15 +31,25 @@ Construire une plateforme professionnelle permettant notamment :
 - recommandations de maintenance prédictive
 - historique des recommandations
 
-## P101 - préparation de qualification PostgreSQL, EXEC-1
+## P101 - préparation de qualification PostgreSQL, EXEC-2
 
 Au 9 novembre 2026, la branche `feature/auth-b2b-identity-access` est à
-`d3b9c5860bef40812a5df57a81b25229b5a0732b` (RUNNER-1). EXEC-1 est implémenté
-et testé hors ligne, en revue avant commit. Le compilateur reconnaît exactement
+`542ba381c55793f3b9de86a33c18b96ebc9ec4af` (EXEC-1). EXEC-2 ajoute, sans commit,
+un backend de commandes SQL et un observateur au noyau existant, testables
+uniquement avec des doubles hors réseau. Le compilateur reconnaît exactement
 14 révisions approuvées et produit du SQL sans importer le Python des migrations.
 Signatures Ed25519, réservations anti-rejeu et transactions sont implémentées
-pour le backend simulé uniquement ; une signature ne vaut pas consentement
+pour les backends hors ligne uniquement ; une signature ne vaut pas consentement
 opérationnel déjà obtenu. Les 48 tests initiaux ne qualifient aucun serveur réel.
+
+Le nouvel adaptateur prévoit transactions RW/RO explicites, SQL figé, relecture
+complète des fixtures et de la paire P101 et gestion du COMMIT incertain sans
+retry. Psycopg 3.3.4 n'expose pas le DER serveur sur le canal SQL utilisé ; le
+connecteur réel refuse donc inconditionnellement. INFRA-3 reste inchangé et limité
+aux métadonnées RO. Voir [EXEC-2](tests/p101_postgres_qualification/EXEC-2.md) pour
+les garanties hors ligne et les blocages TLS, catalogue, registre et artefacts.
+Validation EXEC-2 : une seule campagne ciblée, 99 tests réussis en 132,62 s,
+nouveau backend et régression du noyau ; aucun PostgreSQL/TLS réel qualifié.
 
 `run_live` refuse toujours ; le runner n'est pas qualifié sur PostgreSQL réel
 et le writer métier reste désactivé. Aucun changement des environnements DEV,

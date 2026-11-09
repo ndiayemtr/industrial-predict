@@ -1,5 +1,28 @@
 # Architecture - Industrial Predict AI
 
+## Qualification isolée P101 EXEC-2
+
+La chaîne de qualification reste distincte de l'application : CampaignExecutor
+EXEC-1 → PostgresBackend → commandes DB-API figées. Seul OfflineChannelPool est
+admis à ce stade, sans réseau. Le noyau conserve signatures Ed25519, réservation
+anti-rejeu et contrôle des sources. QualificationObserver relit via une session RO
+distincte, avec contrôles socket/handle/PID et comparaison exhaustive, y compris
+les IDs obtenus par le writer. Aucun endpoint ou writer métier n'est raccordé.
+
+Les transactions prévoient SERIALIZABLE READ WRITE et REPEATABLE READ READ ONLY,
+contrôle du catalogue, fixtures synthétiques, journal avant prédiction, contraintes
+différées forcées puis COMMIT unique. Une perte d'acquittement reste incertaine ;
+la clé d'opération est disponible pour une réconciliation future sans retry.
+Les erreurs exposées ne conservent pas les diagnostics privés du pilote.
+
+Psycopg 3.3.4 fournit le descripteur et ssl_in_use, sans DER du pair sur ce canal.
+PsycopgBoundConnector et run_live refusent donc tout accès réel. Le transport
+INFRA-3 avec certificat même SSLSocket reste limité aux métadonnées RO et inchangé.
+Un pont natif même canal ou une extension revue du protocole INFRA-3 reste à
+qualifier, ainsi que les privilèges effectifs, le catalogue et la durabilité du
+registre. Aucune seconde connexion TLS ne remplace cette preuve.
+Voir [EXEC-2](../tests/p101_postgres_qualification/EXEC-2.md) et ses limites.
+
 ## Vue générale
 
 ```text

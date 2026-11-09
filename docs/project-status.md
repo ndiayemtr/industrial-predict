@@ -7,9 +7,9 @@ Projet en développement actif.
 ## Branche actuelle
 
 Contrôle local du 9 novembre 2026 : `feature/auth-b2b-identity-access`, HEAD
-`d3b9c5860bef40812a5df57a81b25229b5a0732b` (RUNNER-1), index vide avant la revue.
-EXEC-1 et son actualisation documentaire sont en préparation de commit ; aucune
-vérification distante ni nouvelle publication dans cette revue.
+`542ba381c55793f3b9de86a33c18b96ebc9ec4af` (EXEC-1), dépôt et index propres avant
+EXEC-2. Le contexte utilisateur indique EXEC-1 publié ; aucun accès distant dans
+ce lot. EXEC-2 est en développement hors ligne, sans commit ni publication.
 
 ### Référence historique UI 9.7 - 25 octobre 2026
 
@@ -23,10 +23,31 @@ commité. UI 9.1 déjà dans main, non recomptée. UI 9.7 prépare sept document
 
 À mettre à jour à chaque changement de branche.
 
-## P101 - qualification PostgreSQL isolée EXEC-1
+## P101 - qualification PostgreSQL isolée EXEC-2
 
-EXEC-1 est implémenté et testé **hors ligne uniquement**, non commité au présent
-contrôle. Références locales : INFRA-3 `bd5d82a`, RUNNER-1 `d3b9c58`.
+EXEC-2 raccorde au noyau EXEC-1 un backend de commandes DB-API et un observateur :
+transactions explicites SERIALIZABLE RW / REPEATABLE READ RO, migrations compilées
+exclusivement, paramètres liés, relecture complète des 15 fixtures puis de la
+paire, contrôle des identifiants persistés et COMMIT unique. Les SQL sont exercés
+sur des doubles à réponses fixes uniquement. Les PID/socket/handle distincts sont
+contrôlés, sans présenter des UUID comme preuve d'indépendance réelle.
+
+Le DER du canal SQL d'écriture n'est pas accessible par l'API psycopg 3.3.4
+retenue. Le connecteur réel et run_live restent fermés ; INFRA-3 RO est inchangé.
+La clé d'opération est conservée dans le rapport pour réconciliation future,
+sans rejeu après acquittement perdu. Baseline catalogue et privilèges, transport
+réel, stockage anti-rejeu administré, autorité humaine et artefacts reproductibles
+restent bloquants. Voir [EXEC-2](../tests/p101_postgres_qualification/EXEC-2.md).
+Aucune ressource ni connexion réelle, migration, build, writer, API ou Angular.
+
+Validation EXEC-2 : une seule campagne, **99 tests réussis en 132,62 s**,
+test_sql_backend.py et régression test_execution.py ; uniquement hors ligne.
+Ce résultat ne qualifie ni PostgreSQL, ni TLS, ni la durabilité réelle.
+
+### Référence de validation EXEC-1
+
+EXEC-1 a été implémenté et testé **hors ligne uniquement**, puis commité `542ba38`.
+Références locales : INFRA-3 `bd5d82a`, RUNNER-1 `d3b9c58`.
 Le nouveau noyau compile les 14 révisions épinglées sans importer leurs modules
 Python ; les opérations inconnues sont refusées. Ed25519 lie campagne,
 destination, ressources, sources, SQL et état initial attendu. Réservation locale

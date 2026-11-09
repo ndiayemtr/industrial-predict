@@ -1,5 +1,9 @@
 # P101-DEV-3D-EXEC-1 — noyau transactionnel et compilation fermée
 
+Évolution : [EXEC-2](EXEC-2.md) étend désormais run_simulated au backend de
+commandes SQL alimenté exclusivement par doubles hors réseau. Le présent dossier
+décrit la livraison EXEC-1 ; son noyau est réutilisé, run_live reste fermé.
+
 Implémentation hors ligne. Aucun serveur, conteneur ou moteur Docker consulté.
 Aucune migration exécutée, aucun build, téléchargement, writer métier ou endpoint.
 Les composants INFRA-3 et RUNNER-1 publiés, les gardes et les révisions sont inchangés.
