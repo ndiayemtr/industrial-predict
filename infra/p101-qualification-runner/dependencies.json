@@ -1,0 +1,29 @@
+{
+  "format": "p101-qualification-runner-dependencies-v1",
+  "build_enabled": false,
+  "platform": "linux/amd64",
+  "base_image": null,
+  "base_image_id": null,
+  "python": "3.12.10",
+  "postgresql_client": "17.10",
+  "openssl_reference": "3.0.16",
+  "runtime_packages": {
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "python-dateutil": "2.9.0.post0",
+    "six": "1.17.0",
+    "tzdata": "2026.3",
+    "cryptography": "50.0.2",
+    "cffi": "2.1.1",
+    "pycparser": "3.12"
+  },
+  "wheel_artifacts": [],
+  "requirements_lock_sha256": null,
+  "source_archive_sha256": null,
+  "blockers": [
+    "approved_base_digest_with_python_and_psql_missing",
+    "linux_wheels_and_transitive_hash_lock_missing",
+    "reviewed_source_archive_missing",
+    "build_reproducibility_not_demonstrated"
+  ]
+}

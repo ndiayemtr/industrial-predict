@@ -1,0 +1,10 @@
+{
+  "format": "p101-qualification-fixture-v1",
+  "target_at": "2026-04-11T12:00:00+00:00",
+  "observed_at": "2026-04-12T12:00:00+00:00",
+  "reference_values": [65, 63, 67, 64.5, 65.5, 64.5, 65.5, 65, 65, 65],
+  "target_value": 70,
+  "sensor_type": "temperature",
+  "unit": "°C",
+  "quality": "good"
+}

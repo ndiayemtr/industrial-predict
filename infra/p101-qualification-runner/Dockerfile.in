@@ -1,0 +1,15 @@
+# NON BUILDABLE TEMPLATE. All @...@ substitutions require an independently
+# reviewed artifact lock. No image/tag/default or network fallback is provided.
+FROM @APPROVED_BASE_WITH_PYTHON_3_12_10_AND_PSQL_17_10_BY_DIGEST@
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/qualification/backend:/opt/qualification/tests
+WORKDIR /opt/qualification
+COPY requirements.lock /opt/qualification/requirements.lock
+COPY wheels/ /opt/wheels/
+RUN python -m pip install --no-index --no-deps --require-hashes --find-links=/opt/wheels -r requirements.lock
+# Staged source context must be assembled from the reviewed explicit source list.
+COPY backend/ /opt/qualification/backend/
+COPY tests/ /opt/qualification/tests/
+COPY infra/p101-qualification-runner/ /opt/qualification/infra/p101-qualification-runner/
+USER 10001:10001
+ENTRYPOINT ["python", "-B", "-m", "p101_postgres_qualification.runner"]
+CMD ["report"]
