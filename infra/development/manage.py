@@ -459,6 +459,9 @@ def b2b_apply_release(connection, plan, bodies):
         exec(compile(source, '<approved:' + path + '>', 'exec'), module.__dict__)
         scripts.append(Script(module, revision, '<approved:' + path + '>'))
     revision_map = RevisionMap(lambda: iter(scripts))
+    # RevisionMap is lazy: resolve the target before handing Script objects to
+    # MigrationStep, which requires the graph's normalized dependency metadata.
+    revision_map.get_revision(plan['target'])
     def steps(heads, context):
         if heads != (REVISION,):
             raise ValueError('Alembic starting heads changed')

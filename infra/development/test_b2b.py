@@ -1,5 +1,6 @@
-"""DEV B2B guards only. Never call a revision upgrade or real PostgreSQL."""
+"""DEV B2B guards and actual Alembic SQL rendering; never real PostgreSQL."""
 from datetime import datetime, timedelta, timezone
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -8,6 +9,23 @@ from unittest.mock import MagicMock, patch
 
 import b2b_policy as b2b
 import manage
+
+
+# Keep the real runner available to exercise Alembic, beyond orchestration mocks.
+APPLY_APPROVED_RELEASE = manage.b2b_apply_release
+
+
+def recording_connection(connection):
+    """Record PostgreSQL SQL compilation on a double, with an outer transaction."""
+    from sqlalchemy.dialects import postgresql
+    connection.dialect = postgresql.dialect()
+    connection.in_transaction.return_value = True
+    statements = []
+    def execute(statement, *args, **kwargs):
+        statements.append(str(statement.compile(dialect=connection.dialect)))
+        return MagicMock(rowcount=1)
+    connection.execute.side_effect = execute
+    return statements
 
 
 class B2BTests(unittest.TestCase):
@@ -318,6 +336,45 @@ class B2BTests(unittest.TestCase):
             manage.migrate_b2b(self.config, directory, self.target)
         transaction.commit.assert_called_once()
 
+    def test_real_alembic_runner_rolls_back_on_final_validation_failure(self):
+        from alembic.runtime.migration import MigrationContext
+        directory, engine, connection, transaction, patched = self.simulate_migration()
+        statements = recording_connection(connection)
+        patched['manage.b2b_installed_shape'].side_effect = ValueError('injected final validation failure')
+        # Only the starting version SELECT is simulated. The real context,
+        # RevisionMap, steps, operations and version updates run against a double.
+        with patch('manage.b2b_apply_release', APPLY_APPROVED_RELEASE), \
+             patch.object(MigrationContext, 'get_current_heads', return_value=(manage.REVISION,)), \
+             self.assertRaisesRegex(ValueError, 'injected final validation failure'):
+            manage.migrate_b2b(self.config, directory, self.target)
+        self.assertEqual(len(statements), 18)  # fourteen DDL + four version updates
+        connection.begin.assert_called_once()
+        transaction.rollback.assert_called_once()
+        transaction.commit.assert_not_called()
+        connection.commit.assert_not_called()
+
+    def test_real_alembic_runner_rolls_back_when_a_later_revision_fails(self):
+        from alembic.runtime.migration import MigrationContext
+        directory, engine, connection, transaction, patched = self.simulate_migration()
+        statements = recording_connection(connection)
+        record = connection.execute.side_effect
+        def fail_later(statement, *args, **kwargs):
+            result = record(statement, *args, **kwargs)
+            if 'CREATE TABLE public.company_memberships' in statements[-1]:
+                raise ValueError('injected later revision failure')
+            return result
+        connection.execute.side_effect = fail_later
+        with patch('manage.b2b_apply_release', APPLY_APPROVED_RELEASE), \
+             patch.object(MigrationContext, 'get_current_heads', return_value=(manage.REVISION,)), \
+             self.assertRaisesRegex(ValueError, 'injected later revision failure'):
+            manage.migrate_b2b(self.config, directory, self.target)
+        self.assertTrue(any(s.startswith('UPDATE public.alembic_version') for s in statements))
+        patched['manage.b2b_installed_shape'].assert_not_called()
+        connection.begin.assert_called_once()
+        transaction.rollback.assert_called_once()
+        transaction.commit.assert_not_called()
+        connection.commit.assert_not_called()
+
     def test_client_credentials_not_in_argv_or_parent_environment(self):
         import os
         from sqlalchemy.engine import URL
@@ -399,6 +456,53 @@ class B2BTests(unittest.TestCase):
                 message = output.call_args.args[0]
                 self.assertIn(marker,message)
                 self.assertNotIn('synthetic-sensitive-driver-details',message)
+
+
+class B2BAlembicCompatibilityTests(unittest.TestCase):
+    def setUp(self):
+        p = b2b.policy()
+        config = {**p['destination'], '_path': p['profile'], '_directory': 'UNUSED-SYNTHETIC'}
+        self.plan, self.bodies = manage.b2b_plan(config, p['target'])
+        for name in ('manage.create_engine', 'manage.load_config', 'manage.db_url',
+                     'sqlalchemy.engine.Engine.connect', 'sqlalchemy.engine.Engine.raw_connection',
+                     'psycopg.connect', 'psycopg.Connection.connect', 'socket.socket.connect',
+                     'socket.socket.connect_ex', 'socket.getaddrinfo', 'manage.subprocess.run'):
+            guard = patch(name, side_effect=AssertionError('External I/O or secret read forbidden'))
+            guard.start()
+            self.addCleanup(guard.stop)
+
+    def test_real_alembic_renders_all_four_approved_revisions_offline(self):
+        from alembic.runtime.migration import MigrationContext
+        configure = MigrationContext.configure
+        output = io.StringIO()
+        def offline(connection, opts):
+            self.assertIsNone(connection)
+            return configure(dialect_name='postgresql', opts={
+                **opts, 'as_sql': True, 'starting_rev': manage.REVISION, 'output_buffer': output})
+        with patch.object(MigrationContext, 'configure', side_effect=offline):
+            APPLY_APPROVED_RELEASE(None, self.plan, self.bodies)
+        sql = output.getvalue()
+        self.assertEqual(sql.count('CREATE TABLE public.'), 6)
+        self.assertEqual(sql.count('CREATE INDEX '), 5)
+        self.assertEqual(sql.count('UPDATE public.alembic_version'), 4)
+        for revision in self.plan['sequence']:
+            self.assertIn("SET version_num='" + revision + "'", sql)
+        self.assertNotIn('p101_prediction_operations', sql)
+        self.assertNotIn('COMMIT;', sql)
+
+    def test_real_alembic_keeps_the_existing_outer_transaction(self):
+        from alembic.runtime.migration import MigrationContext
+        from sqlalchemy.engine import Connection
+        connection = MagicMock(spec=Connection)
+        statements = recording_connection(connection)
+        with patch.object(MigrationContext, 'get_current_heads', return_value=(manage.REVISION,)):
+            APPLY_APPROVED_RELEASE(connection, self.plan, self.bodies)
+        self.assertEqual(len(statements), 18)
+        self.assertEqual(sum(s.startswith('UPDATE public.alembic_version') for s in statements), 4)
+        self.assertFalse(any('p101_prediction_operations' in s for s in statements))
+        connection.begin.assert_not_called()
+        connection.commit.assert_not_called()
+        connection.rollback.assert_not_called()
 
 
 if __name__ == '__main__':
