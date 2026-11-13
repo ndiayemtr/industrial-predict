@@ -1,5 +1,14 @@
 # Frontend Architecture - Industrial Predict AI
 
+## Contrats P101-REAL-UI-1
+
+`features/predictions/models/p101-analysis.model.ts` distingue les résultats
+`source: simulation` et `source: real` en réutilisant les modèles existants.
+Les états réels futurs sont typés mais seul `unavailable` est présenté, à partir
+d’une constante immuable, sans switch d’activation ni service réseau. La réussite
+d’une future analyse ne constitue pas à elle seule une preuve de persistance.
+La simulation, sa gestion d’annulation et la façade d’historique restent séparées.
+
 ## Objectif
 
 Définir l'architecture frontend d'Industrial Predict AI et garantir une interface cohérente, maintenable et alignée avec les APIs backend.

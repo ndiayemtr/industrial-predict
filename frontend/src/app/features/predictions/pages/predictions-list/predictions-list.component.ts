@@ -21,6 +21,7 @@ import { predictionPresentation } from '../../utils/prediction-display';
 import { predictionNavigationParams } from '../../utils/prediction-navigation';
 import { P101SimulationComponent } from '../../components/p101-simulation/p101-simulation.component';
 import { SimulationEquipment } from '../../models/p101-simulation.model';
+import { P101_REAL_ANALYSIS_UNAVAILABLE } from '../../models/p101-analysis.model';
 
 type ScopeKey = 'company_id' | 'site_id' | 'equipment_id';
 
@@ -31,6 +32,7 @@ type ScopeKey = 'company_id' | 'site_id' | 'equipment_id';
   templateUrl: './predictions-list.component.html', styleUrl: './predictions-list.component.scss'
 })
 export class PredictionsListComponent {
+  readonly realAnalysis = P101_REAL_ANALYSIS_UNAVAILABLE;
   readonly facade = inject(PredictionsListFacade);
   private readonly references = inject(ReferenceDataApiService);
   private readonly router = inject(Router);

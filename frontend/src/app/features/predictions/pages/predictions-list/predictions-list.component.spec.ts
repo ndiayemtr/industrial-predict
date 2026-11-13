@@ -136,6 +136,28 @@ describe('Predictions list with isolated routing and HTTP fixtures', () => {
     http.expectNone(() => true);
   });
 
+  it('keeps real analysis visibly unavailable without an HTTP action, including after clearing equipment', async () => {
+    await ready();
+    const check = () => {
+      const title = root().querySelector('#p101-real-title')!;
+      const section = title.closest('section')!;
+      const action = section.querySelector<HTMLButtonElement>('button')!;
+      expect(section.getAttribute('aria-labelledby')).toBe(title.id);
+      expect(action.type).toBe('button');
+      expect(action.disabled).toBe(true);
+      expect(action.getAttribute('aria-describedby')).toBe('p101-real-unavailable');
+      expect(root().querySelector('#p101-real-unavailable')?.textContent).toContain('API sécurisée');
+      expect(c.realAnalysis.status).toBe('unavailable');
+      action.click();
+      http.expectNone(() => true);
+    };
+    check();
+    c.resetSelection(); await settle();
+    check();
+    expect(root().querySelector('app-p101-simulation')?.textContent).toContain('Simulation - données fictives');
+    expect(root().querySelector('app-p101-simulation .binary-score')).toBeNull();
+  });
+
   it('keeps precision folded and preserves equal inclusive bounds, source offsets and fractions through toggles and application', async () => {
     const start='2026-10-23T17:30:00.123456+05:30',end='2026-10-23T12:00:00.123456Z';
     await ready(base+'&start_time='+encodeURIComponent(start)+'&end_time='+encodeURIComponent(end));

@@ -252,6 +252,12 @@
   </div>
 </section>
 <app-p101-simulation [equipment]="simulationEquipment()" />
+<section class="real-analysis" aria-labelledby="p101-real-title">
+  <h2 id="p101-real-title">Analyse réelle</h2>
+  <p id="p101-real-unavailable">{{ realAnalysis.message }}</p>
+  <button type="button" disabled aria-describedby="p101-real-unavailable">Lancer une analyse réelle</button>
+  <p>Les exemples de simulation ci-dessus utilisent des données fictives. Ils ne sont jamais ajoutés à l’historique.</p>
+</section>
 <section class="results" aria-labelledby="predictions-results-title" [attr.aria-busy]="busy()">
   <h2 id="predictions-results-title">Historique des prédictions</h2>
   @if (canFilter()) {

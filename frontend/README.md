@@ -1,5 +1,26 @@
 # IndustrialPredictUi
 
+## P101-REAL-UI-1 — Prédictions
+
+La simulation P101 existante conserve ses scénarios locaux et son badge fictif.
+L’encart « Analyse réelle » affiche une action désactivée et sa raison : l’API
+sécurisée n’est pas opérationnelle. Aucun appel d’analyse ni résultat réel n’est
+produit. Les types UI distinguent simulation/réel et préparent chargement, succès,
+données insuffisantes, refus d’autorisation et erreur sans activer ces états.
+
+Recette humaine sur le frontend DEV déjà autorisé (`http://127.0.0.1:4201/predictions`) :
+sélectionner entreprise/site/équipement, essayer les cinq scénarios fictifs, puis
+changer d’équipement pendant une simulation. Vérifier l’effacement du résultat,
+le badge permanent et l’historique inchangé. L’action réelle reste désactivée
+avec ou sans équipement ; son explication est reliée par `aria-describedby`.
+Vérifier clavier, écran étroit et absence de POST dans Réseau. Aucun service DEV
+n’est démarré par ce lot.
+
+Validation ciblée : 60 tests réussis (panneau de simulation et page Prédictions),
+build production réussi. Budgets d’avertissement dépassés : initial 606,56 kB
+pour 500 kB, style Prédictions 5,40 kB pour 4 kB ; aucun seuil d’erreur dépassé.
+Les tests DOM ne remplacent pas la recette visuelle humaine.
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.26.
 
 ## Development server

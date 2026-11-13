@@ -3,7 +3,7 @@
 // Keep the shared page header override local to Predictions.
 :host ::ng-deep > app-page-header h1 { padding-left: .8rem; font-weight: 700; line-height: 1.35; }
 :host { display: block; min-width: 0; overflow-wrap: anywhere; color: tokens.$text-primary; }
-.filters, .results { margin-top: tokens.$space-lg; padding: tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; background: tokens.$surface-background; }
+.filters, .results, .real-analysis { margin-top: tokens.$space-lg; padding: tokens.$space-md; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius; background: tokens.$surface-background; }
 h2, .section-title { margin: 0 0 tokens.$space-md; padding-left: .8rem; border-left: 3px solid tokens.$navigation-active; font-weight: 700; line-height: 1.35; }
 h2 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); }
 .section-title, form { margin-top: tokens.$space-xl; }
