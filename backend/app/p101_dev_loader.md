@@ -1,5 +1,35 @@
 # P101-DEV-2 — injected industrial snapshot SQL reader
 
+## P101-MÉTIER-1 — diagnostic opérateur privé
+
+`services/p101_operator_diagnostic.py` fournit `diagnose(connection, *,
+company_id, site_id, equipment_id, cutoff_utc, provenance)`. Il ouvre une seule
+transaction `REPEATABLE READ READ ONLY` sur la connexion PostgreSQL synchrone
+fournie, vérifie le mode côté serveur avant toute lecture métier, sélectionne les
+capteurs de l'équipement et leur mesure cible existante la plus récente au cutoff,
+puis appelle le loader ci-dessous et l'unique `evaluate_snapshot` existant.
+Chaque résultat conserve Computed/Abstained/Rejected et un résumé temporel/de
+qualité sans publier les valeurs de mesure. Aucun résultat ou mesure manquante
+n'est fabriqué. Le scope entreprise/site/équipement est joint et vérifié.
+
+La décision `predictions:analyze` créée par ce point d'entrée est un contrôle
+opérateur local, pas une autorisation B2B. Ne pas l'exposer par HTTP ni réutiliser
+ce module comme autorisation applicative. La provenance reste une déclaration
+non authentifiée. L'appelant fournit la connexion; le diagnostic annule sa
+transaction et ferme sa Session liée, mais ne ferme jamais la connexion fournie.
+Sur erreur SQL, l'annulation est tentée avant de remonter un code assaini.
+
+Validation automatique hors ligne avec doubles uniquement; aucune exécution DEV
+ni qualification PostgreSQL réelle n'a eu lieu. Procédure ultérieure : obtenir
+une autorisation opérateur distincte, prendre la connexion depuis la configuration
+DEV déjà administrée sans afficher sa valeur, appeler `diagnose` avec les trois
+IDs métier explicitement confirmés et un cutoff ISO UTC (`Z`), puis examiner
+`Computed`, `Abstained` ou `Rejected`, les compteurs qualité et bornes temporelles.
+Arrêter si l'identité de base/rôle/serveur, READ ONLY, REPEATABLE READ, scope,
+capteurs ou qualité divergent. Ne pas joindre DSN, mot de passe, sujets utilisateur
+ou valeurs de mesure au rapport. Le score 0/1 est un indicateur d'anomalie, jamais
+une probabilité de panne. L'intégration Angular et toute écriture restent indisponibles.
+
 `p101_dev_loader.py` lives outside the pure `p101_dev` package. It imports only
 settings-independent ORM metadata, B2B policy types and immutable projections.
 There is no engine factory, configuration lookup, connection acquisition, CLI,
@@ -116,6 +146,10 @@ SQL failure raises `SnapshotLoadError`: constant public diagnostic, closed
 LoadCode and detached exception context; no raw driver errors, data or logs.
 
 ## Offline evidence and remaining qualification
+
+For the separate private read-only operator diagnostic that invokes this loader
+and the existing evaluator, see
+[`services/p101_operator_diagnostic.md`](services/p101_operator_diagnostic.md).
 
 `tests/p101_dev_sql/test_loader.py` uses synthetic Session/Connection doubles and
 compiles actual statements with the installed PostgreSQL dialect. It checks SQL
