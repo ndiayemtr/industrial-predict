@@ -1,5 +1,55 @@
 # Industrial Predict AI - Project Status
 
+AUTH-B2B-RUNTIME-1 : authentification Google/session et autorisation des routes
+prioritaires implémentées, non validées avec un fournisseur réel. Fournisseur SQL
+CurrentCaller frais, périmètre limité aux entreprises autorisées et recontrôle
+avant commit des recommandations. Sans assemblage explicite : 401 sans session,
+503 avec secret syntaxiquement valide. Aucune activation DEV ni qualification des
+tables/rôles B2B. P101 demeure fermé sans preuve de provenance. Voir
+[procédure exacte](../backend/app/b2b_runtime.md). Angular n'est pas modifié.
+L'environnement local `backend/.venv` contient PyJWT 2.15.1 et cryptography 50.0.2.
+Ces installations ne constituent ni une activation DEV du runtime B2B, ni une
+authentification Google réelle validée.
+
+GIT-CONSOLIDATION-2 : les tests historiques HTTP des recommandations suivent
+désormais le contrat protégé, avec sessions synthétiques et SQLite en mémoire.
+64 tests HTTP et 63 tests ciblés B2B/P101 réussis, sans changement du backend de
+production. Les refus 401/403/503 et l'absence d'écriture avant autorisation sont
+vérifiés ; aucune qualification PostgreSQL, Google réelle ou activation DEV.
+
+P101-INTEGRATION-1 : adaptateur HTTP/backend d'analyse v1 non persistée ajouté,
+route montée sous garde. Depuis AUTH-B2B-RUNTIME-1, les routes predictions,
+recommendations et p101-analysis renvoient 401 sans session valide, 403 pour une
+session authentifiée sans permission/périmètre, et 503 en cas de runtime/autorité
+indisponible. Le POST recommandations exige predictions:read et maintenance:write
+dans la même entreprise. Les POST health-score/rul restent fermés avec 503.
+Même authentifiée et autorisée, l'analyse P101 réelle reste bloquée sans provenance
+qualifiée ; aucun calcul réel n'est activé. L'historique Angular
+peut afficher une erreur de chargement; la simulation demeure disponible.
+Validation exclusivement hors ligne; aucune analyse HTTP/PostgreSQL réelle.
+Voir [détail technique](../backend/app/services/p101_analysis.md).
+
+## P101-MÉTIER-1
+
+Un point d'entrée backend privé réutilise le loader SQL et l'évaluateur P101 pour
+diagnostiquer les mesures existantes dans une transaction READ ONLY REPEATABLE READ.
+Résultats et compteurs sont couverts par des tests hors ligne uniquement. Aucun
+accès PostgreSQL DEV n'a été effectué; le lancement réel attend une autorisation
+opérateur distincte. Ce diagnostic privé n'est pas exposé par HTTP ; l'adaptateur
+HTTP P101 distinct reste sous garde et l'intégration Angular réelle est indisponible.
+
+## P101-REAL-UI-1 — préparation Angular
+
+La page `/predictions` conserve la simulation P101 validée. Un encart « Analyse
+réelle » explique l’indisponibilité de l’API sécurisée et conserve son action
+désactivée. Les contrats TypeScript distinguent résultat simulé/réel et préparent
+les états futurs, sans produire de résultat ni persistance réels. Aucun backend
+n’est activé ; la validation visuelle humaine sur Angular DEV reste à effectuer.
+
+Validation UI : 60 tests ciblés réussis ; build frontend réussi avec avertissements
+de budget (initial 606,56 kB, style Prédictions 5,40 kB). Aucun serveur DEV démarré,
+aucun appel d’analyse réelle ou accès Docker/PostgreSQL.
+
 ## État général
 
 Projet en développement actif.

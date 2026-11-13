@@ -1,5 +1,44 @@
 # Industrial Predict AI - Roadmap
 
+AUTH-B2B-RUNTIME-1 : les raccordements backend OIDC/session et les dépendances
+d'autorisation des routes prioritaires sont implémentés. Prochaine validation,
+distinctement autorisée : schéma/rôle/destination B2B, client Google et callback
+HTTPS enregistrés, liens et grants explicites, puis session réelle et refus
+interentreprises. Ne pas activer P101 sans provenance source vérifiée ni lancer le
+POST recommandations pour simplement vérifier l'authentification. Aucun changement
+Angular, migration ou privilège automatique dans ce lot.
+Les dépendances PyJWT 2.15.1 et cryptography 50.0.2 sont présentes dans
+`backend/.venv` ; le runtime reste codé mais non activé en DEV et aucune
+authentification Google réelle n'est validée.
+
+P101-INTEGRATION-1 : raccordement v1 sans persistance codé, route HTTP montée
+sous garde, sans analyse réelle activée. Prochaine étape obligatoire : qualifier les fournisseurs
+serveur de session et de provenance, puis le périmètre sur le runtime existant.
+Les routes predictions/recommendations/p101-analysis exigent une session : 401
+sans session valide, 403 pour une session authentifiée sans permission/périmètre,
+503 si runtime ou autorité indisponible. Le POST recommandations exige les deux
+permissions predictions:read et maintenance:write dans la même entreprise.
+health-score/rul restent fermés avec 503. L'analyse P101 réelle demeure bloquée
+par la provenance manquante, même après authentification/autorisation. Raccorder
+Angular et les recommandations seulement après ces contrôles; ne pas réutiliser
+les fixtures UI47 comme mesures physiques. Aucun writer ou droit SQL activé.
+
+## P101-MÉTIER-1
+
+Implémenté hors ligne : diagnostic opérateur privé sur mesures existantes via le
+loader P101 et `evaluate_snapshot`, avec transaction READ ONLY REPEATABLE READ.
+La validation PostgreSQL DEV réelle reste à autoriser; l'intégration Angular et
+la persistance ne sont pas disponibles.
+
+## P101-REAL-UI-1 — parcours Prédictions
+
+Préparé : distinction simulation/résultat réel dans les contrats TypeScript,
+états futurs chargement/succès/données insuffisantes/autorisation/erreur, encart
+visible d’analyse réelle indisponible avec action désactivée. Simulation existante
+conservée ; aucune nouvelle simulation ni écriture. Restent l’API sécurisée,
+la qualification PostgreSQL et une intégration séparément autorisée avant toute
+activation. Recette visuelle humaine sur `/predictions` attendue.
+
 ## P101 REAL-1 - première campagne sous approbation explicite
 
 Préparé hors ligne : extension RW du canal TLS INFRA-3, paramètres liés et JSON,

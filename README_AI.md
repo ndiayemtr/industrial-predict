@@ -1,5 +1,41 @@
 # Industrial Predict AI - AI Context
 
+AUTH-B2B-RUNTIME-1 : chaîne Google OIDC → identité locale → session et fournisseur
+CurrentCaller SQL raccordés sous assemblage explicite. GET prédictions et GET/POST
+recommandations exigent maintenant la session et les permissions serveur; 401 sans
+session, 403 hors droits, 503 sans runtime qualifié. Aucun assemblage DEV activé,
+aucun fournisseur réel testé. P101 reste bloqué sans provenance vérifiée; health-score
+et RUL restent fermés. Voir [activation et limites](backend/app/b2b_runtime.md).
+Ces états remplacent la fermeture uniforme 503 décrite dans le lot précédent.
+Localement, `backend/.venv` contient PyJWT 2.15.1 et cryptography 50.0.2 ; leur
+présence n'active aucun runtime et ne valide aucune authentification Google réelle.
+
+P101-INTEGRATION-1 : l'adaptateur HTTP/backend v1 sans persistance est codé et
+sa route est montée. État courant après AUTH-B2B-RUNTIME-1 : GET predictions,
+GET/POST recommendations et POST p101-analysis sont protégés ; 401 sans session
+valide, 403 pour une session authentifiée sans permission/périmètre, 503 si le
+runtime ou une dépendance requise manque. Les POST health-score/rul restent
+fermés par leur garde 503. L'analyse P101 réelle ne peut pas être activée par la
+seule identité : la provenance qualifiée manque. La simulation Angular reste indépendante.
+Voir [contrat et limites](backend/app/services/p101_analysis.md). Aucun calcul
+HTTP réel, droit SQL, migration ou writer activé par cette livraison.
+
+## Diagnostic P101 sur données industrielles
+
+Le backend fournit un diagnostic opérateur privé en lecture seule qui réutilise
+le loader SQL P101 DEV et `evaluate_snapshot`. Les résultats sont testés hors ligne;
+aucune exécution PostgreSQL réelle n'est autorisée ou annoncée. Ce diagnostic
+n'est pas exposé par HTTP. L'adaptateur HTTP P101 distinct est codé sous garde,
+sans analyse réelle activée ni liaison avec l'interface Angular.
+
+## P101-REAL-UI-1
+
+`/predictions` conserve la simulation locale P101 et affiche désormais l’analyse
+réelle comme indisponible, avec action désactivée. Les contrats UI préparent les
+états futurs et distinguent les sources simulation/réel. Ce lot Angular n'ajoute
+aucun endpoint d’analyse, appel POST, résultat réel ou historique persistant. L’API sécurisée
+reste indisponible ; validation visuelle humaine sur Angular DEV attendue.
+
 ## Projet
 
 Industrial Predict AI est une plateforme SaaS de maintenance prédictive
@@ -277,6 +313,16 @@ Voir le [dossier UI 9.7](docs/ui-9.7-predictions-delivery.md).
 Aucune validation applicative relancée pour cette documentation.
 
 ### Machine Learning
+
+#### P101 operator diagnostic
+
+An offline-tested private backend diagnostic now reuses the existing industrial
+loader and `evaluate_snapshot` on one caller-supplied PostgreSQL connection in
+a `REPEATABLE READ READ ONLY` transaction. It has no HTTP route, performs no
+write, and does not activate the P101 writer. Tests use doubles only; execution
+on PostgreSQL DEV remains separately unauthorized, and no Angular integration
+for real analysis is available. See [project status](docs/project-status.md#p101-métier-1)
+and the [operator procedure](backend/app/services/p101_operator_diagnostic.md).
 
 - Python
 - scikit-learn
