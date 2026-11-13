@@ -9,8 +9,11 @@ const modulePath = require.resolve('./angular-proxy.cjs');
 const initialEnv = process.env.INDUSTRIAL_PREDICT_DEV_CONFIG;
 const initialFetch = global.fetch;
 const config = { mode:'local-development',database:'industrial_predict_dev',api_port:8001,
-  db_port:5434,db_host:'127.0.0.1',instance_id:'00000000-0000-0000-0000-000000000001' };
-const proof = { ...config,role:'ui47_app',revision:'09ac8101e9fe',superuser:false };
+  db_port:5434,db_host:'127.0.0.1',database_oid:16384,cluster_identifier:'1234567890123456789',instance_id:'00000000-0000-0000-0000-000000000001' };
+const proof = { ...config,role:'ui47_app',revision:'b2b_0002_analyze',superuser:false,
+  createdb:false,createrole:false,replication:false,bypassrls:false,
+  cluster_name:'industrial-predict-development',runtime_mode:'b2b-preparation',
+  business_routes_enabled:false,ssl:true,tls_verify_full:true };
 function load(value = config) {
   fs.writeFileSync(file, JSON.stringify(value));
   process.env.INDUSTRIAL_PREDICT_DEV_CONFIG = file;
@@ -49,6 +52,15 @@ for (const [label, result] of [
   ['wrong instance', () => response({...proof,instance_id:'another-instance'})],
   ['admin identity', () => response({...proof,role:'ui47_admin',superuser:true})],
   ['wrong migration', () => response({...proof,revision:'old'})],
+  ['historical revision', () => response({...proof,revision:'09ac8101e9fe'})],
+  ['wrong database oid', () => response({...proof,database_oid:999})],
+  ['wrong cluster', () => response({...proof,cluster_identifier:'999'})],
+  ['wrong cluster name', () => response({...proof,cluster_name:'another-cluster'})],
+  ['TLS not verified', () => response({...proof,tls_verify_full:false})],
+  ['plaintext connection', () => response({...proof,ssl:false})],
+  ['legacy CRUD enabled', () => response({...proof,business_routes_enabled:true})],
+  ['wrong runtime mode', () => response({...proof,runtime_mode:'legacy'})],
+  ['privileged role', () => response({...proof,createrole:true})],
   ['missing marker', () => response(proof,'')],
   ['API unavailable', () => { throw new Error('offline'); }],
   ['HTTP failure', () => ({...response(),ok:false})]

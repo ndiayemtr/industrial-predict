@@ -18,9 +18,15 @@ import b2b_policy as b2b
 
 REPO = Path(__file__).resolve().parents[2]
 REVISION = '09ac8101e9fe'
+RUNTIME_REVISION = 'b2b_0002_analyze'
+RUNTIME_MODE = 'b2b-preparation'
 SOURCE_CLUSTER = '7673083456081215526'
 TABLES = ('companies', 'sites', 'equipments', 'sensors', 'measurements',
           'maintenance_records', 'prediction_records', 'maintenance_recommendations')
+B2B_TABLES = ('local_users', 'external_identities', 'company_memberships',
+              'membership_permissions', 'application_sessions', 'oidc_transactions')
+BUSINESS_SEQUENCES = frozenset(table + '_id_seq' for table in TABLES)
+B2B_SEQUENCES = frozenset(('local_users_id_seq', 'external_identities_id_seq', 'company_memberships_id_seq'))
 
 
 def load_config(filename):
@@ -55,7 +61,7 @@ def db_url(config, role):
                       host=config['db_host'], port=config['db_port'], database=config['database'])
 
 
-def inspect_connection(connection, config, role='app', revision=True):
+def inspect_connection(connection, config, role='app', revision=True, *, expected_revision=REVISION):
     proof = dict(connection.execute(text("""SELECT current_database() AS database,
         current_user AS role,current_setting('server_version') AS version,
         current_setting('app.development_instance_id',true) AS instance_id,
@@ -75,18 +81,82 @@ def inspect_connection(connection, config, role='app', revision=True):
         raise ValueError('Excessive development privileges')
     if revision:
         proof['revision'] = connection.execute(text('SELECT version_num FROM public.alembic_version')).scalar_one()
-        if proof['revision'] != REVISION:
+        if proof['revision'] != expected_revision:
             raise ValueError('Development migration mismatch')
     return proof
 
 
+def runtime_connect_args(config):
+    # Reuse the approved inventory and CA verifier without changing migration policy.
+    policy = b2b.policy()
+    destination = policy['destination']
+    if any(config.get(key) != value for key, value in destination.items()):
+        raise ValueError('Runtime destination differs from approved DEV inventory')
+    if Path(config['_path']).resolve() != Path(policy['profile']).resolve():
+        raise ValueError('Unapproved runtime profile')
+    transport = b2b.transport(config)
+    if any(key.upper().startswith('PG') for key in os.environ):
+        raise ValueError('Ambient libpq settings forbidden for DEV runtime')
+    return {**transport, 'connect_timeout': 3, 'gssencmode': 'disable',
+            'options': '-c search_path=public -c timezone=UTC'}
+
+
+def runtime_engine(config):
+    arguments = runtime_connect_args(config)  # Reject invalid TLS before reading a password.
+    return create_engine(db_url(config, 'app'), echo=False, hide_parameters=True,
+                         pool_pre_ping=True, connect_args=arguments)
+
+
+def inspect_runtime_connection(connection, config):
+    runtime_connect_args(config)
+    proof = inspect_connection(connection, config, expected_revision=RUNTIME_REVISION)
+    cluster = connection.exec_driver_sql('SELECT system_identifier::text FROM pg_control_system()').scalar_one()
+    ssl = connection.exec_driver_sql('SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()').scalar_one()
+    if cluster != config['cluster_identifier'] or ssl is not True:
+        raise ValueError('Runtime cluster/TLS identity mismatch')
+    return {**proof, 'cluster_identifier': cluster, 'ssl': True, 'tls_verify_full': True,
+            'runtime_mode': RUNTIME_MODE, 'business_routes_enabled': False}
+
+
+def inspect_runtime_schema(connection):
+    tables = dict(connection.exec_driver_sql("SELECT tablename,tableowner FROM pg_tables WHERE schemaname='public'").all())
+    if set(tables) != set(TABLES) | set(B2B_TABLES) | {'alembic_version'} or any(
+            owner != 'ui47_migrator' for owner in tables.values()):
+        raise ValueError('Runtime tables or owners mismatch')
+    if connection.exec_driver_sql("SELECT nspowner::regrole::text FROM pg_namespace WHERE nspname='public'").scalar_one() != 'ui47_migrator':
+        raise ValueError('Runtime schema owner mismatch')
+    sequences = dict(connection.exec_driver_sql("SELECT sequencename,sequenceowner FROM pg_sequences WHERE schemaname='public'").all())
+    if set(sequences) != BUSINESS_SEQUENCES | B2B_SEQUENCES or any(
+            owner != 'ui47_migrator' for owner in sequences.values()):
+        raise ValueError('Runtime sequence set or owners mismatch')
+    for name in sorted(sequences):
+        privileges = {p: bool(connection.execute(text('SELECT has_sequence_privilege(current_user,:name,:privilege)'),
+                        {'name': 'public.' + name, 'privilege': p}).scalar_one()) for p in ('USAGE', 'SELECT', 'UPDATE')}
+        expected = {'USAGE': name in BUSINESS_SEQUENCES, 'SELECT': False, 'UPDATE': False}
+        if privileges != expected:
+            raise ValueError('Unexpected runtime sequence privileges')
+    # Preparation phase only: no B2B endpoints are mounted. A future activation
+    # must separately qualify a minimal grant profile instead of inheriting CRUD.
+    for name in B2B_TABLES:
+        for privilege in ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'):
+            if connection.execute(text('SELECT has_table_privilege(current_user,:name,:privilege)'),
+                                  {'name': 'public.' + name, 'privilege': privilege}).scalar_one():
+                raise ValueError('B2B privileges require a separately reviewed activation profile')
+        for privilege in ('SELECT', 'INSERT', 'UPDATE', 'REFERENCES'):
+            if connection.execute(text('SELECT has_any_column_privilege(current_user,:name,:privilege)'),
+                                  {'name': 'public.' + name, 'privilege': privilege}).scalar_one():
+                raise ValueError('B2B column privileges not enabled during preparation')
+    return {'sequence_usage_only': True, 'b2b_access': 'not_enabled'}
+
+
 def inspect_db(config):
-    engine = create_engine(db_url(config, 'app'), connect_args={'connect_timeout': 3}, echo=False)
+    engine = runtime_engine(config)
     try:
         with engine.connect().execution_options(isolation_level='AUTOCOMMIT') as connection:
             connection.exec_driver_sql('BEGIN TRANSACTION READ ONLY')
             try:
-                result = inspect_connection(connection, config)
+                result = inspect_runtime_connection(connection, config)
+                result.update(inspect_runtime_schema(connection))
                 result['counts'] = {table: connection.exec_driver_sql(f'SELECT count(*) FROM public.{table}').scalar_one() for table in TABLES}
                 permissions = {}
                 for privilege in ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'):
@@ -100,10 +170,6 @@ def inspect_db(config):
                 result['alembic_update'] = connection.execute(text("SELECT has_table_privilege(current_user,'public.alembic_version','UPDATE')")).scalar_one()
                 result['owns_business_tables'] = connection.execute(text("SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tableowner=current_user")).scalar_one() != 0
                 result['role_memberships'] = connection.execute(text('SELECT count(*) FROM pg_auth_members WHERE member=(SELECT oid FROM pg_roles WHERE rolname=current_user)')).scalar_one()
-                sequences = connection.execute(text("SELECT sequencename FROM pg_sequences WHERE schemaname='public'")).scalars().all()
-                result['sequence_usage_only'] = len(sequences) == len(TABLES) and all(
-                    connection.execute(text("SELECT has_sequence_privilege(current_user,:name,'USAGE') AND NOT has_sequence_privilege(current_user,:name,'SELECT') AND NOT has_sequence_privilege(current_user,:name,'UPDATE')"),
-                                       {'name':'public.'+name}).scalar_one() for name in sequences)
                 if not result['crud_all_tables'] or not result['sequence_usage_only'] or any(result[k] for k in ('extra_table_privileges','schema_create','database_create','temporary_tables','alembic_update','owns_business_tables','role_memberships')):
                     raise ValueError('Unexpected runtime privileges')
                 return result
@@ -118,7 +184,15 @@ def check_api(config):
         proof = json.load(response)
         if response.headers.get('X-Industrial-Predict-Environment') != 'local-development':
             raise ValueError('API marker missing')
-    if proof.get('mode') != config['mode'] or proof.get('database') != config['database'] or proof.get('instance_id') != config['instance_id'] or proof.get('role') != 'ui47_app' or proof.get('revision') != REVISION or proof.get('superuser') is not False:
+    if (proof.get('mode') != config['mode'] or proof.get('database') != config['database']
+            or proof.get('instance_id') != config['instance_id'] or proof.get('role') != 'ui47_app'
+            or proof.get('revision') != RUNTIME_REVISION
+            or proof.get('database_oid') != config['database_oid']
+            or proof.get('cluster_name') != 'industrial-predict-development'
+            or proof.get('cluster_identifier') != config['cluster_identifier']
+            or proof.get('runtime_mode') != RUNTIME_MODE or proof.get('business_routes_enabled') is not False
+            or proof.get('ssl') is not True or proof.get('tls_verify_full') is not True
+            or any(proof.get(k) is not False for k in ('superuser','createdb','createrole','replication','bypassrls'))):
         raise ValueError('API target mismatch')
     return proof
 
@@ -578,25 +652,25 @@ def migrate_b2b(config, directory, target):
         engine.dispose()
 
 
-def api(config):
-    inspect_db(config)
-    free_port(config['api_port'])
-    os.environ['DATABASE_URL'] = db_url(config, 'app').render_as_string(hide_password=False)
-    os.environ['APP_ENV'] = 'local-development'
-    os.environ['DEBUG'] = 'false'
+def prepare_runtime_app(config):
+    """Prepare the existing SqlRuntime over one TLS engine, without DB/Google I/O.
+
+    Do not import app.main/core.database: their legacy CRUD assembly and .env
+    discovery are outside this preparation phase. Only diagnostics are mounted.
+    """
+    from fastapi import FastAPI
+    from sqlalchemy.orm import sessionmaker
     sys.path.insert(0, str(REPO/'backend'))
-    os.chdir(REPO/'backend')
-    from app.main import app
-    from app.core.database import engine
-    if engine.url != db_url(config, 'app'):
-        raise ValueError('API engine differs from development configuration')
+    from app.core.database_runtime import SqlRuntime
+    engine = runtime_engine(config)
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+    app.state.sql_runtime = SqlRuntime(engine, sessionmaker(bind=engine, autoflush=False, autocommit=False))
     from starlette.concurrency import run_in_threadpool
     from starlette.responses import JSONResponse
-    import uvicorn
 
     def identity():
         with engine.connect() as connection:
-            proof = inspect_connection(connection, config)
+            proof = inspect_runtime_connection(connection, config)
         return {'mode':'local-development',**proof}
 
     @app.middleware('http')
@@ -610,7 +684,21 @@ def api(config):
         return response
 
     app.add_api_route('/__dev/identity', identity, methods=['GET'], include_in_schema=False)
-    uvicorn.run(app, host='127.0.0.1', port=config['api_port'], log_level='warning', access_log=False)
+    @app.get('/health')
+    def health():
+        return {'environment': config['mode'], 'status': 'healthy', 'runtime_mode': RUNTIME_MODE}
+    return app
+
+
+def api(config):
+    inspect_db(config)
+    free_port(config['api_port'])
+    app = prepare_runtime_app(config)
+    import uvicorn
+    try:
+        uvicorn.run(app, host='127.0.0.1', port=config['api_port'], log_level='warning', access_log=False)
+    finally:
+        app.state.sql_runtime.dispose()
 
 
 def frontend(config):
