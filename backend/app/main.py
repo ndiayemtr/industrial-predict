@@ -7,12 +7,15 @@ from app.api.routes.sensors import router as sensors_router
 from app.api.routes.measurements import router as measurements_router
 from app.api.routes.maintenance import router as maintenance_router
 from app.api.routes.dashboard import router as dashboard_router
+from app.api.routes.p101_analysis import create_p101_analysis_router
 
 app = FastAPI(
     title=settings.app_name,
     description="API de maintenance prédictive industrielle",
     version=settings.app_version,
 )
+
+app.include_router(create_p101_analysis_router(), prefix="/api/v1")
 
 @app.get("/health")
 def health_check():

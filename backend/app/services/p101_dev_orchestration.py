@@ -136,9 +136,13 @@ class P101DevOrchestrator:
         _require(decision.effect is AuthorizationEffect.ALLOW)
         return caller, decision
 
+    def analyze(self, **arguments) -> AnalysisOutcome:
+        """Read-only analysis; never retain or expose a persistence plan."""
+        return self.prepare(**arguments, _analysis_only=True)
+
     def prepare(self, *, reference: SessionReference, company_id: int, equipment_id: int,
                 sensor_id: int, target_measurement_id: int, event_cutoff: datetime,
-                provenance: DeclaredProvenance) -> AnalysisOutcome:
+                provenance: DeclaredProvenance, _analysis_only: bool = False) -> AnalysisOutcome:
         completed = False
         try:
             _require(type(reference) is SessionReference)
@@ -159,7 +163,7 @@ class P101DevOrchestrator:
                 completed = True
             _require(completed)  # A suppressing/failed read context cannot prepare a plan.
             _require(not read_transaction.is_active)
-            if type(result) is not Computed:
+            if _analysis_only or type(result) is not Computed:
                 return AnalysisOutcome(result, None)
             r = result
             key = sha256(json.dumps([r.asset.company_id, r.asset.equipment_id, r.asset.sensor_id,

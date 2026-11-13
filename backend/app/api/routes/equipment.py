@@ -2,6 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.api.routes.p101_analysis import require_b2b_integration
+from app.api.b2b import prediction_read_db, recommendation_write_db
+from app.core.caller_session import CallerUnauthenticated, CallerForbidden, CallerProviderUnavailable
 from app.schemas.pagination import Page
 from app.schemas.equipment import (
     EquipmentCreate,
@@ -94,7 +97,7 @@ def get_equipments(
 )
 def generate_equipment_recommendation(
     equipment_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(recommendation_write_db),
 ):
     service = RecommendationService(db)
 
@@ -103,6 +106,8 @@ def generate_equipment_recommendation(
             equipment_id=equipment_id,
         )
 
+    except (CallerUnauthenticated, CallerForbidden, CallerProviderUnavailable):
+        raise
     except LookupError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -135,7 +140,7 @@ def get_equipment_recommendations(
     end_time: datetime | None = Query(
         default=None,
     ),
-    db: Session = Depends(get_db),
+    db: Session = Depends(prediction_read_db),
 ):
     service = MaintenanceRecommendationService(db)
 
@@ -158,6 +163,7 @@ def get_equipment_recommendations(
 
 @router.post(
     "/{equipment_id}/health-score",
+    dependencies=[Depends(require_b2b_integration)],
     response_model=HealthScoreRead,
 )
 def calculate_equipment_health_score(
@@ -204,7 +210,7 @@ def get_equipment_predictions(
     end_time: datetime | None = Query(
         default=None,
     ),
-    db: Session = Depends(get_db),
+    db: Session = Depends(prediction_read_db),
 ):
     service = PredictionService(db)
 
@@ -232,6 +238,7 @@ def get_equipment_predictions(
         
 @router.post(
     "/{equipment_id}/rul",
+    dependencies=[Depends(require_b2b_integration)],
     response_model=RULPredictionRead,
 )
 def predict_equipment_rul(

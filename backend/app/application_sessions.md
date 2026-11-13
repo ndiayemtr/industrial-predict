@@ -1,5 +1,12 @@
 # B2B application sessions — offline persistence foundation
 
+AUTH-B2B-RUNTIME-1 ajoute `current_caller_in_transaction` : validation de session
+existante, rechargement des appartenances/grants sous verrous partagés, sans commit
+ni mise à jour d'activité. L'assemblage HTTP reste explicite et non activé en DEV.
+Voir [raccordement runtime](b2b_runtime.md), qui précise aussi les prérequis de
+schéma, rôle, OIDC et validation réelle. Les hypothèses administratives de verrouillage
+et révocation des sessions lors d'une réaffectation d'identité restent obligatoires.
+
 No engine, schema, route, cookie or DEV binding is created by these modules.
 Import the model explicitly. Existing model exports and all previously published revisions are unchanged.
 Two new general revisions are published offline; their execution remains disabled.

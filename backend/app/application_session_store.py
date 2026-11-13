@@ -2,8 +2,8 @@
 
 The admission provider and injected runtime are SERVER trust boundaries, never
 request-selected dependencies. Typed admission is not cryptographic proof.
-No permissions are stored or granted. Reads do not produce CurrentCaller: fresh
-membership loading/authorization remain the future caller provider's duties.
+No permissions are stored or granted. current_caller_in_transaction reloads
+memberships under the caller transaction; ordinary read returns only SessionRecord.
 
 All operations lock the local user before the session. Administrative suspension
 and identity reassignment must follow the same user-lock ordering. External links
@@ -23,14 +23,17 @@ from typing import Protocol
 
 from sqlalchemy import func, insert, select, text, update
 
-from app.core.authorization import AccountState, VerifiedIdentity
+from app.core.authorization import (AccountState, VerifiedIdentity, CompanyMembership,
+                                    MembershipState, Role, Permission)
 from app.core.caller_session import (
     AdmissionDecision, Outcome, Reason, SessionPolicy, SessionRecord, SessionReference,
     evaluate_session, record_activity, revoke_session, rotate_session,
+    CurrentCaller,
 )
 from app.core.database_runtime import SqlRuntime
 from app.models.application_session import ApplicationSessionRecord, CONTRACT_VERSION
 from app.models.professional_account import ExternalIdentityRecord, LocalUserRecord
+from app.models.professional_account import MembershipRecord, MembershipPermissionRecord
 
 
 _TABLE = ApplicationSessionRecord.__table__
@@ -289,6 +292,33 @@ class PostgresApplicationSessionStore:
 
     def read(self, reference: SessionReference) -> SessionRecord:
         return self._run(lambda db: self._load(db, reference)[1])
+
+    def current_caller_in_transaction(self, db, *, reference: SessionReference, now: datetime) -> CurrentCaller:
+        """Read fresh grants under locks retained by the caller's transaction.
+
+        Reuses session/user/link validation and expiry checks, without committing
+        or updating activity. Membership/grant mutation must acquire ordinary
+        PostgreSQL row locks; FOR SHARE prevents revocation before caller commit.
+        `now` is the server request anchor; _load also checks both clocks after locks.
+        """
+        _, record, _ = self._load(db, reference)
+        decision = evaluate_session(record, reference=reference, now=now)
+        if decision.outcome is not Outcome.READY:
+            raise SessionStoreRejected(decision.reason)
+        rows = db.execute(select(MembershipRecord).where(
+            MembershipRecord.user_id == record.identity.user_id)
+            .order_by(MembershipRecord.id).with_for_update(read=True)).scalars().all()
+        memberships = []
+        for row in rows:
+            grants = db.execute(select(MembershipPermissionRecord.permission, MembershipPermissionRecord.role).where(
+                MembershipPermissionRecord.membership_id == row.id)
+                .order_by(MembershipPermissionRecord.permission).with_for_update(read=True)).all()
+            _require(all(grant.role == row.role for grant in grants))
+            permissions = frozenset(Permission(grant.permission) for grant in grants)
+            memberships.append(CompanyMembership(record.identity.user_id, row.company_id,
+                MembershipState(row.state), Role(row.role),
+                permissions if row.state == MembershipState.ACTIVE.value else frozenset()))
+        return CurrentCaller(reference, record.identity, tuple(memberships), now)
 
     def touch(self, reference: SessionReference) -> SessionRecord:
         def operation(db):
