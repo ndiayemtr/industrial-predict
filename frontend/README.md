@@ -1,5 +1,58 @@
 # IndustrialPredictUi
 
+## AUTH-B2B-DEV-5B-3 — connexion professionnelle en préparation
+
+Page : `http://127.0.0.1:4201/connexion`. L'application utilise
+`PREPARATION_ROUTES` : cette page est hors du shell métier et un garde redirige
+toute tentative d'accès aux routes métier vers `/connexion`, avant leur chargement.
+La configuration métier `routes` et ses composants sont conservés pour leurs
+tests isolés ; elle n'est pas le routage de démarrage de cette phase.
+
+Le bouton « Continuer avec Google » est désactivé, sans gestionnaire d'action.
+L'état de présentation est immuable et ne constitue pas une session : aucun
+utilisateur connecté, token, stockage navigateur, appel Google ou appel API.
+Le garde ferme l'interface ; il ne remplace pas l'autorisation du backend, qui
+reste en mode diagnostic. Une future activation nécessitera un fournisseur
+serveur qualifié, pas un changement de drapeau côté navigateur.
+
+Pour vérifier uniquement cet écran, sans lancer le backend ou accéder à PostgreSQL,
+exécuter la commande Angular depuis `frontend`, dans un terminal dédié :
+
+```powershell
+Set-Location -LiteralPath 'D:\projets\industrial-predict\frontend'
+$env:INDUSTRIAL_PREDICT_DEV_CONFIG = 'D:\integration\industrial-predict\development\config.json'
+node node_modules/@angular/cli/bin/ng.js serve --configuration=development --host=127.0.0.1 --port=4201 --proxy-config=../infra/development/angular-proxy.cjs
+```
+
+Le proxy officiel lit sa configuration hors Git ; cet écran ne lui envoie aucune
+requête API et ne nécessite aucun mot de passe SQL. Aucun lancement backend,
+migration, activation OIDC ou changement des droits n'est inclus. Si 4201 est
+occupé, arrêter et identifier le processus ; ne pas sélectionner un autre port
+ou arrêter un service existant arbitrairement. Arrêt du serveur : Ctrl+C.
+
+Validation visuelle : ouvrir `/connexion`, vérifier le titre et l'explication,
+le bouton désactivé et l'absence de sidebar/liens métier. Contrôler à 1440 px et
+390 px, puis à 320 px et avec zoom : pas de débordement horizontal, texte lisible,
+défilement vertical possible. Au clavier, aucune action de connexion ne doit
+partir. Dans Réseau, aucun appel `/api/v1/` ou `/auth/oidc/` ; les fichiers Angular
+et la connexion HMR du serveur DEV restent normaux. Saisir `/companies`,
+`/equipments/new` et `/predictions` directement : retour à `/connexion`, sans
+chargement métier ni fausse session.
+
+Vérifications du lot : 37 tests réussis dans les trois fichiers ciblés, build
+production réussi. Avertissements : bundle initial 606,85 kB / 500 kB et style
+Prédictions 5,40 kB / 4 kB. Aucun seuil d'erreur dépassé. Commandes, depuis `frontend` :
+
+```powershell
+node node_modules/@angular/cli/bin/ng.js test --watch=false --include=src/app/features/auth/professional-connection.spec.ts --include=src/app/app.routes.spec.ts --include=src/app/app.config.spec.ts
+node node_modules/@angular/cli/bin/ng.js build --configuration=production
+```
+
+Navigateur DEV : rendu desktop observé, bouton désactivé et redirection de
+`/predictions` vérifiés. À 320 px CSS, aucun élément ne déborde horizontalement
+et la disposition utilise une seule colonne. La capture mobile de l'outil a
+échoué : compléter la recette visuelle mobile manuelle avant validation.
+
 ## P101-REAL-UI-1 — Prédictions
 
 La simulation P101 existante conserve ses scénarios locaux et son badge fictif.
@@ -9,6 +62,8 @@ produit. Les types UI distinguent simulation/réel et préparent chargement, suc
 données insuffisantes, refus d’autorisation et erreur sans activer ces états.
 
 Recette humaine sur le frontend DEV déjà autorisé (`http://127.0.0.1:4201/predictions`) :
+Cette recette historique est suspendue pendant la préparation B2B : cette URL
+redirige désormais vers `/connexion` ; les composants restent couverts en isolation.
 sélectionner entreprise/site/équipement, essayer les cinq scénarios fictifs, puis
 changer d’équipement pendant une simulation. Vérifier l’effacement du résultat,
 le badge permanent et l’historique inchangé. L’action réelle reste désactivée

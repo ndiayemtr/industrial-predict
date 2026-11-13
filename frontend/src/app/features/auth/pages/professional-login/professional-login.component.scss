@@ -1,0 +1,54 @@
+@use '../../../../../styles/tokens' as tokens;
+
+:host { display: block; min-width: 0; }
+.login-page {
+  display: grid; place-items: center; min-height: 100vh; min-height: 100dvh;
+  padding: clamp(1rem, 4vw, 4rem); color: tokens.$text-primary;
+  background: tokens.$content-background; font-family: tokens.$font-family;
+}
+.login-layout {
+  display: grid; grid-template-columns: 1fr 1fr; width: min(100%, 70rem);
+  min-width: 0; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius;
+  overflow: hidden; background: tokens.$surface-background;
+}
+.brand-panel {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 4rem;
+  padding: clamp(1.5rem, 4vw, 3rem); background: tokens.$sidebar-background; color: tokens.$sidebar-text;
+}
+.product-identity { display: flex; align-items: center; gap: tokens.$space-md; }
+.product-mark {
+  display: grid; place-items: center; flex: 0 0 2.75rem; height: 2.75rem;
+  border-radius: tokens.$border-radius; background: tokens.$navigation-active;
+  font-weight: 700; letter-spacing: -.04em;
+}
+.product-identity p { margin: 0; font-size: 1.1rem; font-weight: 600; line-height: 1.4; }
+.product-identity p span { color: tokens.$sidebar-muted; }
+.eyebrow { margin: 0 0 tokens.$space-md; color: tokens.$sidebar-muted; font-size: tokens.$font-size-small; }
+.brand-title { margin: 0; font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 600; line-height: 1.25; letter-spacing: -.03em; }
+.brand-description { margin: tokens.$space-lg 0 0; color: tokens.$sidebar-muted; line-height: 1.7; max-width: 32ch; }
+.brand-footer { margin: 0; color: tokens.$sidebar-muted; font-size: .8rem; line-height: 1.5; }
+.connection-panel { display: grid; align-items: center; min-width: 0; padding: clamp(1.5rem, 4vw, 3rem); }
+nb-card { margin: 0; border: 0; box-shadow: none; }
+nb-card-body { padding: 0; overflow: visible; }
+.availability { display: inline-flex; align-items: center; gap: .5rem; margin: 0 0 tokens.$space-lg; font-size: tokens.$font-size-small; color: tokens.$text-secondary; }
+.availability span { width: .45rem; height: .45rem; border-radius: 50%; background: tokens.$navigation-active; }
+h1 { margin: 0; font-size: clamp(1.65rem, 3vw, 2rem); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; }
+.intro { margin: tokens.$space-md 0 tokens.$space-xl; color: tokens.$text-secondary; line-height: tokens.$line-height-body; }
+.google-button {
+  display: flex; justify-content: center; align-items: center; gap: .75rem; width: 100%; min-height: 3rem;
+  padding: .75rem 1rem; border: 1px solid tokens.$border-color; border-radius: tokens.$border-radius;
+  background: tokens.$content-background; color: tokens.$text-secondary; cursor: not-allowed;
+  font: inherit; font-weight: 600; line-height: 1.4; white-space: normal;
+}
+.provider-mark { font-size: 1.2rem; font-weight: 700; }
+.availability-description { margin: tokens.$space-md 0 tokens.$space-xl; color: tokens.$text-secondary; font-size: tokens.$font-size-small; line-height: tokens.$line-height-body; }
+.session-status { display: flex; align-items: center; gap: .65rem; border-top: 1px solid tokens.$border-color; padding-top: tokens.$space-lg; color: tokens.$text-secondary; }
+.session-status p { margin: 0; font-size: tokens.$font-size-small; line-height: 1.5; }
+.preparation-note { margin: .75rem 0 0; font-size: .8rem; color: tokens.$text-secondary; line-height: 1.5; }
+.brand-panel, .connection-panel { overflow-wrap: anywhere; }
+@media (max-width: 47.99rem) {
+  .login-layout { grid-template-columns: 1fr; max-width: 32rem; }
+  .brand-panel { gap: .75rem; padding: 1.25rem; }
+  .brand-copy, .brand-footer { display: none; }
+  .connection-panel { padding: 1.75rem 1.5rem; }
+}

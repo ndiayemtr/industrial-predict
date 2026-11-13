@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { NAVIGATION_ITEMS } from './layout/navigation/navigation.config';
 import { NavigableNavigationItem } from './layout/navigation/navigation-item.model';
+import { preparationOnlyGuard } from './features/auth/preparation-only.guard';
 
 const availableItems = NAVIGATION_ITEMS.filter(
   (item): item is NavigableNavigationItem => item.status === 'available'
@@ -51,4 +52,16 @@ export const routes: Routes = [
       }
     ]
   }
+];
+
+// Preserve the validated business configuration for isolated feature tests.
+// The application bootstraps only this closed preparation configuration.
+export const PREPARATION_ROUTES: Routes = [
+  {
+    path: 'connexion', pathMatch: 'full',
+    title: 'Connexion professionnelle | Industrial Predict AI',
+    loadComponent: () => import('./features/auth/pages/professional-login/professional-login.component')
+      .then(m => m.ProfessionalLoginComponent),
+  },
+  ...routes.map(route => ({ ...route, canMatch: [preparationOnlyGuard] })),
 ];

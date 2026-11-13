@@ -4,13 +4,13 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { NbGlobalPhysicalPosition, NbSidebarModule, NbThemeModule, NbToastrModule } from '@nebular/theme';
 
-import { routes } from './app.routes';
+import { PREPARATION_ROUTES } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
+    provideRouter(PREPARATION_ROUTES),
     provideHttpClient(),
     // Nebular 17 still requires Angular's legacy animation providers.
     provideAnimations(),

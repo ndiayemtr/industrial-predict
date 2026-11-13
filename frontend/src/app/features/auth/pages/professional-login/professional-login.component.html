@@ -1,0 +1,36 @@
+<main class="login-page" aria-labelledby="login-title">
+  <div class="login-layout">
+    <section class="brand-panel" aria-labelledby="product-name">
+      <div class="product-identity">
+        <span class="product-mark" aria-hidden="true">IP</span>
+        <p id="product-name">Industrial Predict <span>AI</span></p>
+      </div>
+      <div class="brand-copy">
+        <p class="eyebrow">Maintenance prédictive industrielle</p>
+        <p class="brand-title">Votre expertise.<br>Votre espace professionnel.</p>
+        <p class="brand-description">Une plateforme pensée pour accompagner vos équipes dans le suivi de leurs équipements industriels.</p>
+      </div>
+      <p class="brand-footer">Industrial Predict AI · Espace professionnel</p>
+    </section>
+
+    <section class="connection-panel" aria-labelledby="login-title">
+      <nb-card>
+        <nb-card-body>
+          <p class="availability"><span aria-hidden="true"></span>Bientôt disponible</p>
+          <h1 id="login-title">Connexion professionnelle</h1>
+          <p class="intro">Retrouvez prochainement votre espace Industrial Predict AI avec votre compte professionnel.</p>
+          <button class="google-button" type="button" disabled aria-describedby="login-availability">
+            <span class="provider-mark" aria-hidden="true">G</span>
+            Continuer avec Google
+          </button>
+          <p id="login-availability" class="availability-description">{{ preparation.message }}</p>
+          <div class="session-status">
+            <app-icon name="profile" />
+            <p>Vous n’êtes pas connecté.</p>
+          </div>
+          <p class="preparation-note">Les espaces métier restent fermés pendant cette préparation.</p>
+        </nb-card-body>
+      </nb-card>
+    </section>
+  </div>
+</main>
