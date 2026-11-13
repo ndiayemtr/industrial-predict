@@ -1,0 +1,52 @@
+{
+  "format": "dev-b2b-policy-v1",
+  "profile": "D:/integration/industrial-predict/development/config.json",
+  "destination": {
+    "mode": "local-development",
+    "db_host": "127.0.0.1",
+    "db_port": 5434,
+    "database": "industrial_predict_dev",
+    "database_oid": 16384,
+    "container": "industrial-predict-postgres-ui47",
+    "cluster_identifier": "7697614558579179559",
+    "instance_id": "fb3284bd-fb7b-4c22-b620-96a1564b1d0c"
+  },
+  "role": "ui47_migrator",
+  "initial": "09ac8101e9fe",
+  "target": "b2b_0002_analyze",
+  "sequence": [
+    "12e2fc65f372",
+    "4b7e2a91c6d0",
+    "b2b_0001_sessions",
+    "b2b_0002_analyze"
+  ],
+  "scope": [
+    "public.oidc_transactions",
+    "public.local_users",
+    "public.external_identities",
+    "public.company_memberships",
+    "public.membership_permissions",
+    "public.application_sessions"
+  ],
+  "restore_database": "industrial_predict_b2b_restore",
+  "sources": {
+    "app/general_migrations.py": "b2e7348e42558eff32a17596537efc52601452ef3593811465852a466831cb1a",
+    "general_migrations/alembic.ini": "c3fcc74922d83ea8df2de79886ad7d7a0c0e24b1def9a925801f26a0f707e488",
+    "general_migrations/env.py": "a616b136e80b1d956c69e2136175cd730d708bb5367620fd99be5ca077ac3130",
+    "general_migrations/revision_manifest.json": "9602395fa87690b585dd1e078d9693cc40228e3550cdf92719e65667a12ce6d1",
+    "general_migrations/versions/12e2fc65f372_create_oidc_transactions.py": "8dd65b4517c0fba38f789b8b2ce016cafa80794fd0bcf6b8a35d194773da5274",
+    "general_migrations/versions/4b7e2a91c6d0_create_professional_accounts.py": "0aed6450f32f5b5459684de15c72f442cdaa39672df30224affb6b55221f1a26",
+    "general_migrations/versions/b2b_0001_sessions.py": "64da06799a0c0d5033343ec91d6a5539d6cdef98ffc9a74f3d64a6a8beb1fe66",
+    "general_migrations/versions/b2b_0002_analyze.py": "ae59ca35458ca475e01057f025ff5b8e9f91af7e18301a0e6e3817454cb575fe",
+    "general_migrations/versions/p101_0001_operations.py": "db3876b5cc2be0cff37f20ecebabe51821b5289fec1a8ceed96651b091cca46f",
+    "migrations/versions/0468ed5be8f1_create_companies_table.py": "e5e562511a7e83d4d984f51a58ced52c827521618e77a5f2ac101fddf8894bba",
+    "migrations/versions/09ac8101e9fe_add_maintenance_recommendations.py": "11e4b0d62de251d00d1ee1829ff031b8492d43a49ca8d9d931cb1fe0489488ef",
+    "migrations/versions/50e5051527dc_create_sites_table.py": "24c8234a5e8ce9aae6dbd3b8fcfa1b58539eb19874d36518dfdd544a73b63b66",
+    "migrations/versions/570ce155aaf8_create_measurements_table.py": "bc9262c2685575835ad372d4c82e174d9327a065b728675b2ba72e798968d44c",
+    "migrations/versions/572080d9e581_create_sensors_table.py": "a623ae93139cd1f88deb299b20aa9e69d1fe99428a37e03fd90fd7dfbf9d81ca",
+    "migrations/versions/656260b06cdf_create_equipments_table.py": "636729273bc38cf8571eb6c9fd2945d9d1c7c572a4ada82432fa0e2e30c41269",
+    "migrations/versions/675ebfea0bb5_add_equipment_criticality.py": "3d7e21e45645c53ece6fac7355209d2a011cba7c58f18599b1a3c22bd1a1d041",
+    "migrations/versions/783e16aa6ce3_create_maintenance_records_table.py": "780c871579b9cc7a0b91dc4f7836ac17e64d984db20dd6647cc9a09249c4aef9",
+    "migrations/versions/d6ec01cf13b6_add_prediction_records.py": "1fbda40b9aa8a1997ecb29fd6859a3c64785781c5163128940612bd5f15b4f99"
+  }
+}

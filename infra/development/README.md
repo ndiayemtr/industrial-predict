@@ -1,5 +1,18 @@
 # Environnement permanent de développement
 
+## Installation B2B préparée — AUTH-B2B-DEV-2
+
+Le gestionnaire dispose d'actions explicites `b2b-preflight`, `b2b-backup`,
+`b2b-rehearse` et `b2b-migrate`, décrites avec leurs commandes exactes et conditions
+d'arrêt dans le [dossier AUTH-B2B-DEV-2](../../docs/auth-b2b-dev-2.md).
+Seule la prévalidation est hors connexion. Les autres actions nécessitent une
+confirmation humaine interactive distincte ; la migration exige une sauvegarde
+actuelle et une restauration isolée vérifiées. Elles n'ont pas été exécutées dans
+ce lot. La cible B2B est exactement `b2b_0002_analyze`, sans P101, sans GRANT.
+Ne pas employer la commande historique `migrate` pour B2B. Les gardes API/proxy
+historiques restent inchangés et bloqueront la réouverture après installation
+tant qu'un lot distinct n'aura pas qualifié leurs attentes.
+
 Environnement local pour tous les modules d'Industrial Predict AI. La base est `industrial_predict_dev` sur `127.0.0.1:5434`, avec FastAPI sur `8001` et Angular sur `4201`. Les ressources PostgreSQL UI 4.7.2 sont réutilisées. Leurs noms Docker et les noms de rôles restent historiques ; aucun nouveau volume ou compte n'est nécessaire.
 
 Le [rapport de transition](../../docs/ui-4.7.2.1-development-environment.md) décrit les vérifications et les ressources conservées. Ne pas utiliser les anciens lanceurs `infra/ui47/` ou leur configuration privée.
