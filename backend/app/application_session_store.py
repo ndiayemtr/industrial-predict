@@ -180,8 +180,8 @@ class PostgresApplicationSessionStore:
         return caller, server
 
     def _lock_user(self, db, user_id, *, require_active=True):
-        state = db.execute(select(LocalUserRecord.state).where(
-            LocalUserRecord.id == user_id).with_for_update()).scalar_one_or_none()
+        state = db.execute(text('SELECT state FROM b2b_lock.lock_user_v1(CAST(:user_id AS integer))'),
+                           {'user_id': user_id}).scalar_one_or_none()
         if state not in (AccountState.ACTIVE.value, AccountState.SUSPENDED.value):
             raise SessionStoreIncoherent()
         if require_active and state != AccountState.ACTIVE.value:
@@ -189,14 +189,11 @@ class PostgresApplicationSessionStore:
         return AccountState(state)
 
     def _external(self, db, *, user_id, external_id=None, identity=None):
-        query = select(ExternalIdentityRecord.id, ExternalIdentityRecord.issuer, ExternalIdentityRecord.subject).where(
-            ExternalIdentityRecord.user_id == user_id)
-        if external_id is not None:
-            query = query.where(ExternalIdentityRecord.id == external_id)
-        else:
-            query = query.where(ExternalIdentityRecord.issuer == identity.issuer,
-                                ExternalIdentityRecord.subject == identity.subject)
-        row = db.execute(query.with_for_update(read=True)).mappings().one_or_none()
+        row = db.execute(text('''SELECT id,issuer,subject FROM b2b_lock.lock_external_identity_v1(
+            CAST(:user_id AS integer),CAST(:external_id AS integer),CAST(:issuer AS text),CAST(:subject AS text))'''),
+            {'user_id': user_id, 'external_id': external_id,
+             'issuer': None if external_id is not None else identity.issuer,
+             'subject': None if external_id is not None else identity.subject}).mappings().one_or_none()
         if row is None:
             raise SessionStoreIncoherent()
         _require(type(row["id"]) is int and row["id"] > 0)
@@ -305,19 +302,20 @@ class PostgresApplicationSessionStore:
         decision = evaluate_session(record, reference=reference, now=now)
         if decision.outcome is not Outcome.READY:
             raise SessionStoreRejected(decision.reason)
-        rows = db.execute(select(MembershipRecord).where(
-            MembershipRecord.user_id == record.identity.user_id)
-            .order_by(MembershipRecord.id).with_for_update(read=True)).scalars().all()
+        rows = db.execute(text('''SELECT id,user_id,company_id,state,role FROM
+            b2b_lock.lock_memberships_v1(CAST(:user_id AS integer)) ORDER BY id'''),
+            {'user_id': record.identity.user_id}).mappings().all()
         memberships = []
         for row in rows:
-            grants = db.execute(select(MembershipPermissionRecord.permission, MembershipPermissionRecord.role).where(
-                MembershipPermissionRecord.membership_id == row.id)
-                .order_by(MembershipPermissionRecord.permission).with_for_update(read=True)).all()
-            _require(all(grant.role == row.role for grant in grants))
-            permissions = frozenset(Permission(grant.permission) for grant in grants)
-            memberships.append(CompanyMembership(record.identity.user_id, row.company_id,
-                MembershipState(row.state), Role(row.role),
-                permissions if row.state == MembershipState.ACTIVE.value else frozenset()))
+            _require(row['user_id'] == record.identity.user_id)
+            grants = db.execute(text('''SELECT permission,role FROM b2b_lock.lock_membership_permissions_v1(
+                CAST(:user_id AS integer),CAST(:membership_id AS integer)) ORDER BY permission'''),
+                {'user_id': record.identity.user_id, 'membership_id': row['id']}).mappings().all()
+            _require(all(grant['role'] == row['role'] for grant in grants))
+            permissions = frozenset(Permission(grant['permission']) for grant in grants)
+            memberships.append(CompanyMembership(record.identity.user_id, row['company_id'],
+                MembershipState(row['state']), Role(row['role']),
+                permissions if row['state'] == MembershipState.ACTIVE.value else frozenset()))
         return CurrentCaller(reference, record.identity, tuple(memberships), now)
 
     def touch(self, reference: SessionReference) -> SessionRecord:

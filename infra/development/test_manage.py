@@ -197,7 +197,9 @@ class RuntimePreparationTests(unittest.TestCase):
             return result
         def driver(sql):
             result = MagicMock()
-            if 'system_identifier' in sql:
+            if 'to_regnamespace' in sql:
+                result.scalar_one.return_value = None
+            elif 'system_identifier' in sql:
                 result.scalar_one.return_value = state['cluster']
             elif 'pg_stat_ssl' in sql:
                 result.scalar_one.return_value = state['ssl']

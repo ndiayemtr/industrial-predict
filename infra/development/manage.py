@@ -151,6 +151,7 @@ def inspect_runtime_schema(connection, *, profile=RUNTIME_MODE):
             if connection.execute(text('SELECT has_any_column_privilege(current_user,:name,:privilege)'),
                                   {'name': 'public.' + name, 'privilege': privilege}).scalar_one():
                 raise ValueError('B2B column privileges not enabled during preparation')
+    activation.inspect_lock_acl(connection, app_access=False, optional=True)
     return {'sequence_usage_only': True, 'b2b_access': 'not_enabled'}
 
 

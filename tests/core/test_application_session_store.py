@@ -56,6 +56,8 @@ class Result:
         self.rows, self.values, self.rowcount, self.as_scalars = list(rows), list(values), rowcount, False
 
     def scalar_one_or_none(self):
+        if len(self.values)>1:
+            raise AssertionError('Multiple rows')
         return self.values[0] if self.values else None
 
     def scalar_one(self):
@@ -105,11 +107,30 @@ class SimulatedSession:
                 return False
         return True
 
-    def execute(self, statement):
+    def execute(self, statement, params=None):
         self.h.statements.append(statement)
         if self.h.failure == "execute":
             raise RuntimeError(PRIVATE)
         if isinstance(statement, TextClause):
+            if 'b2b_lock.' in str(statement):
+                self.h.lock_calls.append((str(statement),dict(params)))
+            if 'b2b_lock.lock_user_v1' in str(statement):
+                self.h.events.append('lock:local_users')
+                found = [r['state'] for r in self.h.users if r['id'] == params['user_id']]
+                return Result(values=found)
+            if 'b2b_lock.lock_external_identity_v1' in str(statement):
+                self.h.events.append('lock:external_identities')
+                found = [r for r in self.h.external if r['user_id'] == params['user_id'] and (
+                    r['id'] == params['external_id'] if params['external_id'] is not None else
+                    (r['issuer'],r['subject']) == (params['issuer'],params['subject']))]
+                return Result(rows=found)
+            if 'b2b_lock.lock_memberships_v1' in str(statement):
+                self.h.events.append('lock:company_memberships')
+                return Result(rows=sorted((r for r in self.h.memberships if r['user_id']==params['user_id']), key=lambda r:r['id']))
+            if 'b2b_lock.lock_membership_permissions_v1' in str(statement):
+                self.h.events.append('lock:membership_permissions')
+                parent = any(r['id']==params['membership_id'] and r['user_id']==params['user_id'] for r in self.h.memberships)
+                return Result(rows=sorted((r for r in self.h.permissions if parent and r['membership_id']==params['membership_id']), key=lambda r:r['permission']))
             return Result()
         if isinstance(statement, Insert):
             self.h.events.append("insert")
@@ -174,6 +195,7 @@ class Harness:
         self.now = self.server_now = NOW
         self.users = [dict(id=17, state="active"), dict(id=18, state="active")]
         self.external = [dict(id=31, user_id=17, issuer=IDENTITY.issuer, subject=IDENTITY.subject)]
+        self.lock_calls, self.memberships, self.permissions = [], [], []
         self.mutex = Lock()
         self.engine = SimpleNamespace(echo=False, hide_parameters=True,
                                       logger=SimpleNamespace(isEnabledFor=lambda level: False))
@@ -238,6 +260,41 @@ with ExitStack() as guards:
 
 
 class StoreTests(unittest.TestCase):
+    def test_external_function_receives_exact_exclusive_selectors(self):
+        h = Harness()
+        issued = h.store().create()
+        h.store().read(issued.record.reference)
+        parameters = [p for sql,p in h.lock_calls if 'lock_external_identity_v1' in sql]
+        self.assertEqual(parameters, [dict(user_id=17,external_id=None,issuer=IDENTITY.issuer,subject=IDENTITY.subject),
+                                      dict(user_id=17,external_id=31,issuer=None,subject=None)])
+
+    def test_lock_result_cardinality_failure_does_not_issue_a_session(self):
+        for duplicate in ('users','external'):
+            h = Harness()
+            rows = getattr(h,duplicate)
+            rows.append(dict(rows[0]))
+            with self.subTest(duplicate=duplicate), self.assertRaises(SessionStoreUnavailable):
+                h.store().create()
+            self.assertEqual(h.rows,{})
+            self.assertNotIn('commit',h.events)
+
+    def test_membership_functions_use_caller_transaction_and_user_scope(self):
+        h = Harness(stored())
+        h.memberships = [dict(id=1,user_id=17,company_id=101,state='active',role='reader'),
+                         dict(id=2,user_id=18,company_id=202,state='active',role='reader')]
+        h.permissions = [dict(membership_id=1,permission='predictions:read',role='reader'),
+                         dict(membership_id=2,permission='companies:read',role='reader')]
+        store = h.store()
+        with h.runtime.session() as db:
+            db.connection(execution_options={'isolation_level':'READ COMMITTED'})
+            caller = store.current_caller_in_transaction(db,reference=REFERENCE,now=NOW)
+            self.assertTrue(db.locked)
+            self.assertEqual([m.company_id for m in caller.memberships],[101])
+            self.assertEqual(caller.memberships[0].permissions,frozenset({Permission.PREDICTIONS_READ}))
+            self.assertNotIn('commit',h.events)
+            self.assertLess(h.events.index('lock:local_users'),h.events.index('lock:company_memberships'))
+        self.assertEqual(h.lock_calls[-1][1],dict(user_id=17,membership_id=1))
+
     def test_fingerprints_are_canonical_domain_separated_and_non_reversible_storage(self):
         self.assertEqual(session_reference(TOKEN), REFERENCE)
         self.assertNotEqual(REFERENCE.digest, csrf_fingerprint(TOKEN))
@@ -466,9 +523,9 @@ class StoreTests(unittest.TestCase):
         h = Harness(stored())
         h.store().read(REFERENCE)
         sql = [str(statement.compile(dialect=postgresql.dialect())) for statement in h.statements]
-        self.assertTrue(any("FOR UPDATE" in query and "local_users" in query for query in sql))
+        self.assertTrue(any('b2b_lock.lock_user_v1' in query and '%(user_id)s' in query for query in sql))
         self.assertTrue(any("FOR UPDATE" in query and "application_sessions" in query for query in sql))
-        self.assertTrue(any("FOR SHARE" in query and "external_identities.user_id" in query for query in sql))
+        self.assertTrue(any('b2b_lock.lock_external_identity_v1' in query for query in sql))
         self.assertIn("SET LOCAL lock_timeout = '5s'", sql)
         self.assertIn("SET LOCAL statement_timeout = '15s'", sql)
         self.assertFalse(any(TOKEN in query or CSRF in query for query in sql))

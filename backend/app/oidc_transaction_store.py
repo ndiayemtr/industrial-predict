@@ -10,8 +10,8 @@ Expiry while waiting rejects; expiry after this decision, during commit, is
 admissible. Clocks must be synchronized by deployment. No network service other
 than the explicitly injected database is called, and no retry is performed.
 
-The role needs INSERT/SELECT/DELETE plus UPDATE on at least one column for
-FOR UPDATE (a column grant, e.g. transaction_id, suffices). No UPDATE is executed.
+The role needs INSERT/SELECT/DELETE and EXECUTE on the approved lock function.
+No UPDATE on transaction_id is required or executed by the application role.
 Deployment must protect transport, server logs, backups and recoverable verifier
 storage; this module never logs driver exceptions or values. No migration or
 purge executor is installed here.
@@ -171,7 +171,12 @@ class PostgresTransactionStore:
                 c.created_at <= condition.now,
                 c.expires_at > condition.now,
             )
-            identifier = db.execute(select(c.transaction_id).where(*predicates).with_for_update()).scalar_one_or_none()
+            identifier = db.execute(text('''SELECT transaction_id FROM b2b_lock.lock_oidc_transaction_v1(
+                CAST(:state_digest AS text),CAST(:browser_binding_digest AS text),CAST(:policy_digest AS text),
+                CAST(:contract_version AS text),CAST(:now AS timestamp with time zone))'''),
+                {'state_digest': condition.state_digest, 'browser_binding_digest': condition.browser_binding_digest,
+                 'policy_digest': condition.policy_digest, 'contract_version': condition.contract_version,
+                 'now': condition.now}).scalar_one_or_none()
             if identifier is None:
                 return ConsumptionReceipt(ConsumeStatus.REJECTED)
             # Separate round trip: never sample before or inside the lock query.

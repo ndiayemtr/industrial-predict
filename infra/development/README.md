@@ -1,5 +1,16 @@
 # Environnement permanent de développement
 
+## AUTH-B2B-DEV-5B-4F — verrouillages préparés, aucun déploiement
+
+La matrice candidate retire les cinq UPDATE de clés de ui47_app et prévoit
+USAGE sur b2b_lock et EXECUTE sur cinq signatures exactes. Les deux magasins
+appellent ces fonctions sur leur session existante ; il n'existe aucun repli
+vers les anciens UPDATE. Leur usage exige donc un déploiement SQL ultérieur
+approuvé. Le seul lancement autorisé reste b2b-preparation, sans Google ni métier.
+Voir les [contrats, prérequis et limites](B2B_LOCKS.md). Aucun objet, rôle ou droit
+SQL n'a été installé par ce lot. Les scripts et empreintes de revue précédents
+sont remplacés ; aucune migration historique ni empreinte approuvée n'est modifiée.
+
 ## AUTH-B2B-DEV-5B-4B — profil candidat, aucun runtime ouvert
 
 `b2b-preparation` reste le seul profil de lancement. Le profil
@@ -30,18 +41,19 @@ revue générés depuis cette même matrice et contrôlés par les tests.
 
 | Table | SELECT par colonne | INSERT par colonne | UPDATE par colonne | Droit de table |
 | --- | --- | --- | --- | --- |
-| local_users | id, state | aucun | id | aucun |
-| external_identities | id, user_id, issuer, subject | aucun | id | aucun |
-| company_memberships | id, user_id, company_id, state, role | aucun | id | aucun |
-| membership_permissions | membership_id, permission, role | aucun | membership_id | aucun |
+| local_users | id, state | aucun | aucun | aucun |
+| external_identities | id, user_id, issuer, subject | aucun | aucun | aucun |
+| company_memberships | id, user_id, company_id, state, role | aucun | aucun | aucun |
+| membership_permissions | membership_id, permission, role | aucun | aucun | aucun |
 | application_sessions | les 13 colonnes du contrat | les mêmes 13 | last_activity_at, revoked_at, replaced_by | aucun |
-| oidc_transactions | les 13 colonnes du contrat | les mêmes 13 | transaction_id | DELETE |
+| oidc_transactions | les 13 colonnes du contrat | les mêmes 13 | aucun | DELETE |
 
 Toutes les autres permissions B2B sont interdites, notamment SELECT/INSERT/UPDATE
 au niveau table, REFERENCES, TRIGGER, TRUNCATE, MAINTAIN et délégation.
-Aucun droit sur les trois séquences B2B. Les droits UPDATE des clés sont de
-**vrais droits d'écriture**, nécessaires aux verrous FOR UPDATE/FOR SHARE même si
-les magasins n'actualisent pas ces clés. Ce risque doit être approuvé explicitement.
+Aucun droit sur les trois séquences B2B. Les droits UPDATE de clés sont réservés
+au propriétaire technique NOLOGIN des fonctions, avec SELECT limité aux colonnes
+de leurs prédicats et résultats. Le candidat exige leur contrat exact et refuse
+ces UPDATE sur le rôle applicatif. Les fonctions ne décident aucune autorisation.
 Aucun provisioning, purge de sessions ou gestion des appartenances n'est accordé.
 
 `inspect_db(config, profile='b2b-auth-candidate')` prépare la qualification en
@@ -72,7 +84,8 @@ une ouverture réelle. Aucun de ces droits ne monte une route HTTP.
    manage.py ; ne pas utiliser b2b-migrate ou migrate pour les ACL.
 3. Après autorisation distincte, utiliser le transport privé approuvé verify-full
    et le propriétaire ui47_migrator. Le modèle SQL vérifie rôle, version 17.10,
-   base/OID, cluster, instance, TLS et révision avant ses 15 GRANT ciblés.
+   base/OID, cluster, instance, TLS et révision avant ses 16 GRANT ciblés.
+   Les fonctions fermées doivent déjà être installées et qualifiées séparément.
    Il n'est applicable qu'au baseline B2B vide validé, jamais à une ACL ambiguë.
 4. Dans cette même transaction propriétaire, les blocs `DO $acl$` vérifient
    explicitement les droits du rôle nommé ui47_app avant ET après le delta.
@@ -99,7 +112,7 @@ une ouverture réelle. Aucun de ces droits ne monte une route HTTP.
 
 Retour arrière : avant commit, ROLLBACK ; après commit, arrêter les éventuels
 consommateurs, vérifier l'état candidat exact et l'absence de dérive/délégation,
-puis faire approuver le modèle inverse (15 REVOKE ciblés, sans ALL ni CASCADE),
+puis faire approuver le modèle inverse (16 REVOKE ciblés, sans ALL ni CASCADE),
 avec le même grantor. Vérifier dans la transaction propriétaire l'absence de
 droits B2B du rôle nommé ui47_app par le second bloc du modèle inverse, puis, après commit autorisé,
 refaire le contrôle préparatoire complet sous une nouvelle connexion ui47_app.
@@ -110,6 +123,10 @@ L'inverse restaure les privilèges effectifs, sans garantir la représentation
 brute initiale des ACL (par exemple NULL contre une ACL explicite du propriétaire).
 
 ### DEV-5B-4D — risque des droits UPDATE : décision avant attribution
+
+Analyse historique : la décision SECURITY DEFINER est maintenant retenue par
+DEV-5B-4F. La matrice courante ci-dessus et B2B_LOCKS.md remplacent les propositions
+de maintien temporaire des cinq UPDATE ci-dessous ; les risques résiduels demeurent.
 
 Cause du blocage : le propriétaire n'est ni superutilisateur ni autorisé à
 prendre le rôle applicatif. Les anciennes instructions de changement de rôle
@@ -190,7 +207,7 @@ monter les CRUD historiques, ouvrir le proxy métier ni changer Angular ici.
 Tests ciblés sans réseau, depuis `infra/development` :
 
 ```powershell
-& '..\..\backend\.venv\Scripts\python.exe' -m unittest test_b2b_activation test_manage
+& '..\..\backend\.venv\Scripts\python.exe' -m unittest test_b2b_activation test_b2b_locks test_manage
 ```
 
 Ils vérifient les permissions individuellement, les origines PUBLIC/héritage/

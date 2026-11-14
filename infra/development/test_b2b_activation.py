@@ -18,20 +18,28 @@ class ActivationTests(unittest.TestCase):
 
     def connection(self, *, profile=activation.CANDIDATE, role='ui47_app', memberships=0,
                    unsafe=False, changed_shape=None, flip_table=None, flip_column=None,
-                   role_valid=True, owner_valid=True):
+                   role_valid=True, owner_valid=True, lock_fault=None, locks_installed=True):
         expected = activation.matrix(profile)
+        lock_checks = {sql: (label, wanted) for label,sql,wanted in activation.locks.checks(
+            app_access=profile == activation.CANDIDATE, columns=activation.COLUMNS)}
         connection = MagicMock()
         def driver(sql):
             result = MagicMock()
             if sql == 'SELECT current_user':
                 result.scalar_one.return_value = role
+            elif 'to_regnamespace' in sql:
+                result.scalar_one.return_value = ('b2b_lock' if locks_installed and profile == activation.CANDIDATE else None)
             else:
                 raise AssertionError('Unexpected SQL')
             return result
-        def execute(statement, params):
+        def execute(statement, params=None):
             sql = str(statement)
-            self.assertEqual(params['role'], 'ui47_app')
             result = MagicMock()
+            if sql in lock_checks:
+                label,wanted = lock_checks[sql]
+                result.scalar_one.return_value = (not wanted if type(wanted) is bool else wanted+1) if label==lock_fault else wanted
+                return result
+            self.assertEqual(params['role'], 'ui47_app')
             if 'pg_catalog.pg_roles' in sql:
                 result.scalar_one.return_value = int(role_valid)
                 return result
@@ -81,10 +89,12 @@ class ActivationTests(unittest.TestCase):
         self.assertEqual(proof['checked_role'], 'ui47_app')
         self.assertTrue(proof['acl_exact'])
         connection.commit.assert_not_called()
-        self.assertEqual([c.args[0] for c in connection.exec_driver_sql.call_args_list], ['SELECT current_user'])
+        self.assertEqual([c.args[0] for c in connection.exec_driver_sql.call_args_list],
+                         ['SELECT current_user', "SELECT to_regnamespace('b2b_lock')::text"])
         for call in connection.execute.call_args_list:
             self.assertNotIn('current_user', str(call.args[0]))
-            self.assertEqual(call.args[1]['role'], 'ui47_app')
+            if len(call.args)>1:
+                self.assertEqual(call.args[1]['role'], 'ui47_app')
 
     def test_owner_precommit_rejects_app_acl_defects_despite_owner_authority(self):
         for changes in ({'flip_column': ('local_users', 'id', 'UPDATE')},
@@ -210,12 +220,12 @@ class ActivationTests(unittest.TestCase):
 
     def test_matrix_matches_locking_and_session_operations_without_provisioning(self):
         rights = activation.matrix(activation.CANDIDATE)
-        self.assertEqual(rights['local_users']['columns'], {'SELECT': ['id', 'state'], 'UPDATE': ['id']})
-        self.assertEqual(rights['membership_permissions']['columns']['UPDATE'], ['membership_id'])
+        self.assertEqual(rights['local_users']['columns'], {'SELECT': ['id', 'state']})
+        self.assertNotIn('UPDATE', rights['membership_permissions']['columns'])
         self.assertEqual(rights['application_sessions']['columns']['UPDATE'],
                          ['last_activity_at', 'revoked_at', 'replaced_by'])
         self.assertEqual(rights['oidc_transactions']['table'], ['DELETE'])
-        self.assertEqual(rights['oidc_transactions']['columns']['UPDATE'], ['transaction_id'])
+        self.assertNotIn('UPDATE', rights['oidc_transactions']['columns'])
         self.assertEqual({t for t, r in rights.items() if 'INSERT' in r['columns']},
                          {'application_sessions', 'oidc_transactions'})
 
@@ -227,12 +237,28 @@ class ActivationTests(unittest.TestCase):
         self.assertIn('END; $guard$;', grant)
         statements = [line for line in grant.splitlines() if line.startswith('GRANT ')]
         inverse = [line for line in revoke.splitlines() if line.startswith('REVOKE ')]
-        self.assertEqual(inverse, [s.replace('GRANT ', 'REVOKE ', 1).replace(' TO ui47_app;', ' FROM ui47_app;')
-                                  for s in statements])
-        self.assertEqual(len(statements), 15)
+        self.assertEqual(set(inverse), {s.replace('GRANT ', 'REVOKE ', 1).replace(' TO ui47_app;', ' FROM ui47_app;')
+                                       for s in statements})
+        self.assertEqual(len(statements), 16)
         for forbidden in ('CASCADE', 'ALL PRIVILEGES', 'SEQUENCE', 'PUBLIC;', 'WITH GRANT OPTION', 'INSERT INTO', 'DELETE FROM'):
-            self.assertNotIn(forbidden, grant)
-            self.assertNotIn(forbidden, revoke)
+            self.assertNotIn(forbidden, '\n'.join(statements+inverse))
+
+    def test_candidate_requires_exact_lock_catalog_and_no_excess_owner_rights(self):
+        # Every catalog/security invariant is independently made false, including
+        # function source/signature, PUBLIC, owner rights and delegation.
+        critical = {'lock owner','lock owner memberships','lock schema owner','lock schema public/delegation',
+            'lock schema usage','lock schema create','lock function count','owner other tables',
+            'local_users owner column id UPDATE','local_users owner column state UPDATE',
+            'application_sessions owner column secret_digest SELECT','public owner create'}
+        signature = activation.locks.FUNCTIONS[0]['signature']
+        critical.update((signature,signature+' execute',signature+' ACL',signature+' migrator delegation'))
+        for label,sql,wanted in activation.locks.checks(app_access=True, columns=activation.COLUMNS):
+            if label not in critical:
+                continue
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                activation.inspect_lock_acl(self.connection(lock_fault=label), app_access=True)
+        with self.assertRaises(ValueError):
+            activation.inspect_lock_acl(self.connection(locks_installed=False), app_access=True)
 
     def test_review_files_equal_plan_and_column_lists_match_approved_migrations(self):
         import ast

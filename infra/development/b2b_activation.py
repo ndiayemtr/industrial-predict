@@ -4,6 +4,7 @@ This candidate profile cannot start an application. Grants are column-scoped;
 PostgreSQL requires real UPDATE authority for SELECT row-lock clauses.
 """
 from sqlalchemy import text
+import b2b_locks as locks
 
 
 PREPARATION = 'b2b-preparation'
@@ -50,7 +51,7 @@ def matrix(profile):
             'columns': {p: list(values) for p, values in (
                 ('SELECT', columns),
                 ('INSERT', columns if table in ('application_sessions', 'oidc_transactions') else ()),
-                ('UPDATE', update), ('REFERENCES', ()))
+                ('UPDATE', update if table == 'application_sessions' else ()), ('REFERENCES', ()))
                 if profile == CANDIDATE and values},
         }
     return result
@@ -118,7 +119,20 @@ def _inspect_target_acl(connection, *, profile):
                 actual = connection.execute(text('SELECT has_column_privilege(:role,:name,:column,:privilege)'), p).scalar_one()
                 if actual is not (column in expected[table]['columns'].get(privilege, ())):
                     raise ValueError('B2B column ACL mismatch')
+    inspect_lock_acl(connection, app_access=profile == CANDIDATE, optional=profile == PREPARATION)
     return {'acl_profile': profile, 'checked_role': ROLE, 'acl_exact': True, 'activation_available': False}
+
+
+def inspect_lock_acl(connection, *, app_access, optional=False):
+    namespace = connection.exec_driver_sql("SELECT to_regnamespace('b2b_lock')::text").scalar_one()
+    if namespace is None and optional:
+        return
+    if namespace != 'b2b_lock':
+        raise ValueError('Approved lock deployment required')
+    for label, sql, expected in locks.checks(app_access=app_access, columns=COLUMNS):
+        actual = connection.execute(text(sql)).scalar_one()
+        if type(actual) is not type(expected) or actual != expected:
+            raise ValueError('B2B lock contract mismatch: ' + label)
 
 
 def _sql_text(value):
@@ -223,7 +237,12 @@ def sql_delta(*, reverse=False):
                   "     OR (SELECT version_num FROM public.alembic_version) IS DISTINCT FROM 'b2b_0002_analyze'\n"
                   "  THEN RAISE EXCEPTION 'B2B ACL destination/role check failed'; END IF;\n"
                   "END; $guard$;",
-                  acl_assertion_sql(CANDIDATE if reverse else PREPARATION)]
+                  acl_assertion_sql(CANDIDATE if reverse else PREPARATION),
+                  locks.assertion_sql(app_access=reverse, columns=COLUMNS)]
+    if reverse:
+        for f in locks.FUNCTIONS:
+            statements.append(f"REVOKE EXECUTE ON FUNCTION {f['signature']} FROM {ROLE};")
+        statements.append(f'REVOKE USAGE ON SCHEMA b2b_lock FROM {ROLE};')
     for table, rights in matrix(CANDIDATE).items():
         for privilege in rights['table']:
             statements.append(f'{"REVOKE" if reverse else "GRANT"} {privilege} ON TABLE public.{table} '
@@ -231,7 +250,12 @@ def sql_delta(*, reverse=False):
         for privilege, columns in rights['columns'].items():
             statements.append(f'{"REVOKE" if reverse else "GRANT"} {privilege} ({", ".join(columns)}) '
                               f'ON TABLE public.{table} {"FROM" if reverse else "TO"} {ROLE};')
+    if not reverse:
+        statements.append(f'GRANT USAGE ON SCHEMA b2b_lock TO {ROLE};')
+        for f in locks.FUNCTIONS:
+            statements.append(f"GRANT EXECUTE ON FUNCTION {f['signature']} TO {ROLE};")
     statements.extend([acl_assertion_sql(PREPARATION if reverse else CANDIDATE),
+                       locks.assertion_sql(app_access=not reverse, columns=COLUMNS),
                        '-- After an approved future COMMIT: independently qualify with a new official ui47_app connection.',
                        '-- A separate connection cannot see uncommitted grants. No runtime activation is provided.', 'ROLLBACK;'])
     return '\n'.join(statements)
@@ -245,4 +269,6 @@ def plan(*, profile):
             'google_routes_enabled': False, 'business_routes_enabled': False,
             'future_assembly': 'app.b2b_runtime.install_google_b2b (not imported or mounted)',
             'sequence_grants': [], 'matrix': matrix(profile),
+            'lock_schema': locks.SCHEMA, 'lock_owner': locks.OWNER,
+            'lock_functions': [{k: f[k] for k in ('signature','result','sha256')} for f in locks.FUNCTIONS],
             'grant_review_sql': sql_delta(), 'revoke_review_sql': sql_delta(reverse=True)}

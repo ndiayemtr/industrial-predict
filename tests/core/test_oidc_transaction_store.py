@@ -102,10 +102,18 @@ class SimulatedSession:
                 return False
         return True
 
-    def execute(self, statement):
+    def execute(self, statement, params=None):
         self.statements.append(statement)
         if self.h.failure == "execute":
             raise RuntimeError(SECRET)
+        if 'b2b_lock.lock_oidc_transaction_v1' in str(statement):
+            self.h.events.append('lock')
+            found = next((r['transaction_id'] for r in self.rows.values() if
+                all(r[k] == params[k] for k in ('state_digest','browser_binding_digest','policy_digest','contract_version'))
+                and r['created_at'] <= params['now'] < r['expires_at']), None)
+            if found is not None and self.h.after_lock:
+                self.h.after_lock()
+            return Result(found)
         if not hasattr(statement, "selected_columns") and not isinstance(statement, (Insert, Delete)):
             self.h.events.append(str(statement))
             return Result()
@@ -355,7 +363,9 @@ class AdapterTests(unittest.TestCase):
         h.store.consume(condition())
         lock, clock, removal = h.sessions[0].statements[2:]
         lock_sql = str(lock.compile(dialect=postgresql.dialect()))
-        self.assertTrue(lock_sql.endswith("FOR UPDATE"))
+        self.assertIn('b2b_lock.lock_oidc_transaction_v1', lock_sql)
+        for parameter in ('state_digest','browser_binding_digest','policy_digest','contract_version','now'):
+            self.assertIn('%('+parameter+')s', lock_sql)
         self.assertEqual(str(clock.compile(dialect=postgresql.dialect())), "SELECT clock_timestamp() AS clock_timestamp_1")
         sql = str(removal.compile(dialect=postgresql.dialect()))
         self.assertIn("DELETE FROM public.oidc_transactions", sql)

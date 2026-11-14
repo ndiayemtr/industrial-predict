@@ -72,14 +72,15 @@ def case(monkeypatch, offline):
     def execute(statement, *args, **kwargs):
         query = str(statement.compile(dialect=postgresql.dialect()))
         result = Mock()
+        result.mappings.return_value = result
         if 'membership_permissions' in query:
             state.calls.append('permissions')
-            result.all.return_value = [NS(permission=p, role='company_admin') for p in state.permissions]
-        elif 'company_memberships' in query:
+            result.all.return_value = [dict(permission=p, role='company_admin') for p in state.permissions]
+        elif 'lock_memberships_v1' in query:
             state.calls.append('memberships')
             member.company_id = state.company
             member.state = state.membership_state
-            result.scalars.return_value.all.return_value = [member]
+            result.all.return_value = [dict(id=member.id,user_id=17,company_id=member.company_id,state=member.state,role=member.role)]
         elif 'equipments' in query:
             state.calls.append('scope')
             params = statement.compile(dialect=postgresql.dialect()).params
@@ -219,8 +220,8 @@ def test_other_generators_remain_closed(case, suffix):
 def test_grant_queries_take_share_locks_and_reload_each_request(case):
     case.client.request('GET', '/api/v1/equipments/303/predictions', headers=HEADERS)
     sql = [str(call.args[0].compile(dialect=postgresql.dialect())) for call in case.db.execute.call_args_list]
-    assert any('company_memberships' in query and 'FOR SHARE' in query for query in sql)
-    assert any('membership_permissions' in query and 'FOR SHARE' in query for query in sql)
+    assert any('b2b_lock.lock_memberships_v1' in query for query in sql)
+    assert any('b2b_lock.lock_membership_permissions_v1' in query for query in sql)
     case.state.permissions = []
     assert case.client.request('GET', '/api/v1/equipments/303/predictions', headers=HEADERS).status_code == 403
     assert case.reads.get_paginated.call_count == 1
