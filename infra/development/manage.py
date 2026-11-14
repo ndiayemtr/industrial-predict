@@ -63,7 +63,8 @@ def db_url(config, role):
                       host=config['db_host'], port=config['db_port'], database=config['database'])
 
 
-def inspect_connection(connection, config, role='app', revision=True, *, expected_revision=REVISION):
+def inspect_connection(connection, config, role='app', revision=True, *, expected_revision=REVISION,
+                       expected_cluster_name='industrial-predict-development'):
     proof = dict(connection.execute(text("""SELECT current_database() AS database,
         current_user AS role,current_setting('server_version') AS version,
         current_setting('app.development_instance_id',true) AS instance_id,
@@ -77,7 +78,7 @@ def inspect_connection(connection, config, role='app', revision=True, *, expecte
         (SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user) AS bypassrls""")).mappings().one())
     if proof['database'] != config['database'] or proof['database_oid'] != config['database_oid'] or proof['instance_id'] != config['instance_id'] or proof['role'] != f'ui47_{role}':
         raise ValueError('Connected development identity mismatch')
-    if not proof['version'].startswith('17.10') or proof['cluster_name'] != 'industrial-predict-development':
+    if not proof['version'].startswith('17.10') or proof['cluster_name'] != expected_cluster_name:
         raise ValueError('PostgreSQL version mismatch')
     if role != 'admin' and any(proof[key] for key in ('superuser','createdb','createrole','replication','bypassrls')):
         raise ValueError('Excessive development privileges')
@@ -727,15 +728,18 @@ def main():
     parser.add_argument('action',choices=['check-db','check','migrate','api','frontend','db-start','db-stop',
                                         'b2b-preflight','b2b-backup','b2b-rehearse','b2b-migrate','b2b-auth-plan',
                                         'b2b-locks-backup','b2b-locks-rehearse','b2b-locks-install',
-                                        'b2b-locks-grant','b2b-locks-rollback'])
+                                        'b2b-locks-grant','b2b-locks-rollback','b2b-locks-relay'])
     parser.add_argument('--config',required=True)
     parser.add_argument('--target', default='b2b_0002_analyze')
     parser.add_argument('--current-revision')
     parser.add_argument('--role', default='ui47_migrator')
     parser.add_argument('--bundle')
+    parser.add_argument('--qualification-campaign')
     parser.add_argument('--runtime-profile', choices=(activation.PREPARATION, activation.CANDIDATE),
                         default=activation.PREPARATION)
     args = parser.parse_args()
+    if args.qualification_campaign is not None and not args.action.startswith('b2b-locks-'):
+        parser.error('Qualification is available only for explicit lock qualification operations')
     if args.action == 'b2b-auth-plan':
         # Offline only: do not open the private profile, password, CA or engine.
         if args.role != activation.ROLE:
@@ -753,12 +757,28 @@ def main():
         return
     if args.runtime_profile != activation.PREPARATION:
         parser.error('Candidate profile cannot launch, migrate or access services')
-    config = load_config(args.config)
+    qualification = None
+    manager = sys.modules[__name__]
+    if args.qualification_campaign is not None:
+        import b2b_qualification
+        qualification = b2b_qualification.Qualification.load(args.config, args.qualification_campaign)
+        config = qualification.config
+        manager = qualification.manager(manager)
+    else:
+        if args.action == 'b2b-locks-relay':
+            parser.error('Relay requires explicit qualification campaign')
+        config = load_config(args.config)
+    if args.action == 'b2b-locks-relay':
+        if args.bundle or args.role != 'ui47_migrator' or args.target != RUNTIME_REVISION or args.current_revision not in (None, RUNTIME_REVISION):
+            parser.error('Relay accepts only the exact qualification context')
+        import b2b_qualification_relay
+        b2b_qualification_relay.Relay(qualification).run()
+        return
     if args.action.startswith('b2b-locks-'):
         if args.target != RUNTIME_REVISION or args.current_revision not in (None, RUNTIME_REVISION) or args.role != 'ui47_migrator' or not args.bundle:
             parser.error('Lock deployment requires installed revision, default role selector and explicit private bundle')
         import b2b_deployment
-        deployment = b2b_deployment.Deployment(sys.modules[__name__], config)
+        deployment = b2b_deployment.Deployment(manager, config, qualification=qualification) if qualification else b2b_deployment.Deployment(manager, config)
         operation = args.action.removeprefix('b2b-locks-')
         result = (getattr(deployment, operation)(args.bundle) if operation in ('backup', 'rehearse')
                   else deployment.operate(args.bundle, operation))

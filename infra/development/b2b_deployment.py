@@ -137,20 +137,35 @@ def inverse_sql():
 
 
 class Deployment:
-    def __init__(self, manager, config):
+    def __init__(self, manager, config, *, qualification=None):
         self.m, self.config = manager, config
-        approved = policy.policy()
+        self.qualification = qualification
+        if qualification is None:
+            require('qualification_campaign' not in config, 'Qualification must be explicit')
+            approved = policy.policy()
+        else:
+            from b2b_qualification import Qualification
+            require(type(qualification) is Qualification and config == qualification.config,
+                    'Explicit validated qualification required')
+            qualification.validate()
+            approved = qualification.approved()
         require(Path(config['_path']).resolve() == Path(approved['profile']).resolve(), 'Unapproved private profile')
         require(Path(config['_directory']).resolve() == Path(config['_path']).resolve().parent, 'Profile directory mismatch')
         require(all(config.get(k) == v for k, v in approved['destination'].items()), 'Wrong DEV destination')
         activation.require_preparation(config)
         self.bodies = capture()
+        if qualification is not None:
+            self.bodies = qualification.render(self.bodies)
+        self.restore_database = RESTORE_DATABASE if qualification is None else qualification.restore_database
         self.plan = {'operation': 'dev-b2b-locks-v1', 'revision': REVISION,
             'destination': approved['destination'], 'sources': PINS,
             'executors': {Path(p).name: policy.file_digest(Path(p)) for p in (__file__, manager.__file__)},
             'functions': [{k: f[k] for k in ('signature', 'result', 'sha256')} for f in locks.FUNCTIONS],
-            'restore_database': RESTORE_DATABASE, 'runtime_enabled': False,
+            'restore_database': self.restore_database, 'runtime_enabled': False,
             'inverse_sha256': policy.digest(inverse_sql().encode('utf-8'))}
+        if qualification is not None:
+            self.plan.update(qualification.plan())
+            self.plan['rendered_sql'] = {name: policy.digest(body.encode('utf-8')) for name, body in self.bodies.items()}
         self.tables = (*manager.TABLES, *manager.B2B_TABLES, 'alembic_version')
 
     def directory(self, directory, *, existing=True):
@@ -160,6 +175,8 @@ class Deployment:
         return value
 
     def restore_inventory(self):
+        if self.qualification is not None:
+            return self.qualification.restore_inventory()
         value = policy.read_json(Path(self.config['_directory']) / 'b2b-locks-restore.json')
         require(set(value) == {'database', 'database_oid', 'instance_id', 'cluster_identifier'}, 'Invalid restore inventory')
         require(value['database'] == RESTORE_DATABASE and value['database'] != self.config['database'], 'Restore database overlaps source')
@@ -311,7 +328,7 @@ class Deployment:
                             'Unexpected pre-existing B2B grant')
                     exported = c.exec_driver_sql('SELECT pg_export_snapshot()').scalar_one()
                     archive = directory / ARCHIVE
-                    self.m.b2b_pgtool(self.config, 'pg_dump', ['--dbname=industrial_predict_dev', '--format=custom', '--snapshot=' + exported, '--file=' + str(archive)])
+                    self.m.b2b_pgtool(self.config, 'pg_dump', ['--dbname=' + self.config['database'], '--format=custom', '--snapshot=' + exported, '--file=' + str(archive)])
                     require(archive.is_file() and archive.stat().st_size > 0, 'Empty backup archive')
                     toc = self.m.b2b_pgtool(self.config, 'pg_restore', ['--list', str(archive)])
                     (directory / 'archive-toc.txt').write_bytes(toc)

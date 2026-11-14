@@ -5,6 +5,10 @@ arrière fermé est décrit dans [B2B_DEPLOYMENT.md](B2B_DEPLOYMENT.md).
 Ces opérations exigent des approbations séparées ; aucun lancement courant ne
 les exécute.
 
+Le contexte explicite de qualification isolée et son relais TLS sont décrits
+dans [B2B_QUALIFICATION.md](B2B_QUALIFICATION.md). Il reste désactivé par défaut
+et ne permet aucun démarrage applicatif.
+
 ## AUTH-B2B-DEV-5B-4F — verrouillages préparés, aucun déploiement
 
 La matrice candidate retire les cinq UPDATE de clés de ui47_app et prévoit
