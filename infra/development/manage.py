@@ -15,6 +15,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 
 import b2b_policy as b2b
+import b2b_activation as activation
 
 REPO = Path(__file__).resolve().parents[2]
 REVISION = '09ac8101e9fe'
@@ -34,6 +35,7 @@ def load_config(filename):
     if path.is_relative_to(REPO):
         raise ValueError('Private configuration must be outside Git')
     config = json.loads(path.read_text(encoding='utf-8'))
+    activation.require_preparation(config)
     expected = {'mode': 'local-development', 'db_host': '127.0.0.1', 'db_port': 5434,
                 'database': 'industrial_predict_dev', 'api_port': 8001, 'frontend_port': 4201,
                 'container': 'industrial-predict-postgres-ui47', 'volume': 'industrial-predict-postgres-ui47-data',
@@ -118,7 +120,8 @@ def inspect_runtime_connection(connection, config):
             'runtime_mode': RUNTIME_MODE, 'business_routes_enabled': False}
 
 
-def inspect_runtime_schema(connection):
+def inspect_runtime_schema(connection, *, profile=RUNTIME_MODE):
+    activation.require_profile(profile)
     tables = dict(connection.exec_driver_sql("SELECT tablename,tableowner FROM pg_tables WHERE schemaname='public'").all())
     if set(tables) != set(TABLES) | set(B2B_TABLES) | {'alembic_version'} or any(
             owner != 'ui47_migrator' for owner in tables.values()):
@@ -135,10 +138,12 @@ def inspect_runtime_schema(connection):
         expected = {'USAGE': name in BUSINESS_SEQUENCES, 'SELECT': False, 'UPDATE': False}
         if privileges != expected:
             raise ValueError('Unexpected runtime sequence privileges')
+    if profile == activation.CANDIDATE:
+        return {'sequence_usage_only': True, **activation.inspect_acl(connection, profile=profile)}
     # Preparation phase only: no B2B endpoints are mounted. A future activation
     # must separately qualify a minimal grant profile instead of inheriting CRUD.
     for name in B2B_TABLES:
-        for privilege in ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'):
+        for privilege in activation.TABLE_PRIVILEGES:
             if connection.execute(text('SELECT has_table_privilege(current_user,:name,:privilege)'),
                                   {'name': 'public.' + name, 'privilege': privilege}).scalar_one():
                 raise ValueError('B2B privileges require a separately reviewed activation profile')
@@ -149,14 +154,15 @@ def inspect_runtime_schema(connection):
     return {'sequence_usage_only': True, 'b2b_access': 'not_enabled'}
 
 
-def inspect_db(config):
+def inspect_db(config, *, profile=RUNTIME_MODE):
+    activation.require_profile(profile)
     engine = runtime_engine(config)
     try:
         with engine.connect().execution_options(isolation_level='AUTOCOMMIT') as connection:
             connection.exec_driver_sql('BEGIN TRANSACTION READ ONLY')
             try:
                 result = inspect_runtime_connection(connection, config)
-                result.update(inspect_runtime_schema(connection))
+                result.update(inspect_runtime_schema(connection, profile=profile))
                 result['counts'] = {table: connection.exec_driver_sql(f'SELECT count(*) FROM public.{table}').scalar_one() for table in TABLES}
                 permissions = {}
                 for privilege in ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'):
@@ -652,12 +658,13 @@ def migrate_b2b(config, directory, target):
         engine.dispose()
 
 
-def prepare_runtime_app(config):
+def prepare_runtime_app(config, *, profile=RUNTIME_MODE):
     """Prepare the existing SqlRuntime over one TLS engine, without DB/Google I/O.
 
     Do not import app.main/core.database: their legacy CRUD assembly and .env
     discovery are outside this preparation phase. Only diagnostics are mounted.
     """
+    activation.require_preparation(config, profile)
     from fastapi import FastAPI
     from sqlalchemy.orm import sessionmaker
     sys.path.insert(0, str(REPO/'backend'))
@@ -691,6 +698,7 @@ def prepare_runtime_app(config):
 
 
 def api(config):
+    activation.require_preparation(config)
     inspect_db(config)
     free_port(config['api_port'])
     app = prepare_runtime_app(config)
@@ -702,6 +710,7 @@ def api(config):
 
 
 def frontend(config):
+    activation.require_preparation(config)
     inspect_db(config)
     check_api(config)
     free_port(config['frontend_port'])
@@ -715,13 +724,32 @@ def frontend(config):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action',choices=['check-db','check','migrate','api','frontend','db-start','db-stop',
-                                        'b2b-preflight','b2b-backup','b2b-rehearse','b2b-migrate'])
+                                        'b2b-preflight','b2b-backup','b2b-rehearse','b2b-migrate','b2b-auth-plan'])
     parser.add_argument('--config',required=True)
     parser.add_argument('--target', default='b2b_0002_analyze')
     parser.add_argument('--current-revision')
     parser.add_argument('--role', default='ui47_migrator')
     parser.add_argument('--bundle')
+    parser.add_argument('--runtime-profile', choices=(activation.PREPARATION, activation.CANDIDATE),
+                        default=activation.PREPARATION)
     args = parser.parse_args()
+    if args.action == 'b2b-auth-plan':
+        # Offline only: do not open the private profile, password, CA or engine.
+        if args.role != activation.ROLE:
+            parser.error('B2B auth plan requires explicit --role ui47_app')
+        if args.target != RUNTIME_REVISION or args.current_revision not in (None, RUNTIME_REVISION) or args.bundle:
+            parser.error('B2B auth plan accepts only the installed revision and no migration bundle')
+        policy = b2b.policy()
+        if Path(args.config).resolve() != Path(policy['profile']).resolve():
+            parser.error('Activation plan requires the approved private profile path')
+        report = activation.plan(profile=args.runtime_profile)
+        report['destination'] = policy['destination']
+        report['live_checks_performed'] = False
+        report['plan_sha256'] = b2b.digest(b2b.canonical(report))
+        print(json.dumps(report))
+        return
+    if args.runtime_profile != activation.PREPARATION:
+        parser.error('Candidate profile cannot launch, migrate or access services')
     config = load_config(args.config)
     if args.action == 'b2b-preflight':
         if not args.current_revision:

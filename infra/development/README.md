@@ -1,5 +1,120 @@
 # Environnement permanent de développement
 
+## AUTH-B2B-DEV-5B-4B — profil candidat, aucun runtime ouvert
+
+`b2b-preparation` reste le seul profil de lancement. Le profil
+`b2b-auth-candidate` décrit et qualifie les ACL B2B ; il n'est **pas activable**.
+Les commandes `api`, `frontend`, `check-db`, migrations et Docker refusent
+`--runtime-profile b2b-auth-candidate` avant de charger le profil privé.
+Un champ privé `runtime_profile` différent de `b2b-preparation` est également
+refusé. Aucun drapeau ne monte Google ou les anciens CRUD.
+
+Le seul nouveau point d'entrée est un plan **hors ligne**, sans lecture du
+profil privé, de la CA ou d'un mot de passe, sans moteur SQL ni accès Google :
+
+```powershell
+Set-Location -LiteralPath 'D:\projets\industrial-predict'
+& '.\backend\.venv\Scripts\python.exe' '.\infra\development\manage.py' b2b-auth-plan --config 'D:\integration\industrial-predict\development\config.json' --runtime-profile b2b-auth-candidate --role ui47_app
+```
+
+Le chemin est comparé à l'inventaire DEV approuvé existant. Le rapport JSON
+contient destination, révision, rôle, matrice, SQL de revue aller/retour et SHA-256
+du plan ; `live_checks_performed=false`, `activation_available=false`.
+Ce hash identifie un plan, il ne vaut ni approbation humaine ni preuve SQL.
+
+### Matrice exacte proposée
+
+Les listes complètes et ordonnées sont dans `b2b_activation.COLUMNS` ; les fichiers
+`b2b-auth-grants.review.sql` et `b2b-auth-revoke.review.sql` sont des modèles de
+revue générés depuis cette même matrice et contrôlés par les tests.
+
+| Table | SELECT par colonne | INSERT par colonne | UPDATE par colonne | Droit de table |
+| --- | --- | --- | --- | --- |
+| local_users | id, state | aucun | id | aucun |
+| external_identities | id, user_id, issuer, subject | aucun | id | aucun |
+| company_memberships | id, user_id, company_id, state, role | aucun | id | aucun |
+| membership_permissions | membership_id, permission, role | aucun | membership_id | aucun |
+| application_sessions | les 13 colonnes du contrat | les mêmes 13 | last_activity_at, revoked_at, replaced_by | aucun |
+| oidc_transactions | les 13 colonnes du contrat | les mêmes 13 | transaction_id | DELETE |
+
+Toutes les autres permissions B2B sont interdites, notamment SELECT/INSERT/UPDATE
+au niveau table, REFERENCES, TRIGGER, TRUNCATE, MAINTAIN et délégation.
+Aucun droit sur les trois séquences B2B. Les droits UPDATE des clés sont de
+**vrais droits d'écriture**, nécessaires aux verrous FOR UPDATE/FOR SHARE même si
+les magasins n'actualisent pas ces clés. Ce risque doit être approuvé explicitement.
+Aucun provisioning, purge de sessions ou gestion des appartenances n'est accordé.
+
+`inspect_db(config, profile='b2b-auth-candidate')` prépare la qualification en
+lecture seule via le moteur ui47_app existant ; aucun appel n'en est effectué par
+la nouvelle CLI hors ligne. Les contrôles d'identité, révision b2b_0002_analyze,
+CA/SHA-256 et verify-full, propriétaires, tables et séquences sont réutilisés.
+Les privilèges effectifs sont contrôlés avec has_table_privilege ET
+has_column_privilege, pour chaque colonne et chaque permission. Sont refusés :
+colonnes inattendues, droits manquants/excessifs, tout lien de rôle (y compris
+SET ROLE), accords B2B à PUBLIC, options de délégation et grantor autre que
+ui47_migrator pour les accords à ui47_app. Une erreur/ambiguïté interrompt le contrôle.
+
+Les droits industriels historiques et leurs contrôles restent inchangés : CRUD
+sur les huit tables et USAGE sur leurs séquences. Le candidat est donc une
+qualification du **delta B2B**, pas une certification du moindre privilège global.
+Leur réduction éventuelle exige un lot et un rollback approuvés séparément avant
+une ouverture réelle. Aucun de ces droits ne monte une route HTTP.
+
+### Procédure future de droits — ne pas exécuter dans ce lot
+
+1. Arrêter les processus applicatifs contrôlés, conserver le mode fermé. Capturer
+   les ACL effectives et brutes, grantors, rôles, propriétaires et empreintes des
+   scripts. Qualifier sous ui47_app l'identité/TLS et l'état préparatoire sans
+   droit B2B. Une sauvegarde actualisée et sa restauration isolée doivent être
+   validées selon la procédure approuvée ; ne pas réutiliser un instantané périmé.
+2. Faire approuver destination, hash du plan, matrice (dont UPDATE pour verrous),
+   état initial exact et plan inverse. Aucun exécuteur de GRANT n'est fourni dans
+   manage.py ; ne pas utiliser b2b-migrate ou migrate pour les ACL.
+3. Après autorisation distincte, utiliser le transport privé approuvé verify-full
+   et le propriétaire ui47_migrator. Le modèle SQL vérifie rôle, version 17.10,
+   base/OID, cluster, instance, TLS et révision avant ses 15 GRANT ciblés.
+   Il n'est applicable qu'au baseline B2B vide validé, jamais à une ACL ambiguë.
+4. Dans cette même transaction, après les GRANT, effectuer SET LOCAL ROLE ui47_app
+   puis les contrôles d'identité et inspect_runtime_schema avec le profil candidat
+   sur cette connexion. Une autre connexion ne voit pas les accords non commités.
+   N'effectuer aucun test OIDC/écriture de données dans cette transaction.
+   Les deux modèles terminent volontairement par **ROLLBACK**. Seule une revue
+   humaine ultérieure pourra préparer leur version à COMMIT après contrôle exact.
+5. Après commit autorisé, requalifier avec une nouvelle connexion ui47_app et
+   comparer les ACL à la preuve attendue. Maintenir l'application arrêtée : le
+   lanceur préparatoire refusera ces nouvelles ACL. Ce lot n'offre pas de lancement
+   candidat et ne permet pas de poursuivre automatiquement vers Google.
+
+Retour arrière : avant commit, ROLLBACK ; après commit, arrêter les éventuels
+consommateurs, vérifier l'état candidat exact et l'absence de dérive/délégation,
+puis faire approuver le modèle inverse (15 REVOKE ciblés, sans ALL ni CASCADE),
+avec le même grantor. Vérifier sous ui47_app dans la transaction l'absence de
+droits B2B, puis, après commit autorisé, refaire le contrôle préparatoire complet.
+Si l'état ne correspond pas à la preuve, arrêter pour revue ; ne pas révoquer
+aveuglément les droits d'un autre lot et ne pas restaurer la base active pour
+annuler des ACL. Aucun enregistrement ni objet du schéma n'est supprimé.
+
+### Assemblage ultérieur et tests
+
+L'unique raccordement prévu reste `app.b2b_runtime.install_google_b2b` avec le
+SqlRuntime ui47_app qualifié, configuration OIDC explicite et chargeur de secret
+serveur. Ce symbole est seulement documenté dans le plan, jamais importé/appelé
+par ce lot. Une prochaine validation devra apporter HTTPS, callback/remise de
+session et nouveau mode explicite. Ne pas importer app.main/app.core.database,
+monter les CRUD historiques, ouvrir le proxy métier ni changer Angular ici.
+
+Tests ciblés sans réseau, depuis `infra/development` :
+
+```powershell
+& '..\..\backend\.venv\Scripts\python.exe' -m unittest test_b2b_activation test_manage
+```
+
+Ils vérifient les permissions individuellement, les origines PUBLIC/héritage/
+délégation, la forme des colonnes publiée, les scripts inverses, les refus CLI,
+le rôle applicatif, la conservation des contrôles d'identité/TLS et les deux
+seules routes diagnostics du runtime préparatoire. Ils ne qualifient pas une ACL
+PostgreSQL réelle ; aucune connexion réelle n'est autorisée dans ces tests.
+
 ## AUTH-B2B-DEV-5B-1 — préparation du runtime
 
 Le lanceur officiel attend maintenant exactement `b2b_0002_analyze`, quinze

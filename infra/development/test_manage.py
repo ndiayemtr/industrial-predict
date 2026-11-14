@@ -257,6 +257,27 @@ class RuntimePreparationTests(unittest.TestCase):
                 manage.inspect_runtime_connection(connection,self.config)
         self.assertEqual(manage.REVISION,'09ac8101e9fe')  # approved migration start unchanged
 
+    def test_candidate_qualification_keeps_identity_tls_schema_and_closed_proof(self):
+        self.connection()
+        with patch('manage.activation.inspect_acl', return_value={'acl_exact': True, 'activation_available': False}) as acl:
+            proof = manage.inspect_db(self.config, profile=manage.activation.CANDIDATE)
+        self.assertFalse(proof['activation_available'])
+        self.assertFalse(proof['business_routes_enabled'])
+        self.assertEqual(proof['runtime_mode'], 'b2b-preparation')
+        acl.assert_called_once()
+        for changes in ({'revision': manage.REVISION}, {'identity_changes': {'role': 'ui47_admin'}},
+                        {'schema_changes': {'ssl': False}}, {'schema_changes': {'cluster': 'wrong'}}):
+            self.connection(**changes)
+            with self.subTest(changes=changes), patch('manage.activation.inspect_acl') as acl, self.assertRaises(ValueError):
+                manage.inspect_db(self.config, profile=manage.activation.CANDIDATE)
+            acl.assert_not_called()
+
+    def test_candidate_acl_failure_blocks_qualification(self):
+        connection, _ = self.connection()
+        with patch('manage.activation.inspect_acl', side_effect=ValueError('ACL mismatch')), self.assertRaises(ValueError):
+            manage.inspect_db(self.config, profile=manage.activation.CANDIDATE)
+        self.assertIn('ROLLBACK', [c.args[0] for c in connection.exec_driver_sql.call_args_list])
+
     def test_runtime_refuses_wrong_live_identity_cluster_or_plaintext(self):
         for key, value in (('database','industrial_predict'),('database_oid',99),('role','ui47_admin'),
                            ('instance_id','wrong'),('cluster_name','wrong'),('superuser',True),('createdb',True)):
