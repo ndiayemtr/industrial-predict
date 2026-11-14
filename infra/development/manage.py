@@ -725,7 +725,9 @@ def frontend(config):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action',choices=['check-db','check','migrate','api','frontend','db-start','db-stop',
-                                        'b2b-preflight','b2b-backup','b2b-rehearse','b2b-migrate','b2b-auth-plan'])
+                                        'b2b-preflight','b2b-backup','b2b-rehearse','b2b-migrate','b2b-auth-plan',
+                                        'b2b-locks-backup','b2b-locks-rehearse','b2b-locks-install',
+                                        'b2b-locks-grant','b2b-locks-rollback'])
     parser.add_argument('--config',required=True)
     parser.add_argument('--target', default='b2b_0002_analyze')
     parser.add_argument('--current-revision')
@@ -752,7 +754,16 @@ def main():
     if args.runtime_profile != activation.PREPARATION:
         parser.error('Candidate profile cannot launch, migrate or access services')
     config = load_config(args.config)
-    if args.action == 'b2b-preflight':
+    if args.action.startswith('b2b-locks-'):
+        if args.target != RUNTIME_REVISION or args.current_revision not in (None, RUNTIME_REVISION) or args.role != 'ui47_migrator' or not args.bundle:
+            parser.error('Lock deployment requires installed revision, default role selector and explicit private bundle')
+        import b2b_deployment
+        deployment = b2b_deployment.Deployment(sys.modules[__name__], config)
+        operation = args.action.removeprefix('b2b-locks-')
+        result = (getattr(deployment, operation)(args.bundle) if operation in ('backup', 'rehearse')
+                  else deployment.operate(args.bundle, operation))
+        print(json.dumps({'stage': result['stage'], 'completed': True, 'runtime_enabled': False}))
+    elif args.action == 'b2b-preflight':
         if not args.current_revision:
             parser.error('b2b-preflight requires --current-revision (untrusted declaration)')
         print(json.dumps(b2b.report(config, current=args.current_revision, role=args.role, target=args.target)))

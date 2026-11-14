@@ -1,5 +1,10 @@
 # Environnement permanent de développement
 
+Le parcours de sauvegarde au schéma installé, d'installation A/B et de retour
+arrière fermé est décrit dans [B2B_DEPLOYMENT.md](B2B_DEPLOYMENT.md).
+Ces opérations exigent des approbations séparées ; aucun lancement courant ne
+les exécute.
+
 ## AUTH-B2B-DEV-5B-4F — verrouillages préparés, aucun déploiement
 
 La matrice candidate retire les cinq UPDATE de clés de ui47_app et prévoit
