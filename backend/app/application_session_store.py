@@ -264,7 +264,8 @@ class PostgresApplicationSessionStore:
                     replaced_by=None if record.replaced_by is None else record.replaced_by.digest,
                     contract_version=CONTRACT_VERSION)
 
-    def create(self) -> IssuedSession:
+    def create(self, *, require_company_access: bool = False) -> IssuedSession:
+        _require(type(require_company_access) is bool)
         def operation(db):
             admission = self._admission.admit()
             _require(type(admission) is AdmissionDecision and type(admission.outcome) is Outcome)
@@ -284,6 +285,18 @@ class PostgresApplicationSessionStore:
             record = SessionRecord(session_reference(secret), identity, now, now, now,
                                    now + self._policy.absolute_timeout, self._policy)
             db.execute(insert(_TABLE).values(**self._values(record, external_id=external["id"], csrf_digest=csrf_fingerprint(csrf))))
+            if require_company_access:
+                # Opt-in browser admission, inside this SAME transaction before
+                # commit/secret delivery. Reuse existing locked session/grant reads.
+                from app.core.b2b_browser import browser_profile
+                from app.core.caller_session import CallerForbidden, CallerProviderUnavailable
+                try:
+                    browser_profile(self.current_caller_in_transaction(db, reference=record.reference,
+                                    now=max(self._times(db))))
+                except CallerForbidden:
+                    raise SessionStoreRejected() from None
+                except CallerProviderUnavailable:
+                    raise SessionStoreIncoherent() from None
             return IssuedSession(secret, csrf, record)
         return self._run(operation)
 

@@ -9,14 +9,18 @@ from app.core.authorization import Permission
 from app.core.caller_session import CallerUnauthenticated, CallerForbidden, CallerProviderUnavailable
 
 
-def session_runtime(request):
+def session_reference_from_request(request):
     values = request.headers.getlist('authorization')
     if len(values) != 1 or not values[0].startswith('Bearer '):
         raise HTTPException(401, 'AUTHENTICATION_REQUIRED', headers={'WWW-Authenticate': 'Bearer'})
     try:
-        reference = session_reference(values[0][7:])
+        return session_reference(values[0][7:])
     except Exception:
         raise HTTPException(401, 'AUTHENTICATION_REQUIRED', headers={'WWW-Authenticate': 'Bearer'}) from None
+
+
+def session_runtime(request):
+    reference = session_reference_from_request(request)
     runtime = getattr(request.app.state, 'b2b_runtime', None)
     if type(runtime) is not B2BRouteRuntime:
         raise HTTPException(503, 'B2B_RUNTIME_UNAVAILABLE')

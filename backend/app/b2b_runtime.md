@@ -1,5 +1,115 @@
 # AUTH-B2B-RUNTIME-1
 
+## AUTH-B2B-API-1 — contrats navigateur optionnels, aucune activation DEV
+
+Le paramètre `browser_profile` de `install_google_b2b` reste `None` par défaut.
+Sans ce profil explicite, les deux nouvelles routes auth ne sont pas montées et
+le callback existant conserve sa remise JSON historique. Aucun lanceur, profil
+privé, proxy ou garde DevOps n'est modifié par ce lot. Angular n'est pas modifié :
+son provider d'adaptateur reste null et son bouton demeure désactivé.
+
+Le profil `BrowserAuthProfile` exige une origine HTTPS canonique et un
+`qualification_guard(sql)` serveur. Ce garde doit réutiliser la qualification
+réelle approuvée : instance/cluster/base, rôle ui47_app, TLS verify-full et CA,
+révision b2b_0002_analyze, cinq fonctions et ACL exactes. Il est exécuté avant
+montage puis sur chaque requête auth. Il doit lever une erreur si une condition
+échoue et ne rien retourner en cas de réussite ; un booléen n'est pas une preuve.
+Un objet typé ou une fonction vide n'atteste aucune qualification. Les gardes
+vides utilisés dans les tests sont exclusivement des doubles.
+
+L'assemblage navigateur exige une application limitée aux diagnostics ; il
+refuse une application qui monte déjà les CRUD historiques. Il renseigne
+`app.state.b2b_auth_runtime`, jamais `b2b_runtime`, et ferme aussi les chemins
+métier ajoutés ultérieurement. Le moteur SQL et les stores existants sont
+réutilisés ; aucun moteur, compte, grant ou migration n'est créé.
+
+| Route | Contrat du profil navigateur |
+|---|---|
+| GET /auth/oidc/google/start | Route existante inchangée : 302 vers Google et cookie de binding __Host-, Secure, HttpOnly, SameSite=Lax |
+| GET /auth/oidc/google/callback | Même vérification OIDC existante ; retour HTML nonce-CSP avec postMessage sur l'origine exacte de la popup Angular |
+| GET /api/v1/auth/me | Bearer canonique obligatoire ; profil frais via les lectures verrouillées existantes |
+| POST /api/v1/auth/logout | Bearer courant et Origin exacte obligatoires ; 204 seulement après commit confirmé de revoked_at |
+
+La réponse `/me` correspond exactement à la projection Angular UI-1 :
+
+```json
+{
+  "userId": 17,
+  "displayName": null,
+  "companies": [
+    { "companyId": 101, "displayName": null, "permissions": ["predictions:read"] }
+  ]
+}
+```
+
+Les noms sont null : le schéma local ne fournit pas de nom utilisateur et aucun
+accès industriel supplémentaire n'est nécessaire. Aucun email, issuer, subject,
+digest ou secret de session ne figure dans ce DTO. Les entreprises sont limitées
+aux appartenances actives disposant d'au moins un grant explicite accepté par
+`decide_authorization`. Un rôle seul, un domaine Google ou une appartenance
+inactive ne fournit aucun droit. Si aucune entreprise ne satisfait ce contrat,
+la réponse est 403. Les données incohérentes ou une autorité indisponible donnent
+503 ; les sessions absentes/invalides/expirées/révoquées donnent 401. Un compte
+suspendu donne 403. Les lectures ne prolongent pas l'activité de la session.
+
+Dans ce profil, la création de session réutilise `store.create` avec
+`require_company_access=True` fixé côté serveur. Les appartenances/grants sont
+relus dans la même transaction, avant commit et livraison du secret. Un refus
+annule l'INSERT ; aucun compte ou membership n'est provisionné. Le comportement
+historique de `create()` sans cette option est conservé.
+
+Le message popup succès est celui préparé par Angular :
+
+```text
+{kind: "industrial-predict:b2b-session:v1", token_type: "Bearer",
+ session_token: <secret opaque>, absolute_expires_at: <date ISO UTC>}
+```
+
+Un échec donne seulement `{kind: "industrial-predict:b2b-session:v1",
+error: "denied"}` pour 401/403, ou error="unavailable" pour 503. Les erreurs
+Google, notamment access_denied, restent des callbacks refusés ; le flux existant
+de consommation/corrélation n'est pas remplacé. L'annulation par fermeture de
+popup reste gérée par Angular.
+
+Le script vérifie l'origine de sa propre fenêtre ET celle de `window.opener`,
+poste seulement à cette origine exacte, puis ferme la popup. Angular vérifie
+de son côté origine ET fenêtre émettrice avant de charger `/me`. Aucun profil
+dans le message et aucune authentification dérivée du seul message. Une CSP
+nonce par réponse autorise uniquement ce script, sans unsafe-inline ni ressource
+externe. Cache-Control no-store, Pragma no-cache, Referrer-Policy no-referrer,
+nosniff et frame-ancestors none sont conservés. Les paramètres Google sont retirés
+de l'adresse de la popup par replaceState ; aucun bearer ou identifiant de
+session n'est placé dans une URL, un Location ou un cookie de session API.
+
+Les API auth refusent les query params, les Authorization/Origin ambigus et les
+origines/fetch-sites étrangers. `/me` admet l'absence d'Origin pour un GET HTTPS
+same-origin ; `/logout` exige Origin exacte. Aucun CORS permissif n'est ajouté.
+Le cookie de binding n'authentifie pas les API ; seul le bearer en mémoire le fait.
+Le corps du logout ne sélectionne aucun utilisateur ni autre session : seul le
+bearer présenté est révoqué. La perte des droits entreprise n'empêche pas ce
+logout ; une session déjà invalide donne 401. Aucun 204 sur commit incertain.
+
+Une livraison perdue après commit peut laisser une session non remise jusqu'à
+son expiration ; aucun retry automatique n'est effectué. Une erreur de logout
+peut laisser sa révocation incertaine et donne 503. Ces cas ne doivent pas être
+interprétés comme un succès par le client. Un opener absent/étranger ne reçoit
+aucun message ; les politiques COOP réelles et le comportement Google doivent
+encore être validés dans le navigateur avant activation.
+
+Restent nécessaires : qualification réelle du rôle/TLS/ACL et des fonctions,
+garde approuvé raccordé au lanceur, assemblage auth-only explicitement autorisé,
+origine HTTPS commune avec routage du callback vers FastAPI, configuration
+Google/Workspace et provisioning explicite des liens issuer/subject et grants.
+Il faut également un futur lot Angular branchant son adaptateur sur ces routes,
+sans persistance du bearer. Les logs serveur/proxy ne doivent capturer ni query
+du callback, ni corps de réponse, ni Authorization. Aucun de ces changements
+d'environnement ou frontend n'est effectué ici ; DevOps demeure en pause.
+
+Les tests utilisent ASGI, les doubles OIDC et le store transactionnel simulé
+existant. Ils ne constituent pas une connexion Google réelle ni une qualification
+PostgreSQL. Le script popup est aussi exécuté dans un VM Node isolé pour vérifier
+son refus d'opener absent/étranger, sans navigateur ni réseau.
+
 ## Implémenté, sans activation DEV
 
 La chaîne réutilise GoogleOidcClient (code, PKCE, state consommé durablement,

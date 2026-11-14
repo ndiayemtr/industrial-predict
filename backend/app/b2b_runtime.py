@@ -56,7 +56,9 @@ class GoogleSessionLogin:
         start = self.client._transactions.create(return_target=return_target)
         return start, self.client.authorization_url(start)
 
-    def complete_callback(self, *, state, browser_binding, code, client_secret):
+    def complete_callback(self, *, state, browser_binding, code, client_secret, require_company_access=False):
+        if type(require_company_access) is not bool:
+            raise CallerProviderUnavailable()
         try:
             result = self.client.complete_callback(state=state, browser_binding=browser_binding,
                                                   code=code, client_secret=client_secret)
@@ -72,7 +74,7 @@ class GoogleSessionLogin:
         admission = SimpleNamespace(admit=lambda: admit_caller(provider=identity_provider, lookup=lookup))
         store = PostgresApplicationSessionStore(self.runtime, admission_provider=admission, clock=self.clock)
         try:
-            return store.create()
+            return store.create(require_company_access=True) if require_company_access else store.create()
         except SessionStoreRejected:
             raise CallerForbidden() from None
 
@@ -120,6 +122,22 @@ class B2BRouteRuntime:
         with self.sql.session() as db:
             self._configure(db)
             return self._caller(db, reference, now)
+
+    def browser_profile(self, *, reference):
+        from app.core.b2b_browser import browser_profile
+        return browser_profile(self.current_caller(reference=reference, now=self.clock()))
+
+    def logout(self, *, reference):
+        # Revoke this bearer only. No membership permission is required to end
+        # one's session, including after company access has been removed.
+        try:
+            self.sessions.revoke(reference)
+        except SessionStoreRejected as error:
+            if error.reason is Reason.ACCOUNT_INACTIVE:
+                raise CallerForbidden() from None
+            raise CallerUnauthenticated() from None
+        except Exception:
+            raise CallerProviderUnavailable() from None
 
     @contextmanager
     def authorized_equipment(self, *, reference, equipment_id, permissions, write=False):
@@ -180,29 +198,55 @@ def create_route_runtime(*, sql, clock=lambda: datetime.now(timezone.utc), prove
 
 
 def install_google_b2b(app, *, sql, config, approved_domains, client_secret_loader,
-                       clock=lambda: datetime.now(timezone.utc)):
-    """Pre-serve assembly using the SAME approved SQL runtime; no SQL/network I/O.
+                       clock=lambda: datetime.now(timezone.utc), browser_profile=None):
+    """Pre-serve assembly using the SAME approved SQL runtime, closed by default.
 
     Call only after schema, role and destination qualification. No discovery,
     migration, account/grant creation or provenance verifier is supplied here.
+    The optional browser profile runs its real qualification guard before mount
+    and on requests; the legacy assembly still performs no SQL/network I/O here.
     """
     from app.oidc_transaction_store import PostgresTransactionStore
     from app.api.routes.b2b_login import create_google_login_router
     if (getattr(app.state, 'sql_runtime', None) is not sql
             or getattr(app.state, 'b2b_runtime', None) is not None):
         raise CallerProviderUnavailable()
+    if browser_profile is not None:
+        from app.core.b2b_browser import BrowserAuthProfile, DIAGNOSTIC_PATHS, AUTH_PATHS
+        if (type(browser_profile) is not BrowserAuthProfile
+                or any(getattr(route, 'path', None) not in DIAGNOSTIC_PATHS for route in app.routes)
+                or getattr(app.state, 'b2b_auth_runtime', None) is not None):
+            raise CallerProviderUnavailable()
+        from urllib.parse import urlsplit
+        callback = urlsplit(config.callback_url)
+        if browser_profile.origin != callback.scheme + '://' + callback.netloc:
+            raise CallerProviderUnavailable()
+        browser_profile.check(sql)
     # Concrete deployment transport: authenticated TLS, no environment proxies or retries.
     transport = httpx.HTTPTransport(verify=True, retries=0, trust_env=False)
     try:
         client = GoogleOidcClient(config=config, approved_domains=approved_domains, transport=transport,
             clock=clock, store=PostgresTransactionStore(sql), allowed_return_targets=('predictions',))
         login = GoogleSessionLogin(client=client, runtime=sql, clock=clock)
-        router = create_google_login_router(login=login, client_secret_loader=client_secret_loader)
+        router = create_google_login_router(login=login, client_secret_loader=client_secret_loader,
+                                           browser_profile=browser_profile)
         runtime = create_route_runtime(sql=sql, clock=clock)
     except Exception:
         transport.close()
         raise
-    install_b2b_runtime(app, runtime=runtime)
+    if browser_profile is None:
+        install_b2b_runtime(app, runtime=runtime)
+    else:
+        from app.api.routes.b2b_auth import create_b2b_auth_router
+        from app.api.routes.b2b_login import HEADERS
+        from fastapi.responses import JSONResponse
+        app.state.b2b_auth_runtime = runtime  # Do NOT enable business runtime.
+        app.include_router(create_b2b_auth_router(runtime=runtime, profile=browser_profile))
+        @app.middleware('http')
+        async def auth_only_surface(request, call_next):
+            if request.url.path not in AUTH_PATHS | DIAGNOSTIC_PATHS:
+                return JSONResponse({'detail': 'NOT_FOUND'}, status_code=404, headers=HEADERS)
+            return await call_next(request)
     app.include_router(router)
     previous_lifespan = app.router.lifespan_context
     @asynccontextmanager
