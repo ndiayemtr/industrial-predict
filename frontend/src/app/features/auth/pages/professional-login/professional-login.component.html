@@ -13,21 +13,44 @@
       <p class="brand-footer">Industrial Predict AI · Espace professionnel</p>
     </section>
 
-    <section class="connection-panel" aria-labelledby="login-title">
+    <section class="connection-panel" aria-labelledby="login-title" [attr.aria-busy]="auth.busy()">
       <nb-card>
         <nb-card-body>
-          <p class="availability"><span aria-hidden="true"></span>Bientôt disponible</p>
+          <p class="availability"><span aria-hidden="true"></span>{{ availabilityLabel() }}</p>
           <h1 id="login-title">Connexion professionnelle</h1>
-          <p class="intro">Retrouvez prochainement votre espace Industrial Predict AI avec votre compte professionnel.</p>
-          <button class="google-button" type="button" disabled aria-describedby="login-availability">
-            <span class="provider-mark" aria-hidden="true">G</span>
-            Continuer avec Google
-          </button>
-          <p id="login-availability" class="availability-description">{{ preparation.message }}</p>
-          <div class="session-status">
-            <app-icon name="profile" />
-            <p>Vous n’êtes pas connecté.</p>
-          </div>
+          <p class="intro">{{ auth.backendReady() ? 'Accédez à votre session Industrial Predict AI avec votre compte professionnel.' : 'Retrouvez prochainement votre espace Industrial Predict AI avec votre compte professionnel.' }}</p>
+          @if (!auth.authenticated()) {
+            <button class="google-button" type="button" [disabled]="!auth.canStart()" aria-describedby="login-availability" (click)="auth.login()">
+              <span class="provider-mark" aria-hidden="true">G</span>
+              {{ auth.state().status === 'connecting' ? 'Connexion en cours…' : auth.state().status === 'signing-out' ? 'Déconnexion en cours…' : 'Continuer avec Google' }}
+            </button>
+          }
+          <p id="login-availability" class="availability-description" role="status" aria-live="polite" aria-atomic="true">{{ auth.message() }}</p>
+          @if (auth.profile(); as profile) {
+            <div class="session-status">
+              <app-icon name="profile" />
+              <div>
+                <p>Connecté : {{ profile.displayName ?? ('Compte professionnel nº' + profile.userId) }}</p>
+                <ul class="company-list" aria-label="Entreprises autorisées">
+                  @for (company of profile.companies; track company.companyId) {
+                    <li>{{ company.displayName ?? ('Entreprise nº' + company.companyId) }}</li>
+                  }
+                </ul>
+              </div>
+            </div>
+            <div class="session-actions">
+              <button class="session-action" type="button" (click)="auth.refreshProfile()">Vérifier la session</button>
+              <button class="session-action" type="button" (click)="auth.logout()">Se déconnecter</button>
+            </div>
+          } @else {
+            <div class="session-status">
+              <app-icon name="profile" />
+              <p>{{ auth.state().status === 'signing-out' ? 'Votre session locale a été effacée.' : 'Vous n’êtes pas connecté.' }}</p>
+            </div>
+          }
+          @if (auth.state().status === 'connecting' || auth.state().status === 'loading-profile') {
+            <button class="session-action cancel-login" type="button" (click)="auth.cancelLogin()">Annuler la connexion</button>
+          }
           <p class="preparation-note">Les espaces métier restent fermés pendant cette préparation.</p>
         </nb-card-body>
       </nb-card>

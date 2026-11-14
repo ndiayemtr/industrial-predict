@@ -46,6 +46,16 @@ h1 { margin: 0; font-size: clamp(1.65rem, 3vw, 2rem); font-weight: 600; line-hei
 .session-status p { margin: 0; font-size: tokens.$font-size-small; line-height: 1.5; }
 .preparation-note { margin: .75rem 0 0; font-size: .8rem; color: tokens.$text-secondary; line-height: 1.5; }
 .brand-panel, .connection-panel { overflow-wrap: anywhere; }
+.google-button:not(:disabled) { color: tokens.$text-primary; background: tokens.$surface-background; cursor: pointer; }
+.google-button:focus-visible, .session-action:focus-visible { outline: 2px solid tokens.$navigation-active; outline-offset: 3px; }
+.session-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: tokens.$space-lg; }
+.session-action {
+  min-height: 2.75rem; padding: .5rem .75rem; border: 1px solid tokens.$border-color;
+  border-radius: tokens.$border-radius; background: tokens.$surface-background;
+  color: tokens.$text-primary; font: inherit; font-size: tokens.$font-size-small; cursor: pointer;
+}
+.cancel-login { margin-top: tokens.$space-md; }
+.company-list { margin: .5rem 0 0; padding-left: 1.25rem; font-size: tokens.$font-size-small; line-height: 1.5; }
 @media (max-width: 47.99rem) {
   .login-layout { grid-template-columns: 1fr; max-width: 32rem; }
   .brand-panel { gap: .75rem; padding: 1.25rem; }
