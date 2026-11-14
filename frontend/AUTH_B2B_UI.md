@@ -1,118 +1,113 @@
-# AUTH-B2B-UI-1 — Parcours frontend préparé, backend non activé
+# AUTH-B2B-UI-2 — Adaptateur FastAPI raccordé, activation fermée
 
-Le provider PROFESSIONAL_AUTH_BACKEND vaut null dans tous les builds livrés.
-La page /connexion ne fait aucun appel HTTP, n'ouvre aucune popup et n'affiche
-aucun compte connecté. Le bouton Google reste désactivé. Aucun paramètre URL,
-localStorage/sessionStorage ou /health ne peut activer le parcours.
+`appConfig` fournit désormais `FastApiProfessionalAuthBackend`. Sa configuration
+et son vérificateur de disponibilité valent **null par défaut dans les builds
+livrés** : aucune requête, popup, session ou ouverture métier au démarrage.
+Le design de `/connexion` et les guards de préparation restent conservés.
 
-## Contrats examinés et limites exactes
+## Correspondance avec AUTH-B2B-API-1
 
-| Élément | Contrat existant | Utilisation frontend |
-|---|---|---|
-| GET /auth/oidc/google/start | FastAPI b2b_login.py ; redirection 302, cookie __Host- de binding, HTTPS | Chemin constant, navigation popup à la suite du clic ; jamais HttpClient/fetch |
-| GET /auth/oidc/google/callback | FastAPI ; vérification code/state/binding, réponse JSON no-store avec token_type=Bearer, session_token et absolute_expires_at | Le callback reste au backend, aucune route Angular ne l'intercepte |
-| Bearer API | Secret opaque canonique base64url de 32 octets, pas un JWT Google | Mémoire privée du service seulement |
-| Identité et entreprises | Fondations CurrentCaller serveur, aucune route de profil publiée | Port loadProfile non branché ; aucun endpoint /me inventé |
-| Révocation | Store serveur existant, aucune route HTTP de déconnexion publiée | Port revokeSession non branché ; aucun endpoint /logout inventé |
-| Retour popup | Aucun postMessage fourni par le callback JSON actuel | Bridge proposé ci-dessous, non opérationnel côté serveur |
+| Contrat FastAPI existant | Utilisation Angular |
+|---|---|
+| `GET /auth/oidc/google/start` → 302, cookie de binding sécurisé | Navigation popup synchrone après clic, jamais HttpClient/fetch |
+| `GET /auth/oidc/google/callback` | Traité exclusivement par FastAPI : PKCE, state, nonce, identité et autorisations serveur ; aucune route callback Angular |
+| Bridge du profil navigateur explicitement qualifié | `industrial-predict:b2b-session:v1`, contrôle de l'origine HTTPS exacte, de la fenêtre émettrice et du contexte de connexion |
+| `GET /api/v1/auth/me` → 200 JSON no-store | Bearer de session en en-tête ; DTO exact `{userId, displayName, companies}` |
+| Entreprise du DTO | `{companyId, displayName, permissions}` ; noms nullables, permissions explicites, jamais inférées du domaine Google |
+| `POST /api/v1/auth/logout` → 204 vide no-store | Corps vide, bearer courant uniquement, aucun sélecteur d'utilisateur/entreprise |
+| 401 / 403 / 503 | Session absente/expirée ou révoquée / refus / indisponibilité ; aucun compte connecté en cas d'échec |
 
-Il est impossible de terminer aujourd'hui une connexion réelle avec ces seuls
-endpoints. Un JSON affiché par une popup n'envoie pas de postMessage. Aucun
-scraping du document JSON, injection de script dans le callback, deuxième échange
-de code ou faux succès n'est utilisé pour masquer ce manque.
-
-## Port d'intégration à approuver avant activation
-
-ProfessionalAuthBackend est un contrat interne Angular, pas une API déclarée
-existante. Un futur adaptateur devra implémenter readiness (signal explicitement
-qualifié), loadProfile et revokeSession à partir de véritables contrats HTTP
-protégés, revus séparément. Il devra mapper les DTO serveur en projection
-ProfessionalProfile : userId, displayName nullable, companies contenant companyId,
-displayName nullable et permissions explicites. Ces champs ne sont pas supposés
-exister dans une réponse FastAPI actuelle. Aucun domaine email ne donne de droit.
-
-L'adaptateur devra transmettre le bearer uniquement aux routes HTTPS d'auth
-approuvées sur la même origine, sans logs, persistence, retry ou diffusion aux
-CRUD historiques. Aucun interceptor global ajoutant Authorization n'est livré.
-Un provider explicitement écrit dans un lot futur est nécessaire ; aucun switch
-de démonstration ou adaptateur de simulation n'est livré dans l'application.
-
-Proposition de retour navigateur, à implémenter/revoir côté serveur :
+Le callback navigateur serveur émet :
 
 ```text
-{
-  kind: "industrial-predict:b2b-session:v1",
-  token_type: "Bearer",
-  session_token: <secret opaque issu par le serveur>,
-  absolute_expires_at: <date ISO UTC serveur>
-}
+{kind: "industrial-predict:b2b-session:v1", token_type: "Bearer",
+ session_token: <secret opaque canonique base64url de 32 octets>,
+ absolute_expires_at: <date ISO UTC serveur>}
 ```
 
-Alternativement : `{kind: "industrial-predict:b2b-session:v1", error: "denied"}`,
-error limité à denied/cancelled/unavailable. Aucun profil ou grant dans le message.
-Le futur bridge devra envoyer uniquement à l'origine Angular HTTPS exacte,
-préserver les garanties OIDC/backend, appliquer no-store/no-referrer et une CSP
-adaptée, et ne jamais mettre de token dans une URL. Le callback JSON actuel a
-une CSP default-src 'none' : ce lot ne le modifie pas et ne prétend pas qu'un
-bridge fonctionne déjà. L'architecture retenue est strictement same-origin HTTPS.
+Les erreurs sont `{kind: "industrial-predict:b2b-session:v1", error: ...}`,
+avec `denied`, `cancelled` ou `unavailable` seulement. Aucun profil n'est accepté
+dans le message. Les données supplémentaires, ports transférés, mauvaises sources
+ou origines, doublons, réponses tardives et callbacks sans tentative sont ignorés.
+Une livraison valide déclenche `/me` ; elle ne suffit jamais à établir une session.
+Le callback JSON historique ne remplace pas ce bridge navigateur qualifié.
 
-Le frontend contrôle origine ET référence exacte de la popup, refuse les ports
-transférés, les données ambiguës/supplémentaires et les secrets non canoniques.
-Un message valide déclenche seulement le chargement du profil authentifié côté
-serveur ; aucun état connecté n'est établi depuis le seul message.
+## Disponibilité : blocage explicite avant activation réelle
 
-## États et cycle de vie
+Deux dépendances distinctes sont nécessaires :
 
-Initial → indisponible (par défaut) ou non connecté (adaptateur futur prêt).
-Clic → popup → chargement du profil → session vérifiée. Ou refus, annulation,
-popup bloquée, fermeture, timeout, erreur réseau/503. Aucun retry automatique.
-Les requêtes de profil/révocation sont bornées à 10 secondes, la popup à 120 s.
-Les clics multiples, callbacks répétés et réponses tardives sont ignorés.
+- `PROFESSIONAL_AUTH_CONFIGURATION` : origine HTTPS canonique égale à celle
+  d'Angular et version exacte du bridge ; aucun champ `enabled` n'est accepté.
+- `PROFESSIONAL_AUTH_READINESS_VERIFIER` : intégration de confiance chargée de
+  vérifier réellement le profil serveur sécurisé avant de terminer avec succès.
 
-Le service efface bearer et profil sur expiration absolue, 401 d'une session
-établie, refus/incohérence, reset ou destruction ; il nettoie popup, listeners,
-timers et abonnements. Une baisse du signal de readiness efface aussi la session.
-Une horloge navigateur ne remplace pas l'expiration/autorisation serveur : les
-durées d'inactivité et la révocation restent décidées par le serveur. Vérifier la
-session recharge le profil via le port ; aucun jeton n'est récupéré après reload.
+**Aucune implémentation du second port n'est fournie.** L'API actuelle n'a pas de
+contrat de preuve de disponibilité avant connexion. `/health`, OpenAPI, une
+configuration frontend ou un 401 de `/me` ne prouvent pas l'exécution du garde de
+qualification serveur : la validation du bearer intervient avant ce garde.
+Aucun endpoint de disponibilité n'est inventé et aucun probe n'est envoyé.
+Une intégration serveur réelle, revue séparément, reste donc nécessaire.
+Un double RxJS de réussite dans les tests n'est jamais une procédure d'activation.
+Les paramètres URL, cookies et stockages navigateur ne configurent pas ces ports.
 
-Déconnexion : état local effacé immédiatement, succès annoncé seulement après
-révocation serveur (ou 401 indiquant une session déjà invalide). Sur erreur,
-l'interface dit explicitement que la révocation n'est pas confirmée. Effacement
-local, fermeture de popup ou annulation après émission ne garantissent pas une
-révocation distante : une session émise peut subsister jusqu'à son échéance.
-Le futur raccordement backend devra traiter ce risque et les commits incertains.
+## Transport et cycle de vie
 
-PREPARATION_ROUTES et preparationOnlyGuard restent inchangés. Même une session
-valide dans les tests unitaires ne débloque ni le Shell ni les anciennes pages
-métier. Aucune nouvelle permission ou origine n'est autorisée par l'UI.
+Le client Fetch dédié contourne les interceptors globaux. Il ajoute Authorization
+uniquement sur les deux chemins d'authentification fixes de la même origine HTTPS.
+Les requêtes refusent les redirections, omettent les cookies, désactivent cache et
+transfer cache SSR et ne placent ni bearer ni sélecteur dans l'URL ou le corps.
+Le client HTTP historique reste inchangé et ne reçoit aucun bearer automatiquement.
 
-## Validation visuelle frontend, sans backend et sans DevOps
+Le referrer est limité à la racine de l'origine, avec politique `same-origin`.
+Le navigateur doit fournir son en-tête Origin exact sur POST, exigé par FastAPI ;
+Angular ne forge pas cet en-tête. Ce comportement exige encore une validation
+dans un véritable navigateur HTTPS avec le backend activé, pas seulement un mock.
+Les réponses réussies doivent respecter statut, URL, absence de redirection,
+no-store, format JSON et DTO attendus. Les erreurs publiques sont assainies, sans
+corps serveur ni diagnostics susceptibles de refléter le bearer.
 
-Depuis D:\projets\industrial-predict\frontend, avec node_modules déjà installé :
+Bearer et profil restent en mémoire. Reload repart sans identité, sans tentative
+de récupération persistante. Expiration absolue, refresh 401, refus, reset,
+destruction ou retrait de disponibilité effacent les données sensibles.
+L'inactivité et la révocation sont décidées par le serveur. Aucun retry automatique.
+Le transport HTTP expire après 8 s (avant le délai de sécurité du service à 10 s),
+la vérification de disponibilité après 10 s et la popup après 120 s.
+
+Déconnexion : effacement local immédiat, confirmation seulement après 204 vide
+ou 401 (session déjà invalide). Erreur, timeout ou réponse incohérente conservent
+l'avertissement « déconnexion serveur non confirmée », même lorsque la disponibilité
+du transport est retirée. Une erreur réseau ou 503 referme le parcours, sans
+tentative de réactivation automatique. Annulation ou fermeture locale ne révoquent
+pas à elles seules une session qui aurait déjà été émise côté serveur.
+
+Même une session authentifiée ne débloque pas le Shell ou les anciennes routes
+métier : `PREPARATION_ROUTES` et `preparationOnlyGuard` restent inchangés.
+
+## Validation visuelle frontend sans backend ni DevOps
+
+Depuis `D:\projets\industrial-predict\frontend`, dépendances déjà installées :
 
 ```powershell
 node node_modules/@angular/cli/bin/ng.js serve --host 127.0.0.1 --port 4201 --configuration development --proxy-config proxy.auth-preparation.json
 ```
 
-Ouvrir http://127.0.0.1:4201/connexion. Vérifier desktop, 320 px, 375 px : panneau
-bleu compact sur mobile, titre et bouton visibles sans débordement horizontal,
-bouton désactivé, message de préparation, aucune requête auth/API dans Network.
-Les URL /companies et /predictions doivent revenir à /connexion sans chargement
-métier. Le fichier proxy vide sert uniquement à cette validation : aucun proxy
-vers 8000/8001 et aucun lancement du gestionnaire DEV, de Docker ou PostgreSQL.
-Les états connectés/refusés sont couverts par doubles unitaires ; aucun panneau
-de simulation visuelle ni faux utilisateur n'est accessible dans l'application.
+Ouvrir `http://127.0.0.1:4201/connexion`. Vérifier desktop, 320 et 375 px : design
+préservé, bouton Google désactivé, explication de préparation, aucun débordement
+horizontal et aucune requête auth/API dans Network. `/companies` et `/predictions`
+doivent revenir à `/connexion`. Le proxy vide ne contacte aucun serveur backend.
 
-## Vérifications ciblées
+Les autres états sont validés par doubles unitaires uniquement : en cours, refus,
+profil serveur chargé, expiration, indisponibilité, réseau et déconnexion.
+Aucun mode de simulation visuelle ou faux compte n'est livré dans l'application.
 
 ```powershell
 node node_modules/@angular/cli/bin/ng.js test --watch=false --include="src/app/features/auth/**/*.spec.ts" --include="src/app/app.config.spec.ts"
 node node_modules/@angular/cli/bin/ng.js build
 ```
 
-Aucune connexion Google réelle n'est validée par ces tests. Restent à approuver :
-contrats profil/révocation et bridge, assemblage serveur fermé par défaut, HTTPS
-same-origin, cookies de binding, politiques Google/Workspace, provisioning
-explicite des identités/entreprises/grants, privilèges SQL et qualification réelle.
-La qualification DevOps demeure en pause ; ce lot ne la reprend pas.
+Ces tests ne qualifient aucune connexion Google réelle. Avant cette validation :
+preuve serveur de disponibilité, activation explicite de BrowserAuthProfile et de
+ses gardes SQL/TLS/ACL, HTTPS same-origin et routage des chemins existants,
+configuration Google/callback, provisioning explicite des identités/appartenances,
+cookies de binding et compatibilité popup/COOP doivent être validés. La qualification
+DevOps demeure en pause et aucune opération PostgreSQL n'est effectuée dans ce lot.

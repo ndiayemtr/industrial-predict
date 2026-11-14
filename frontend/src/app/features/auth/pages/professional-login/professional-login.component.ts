@@ -16,6 +16,8 @@ export class ProfessionalLoginComponent implements OnInit, OnDestroy {
   readonly availabilityLabel = computed(() => {
     const state = this.auth.state();
     if (state.status === 'unavailable' && state.reason === 'service') return 'Service indisponible';
+    if (!this.auth.backendReady() && state.status === 'error'
+      && (state.reason === 'network' || state.reason === 'logout-unconfirmed')) return 'Service indisponible';
     return this.auth.authenticated() ? 'Session professionnelle'
       : this.auth.busy() ? 'Connexion sécurisée' : this.auth.backendReady() ? 'Connexion disponible' : 'Bientôt disponible';
   });

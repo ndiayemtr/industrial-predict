@@ -191,4 +191,20 @@ describe('Professional connection states with a server adapter double only', () 
     expect(root().textContent).toContain('Votre session a expiré');
     expect(backend.loadProfile).not.toHaveBeenCalled();
   });
+
+  it('keeps the uncertain logout warning visible when transport readiness is withdrawn', () => {
+    click('Continuer avec Google'); callback();
+    profile.next({ userId: 1, displayName: null, companies: [
+      { companyId: 7, displayName: 'Entreprise autorisée', permissions: [] },
+    ] }); fixture.detectChanges(); click('Se déconnecter');
+    revoke.error(new HttpErrorResponse({ status: 503 }));
+    // Same sequence as the HTTP adapter: availability fails before the effect flush.
+    Object.assign(backend, { availability: signal('unavailable') });
+    (backend.ready as ReturnType<typeof signal<boolean>>).set(false);
+    fixture.detectChanges();
+    expect(root().textContent).toContain('Service indisponible');
+    expect(root().textContent).toContain('la déconnexion serveur n’a pas pu être confirmée');
+    expect(root().querySelector<HTMLButtonElement>('.google-button')?.disabled).toBe(true);
+    expect(root().textContent).not.toContain('Entreprise autorisée');
+  });
 });

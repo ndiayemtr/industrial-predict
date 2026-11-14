@@ -1,44 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { computed, DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, DestroyRef, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { defer, Subscription, take, throwIfEmpty, timeout } from 'rxjs';
 import {
   B2B_BROWSER_BRIDGE, GOOGLE_OIDC_START_PATH, PROFESSIONAL_AUTH_BACKEND,
-  PROFESSIONAL_AUTH_WINDOW, PROFESSIONAL_PERMISSIONS, ProfessionalAuthState,
-  ProfessionalPermission, ProfessionalProfile,
+  PROFESSIONAL_AUTH_WINDOW, ProfessionalAuthState, authJsonRecord as record,
+  authExactKeys as keys, isApplicationSessionToken, parseProfessionalProfile,
 } from './professional-auth.model';
 import { PROFESSIONAL_CONNECTION_PREPARATION } from './professional-connection.model';
-
-function record(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
-}
-function keys(value: Record<string, unknown>, expected: string[]): boolean {
-  return Object.keys(value).length === expected.length && expected.every(key => Object.hasOwn(value, key));
-}
-function positiveId(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
-}
-function label(value: unknown): value is string | null {
-  return value === null || (typeof value === 'string' && value.trim().length > 0 && value.length <= 200);
-}
-
-function profileProjection(value: unknown): ProfessionalProfile {
-  if (!record(value) || !keys(value, ['userId', 'displayName', 'companies'])
-    || !positiveId(value['userId']) || !label(value['displayName']) || !Array.isArray(value['companies'])
-    || value['companies'].length === 0) throw new TypeError('Invalid server profile');
-  const seen = new Set<number>();
-  const companies = value['companies'].map((company: unknown) => {
-    if (!record(company) || !keys(company, ['companyId', 'displayName', 'permissions'])
-      || !positiveId(company['companyId']) || seen.has(company['companyId']) || !label(company['displayName'])
-      || !Array.isArray(company['permissions'])
-      || company['permissions'].some((p: unknown) => !PROFESSIONAL_PERMISSIONS.some(allowed => p === allowed))
-      || new Set(company['permissions']).size !== company['permissions'].length) throw new TypeError('Invalid server scope');
-    seen.add(company['companyId']);
-    return Object.freeze({ companyId: company['companyId'], displayName: company['displayName'],
-      permissions: Object.freeze([...company['permissions']] as ProfessionalPermission[]) });
-  });
-  return Object.freeze({ userId: value['userId'], displayName: value['displayName'], companies: Object.freeze(companies) });
-}
 
 @Injectable({ providedIn: 'root' })
 export class ProfessionalAuthService {
@@ -98,12 +66,17 @@ export class ProfessionalAuthService {
     let previousReady: boolean | null = null;
     effect(() => {
       const ready = this.backendReady();
+      const availability = this.backend?.availability?.();
       const previous = previousReady;
       previousReady = ready;
+      const current = untracked(this.state);
       if (!ready && this.initialized) {
         this.clear();
-        this.current.set({ status: 'unavailable', reason: 'preparation' });
-      } else if (ready && previous === false && this.initialized) {
+        this.current.set(availability === 'unavailable' && current.status === 'error'
+          && (current.reason === 'logout-unconfirmed' || current.reason === 'network') ? current
+          : { status: 'unavailable', reason: availability === 'unavailable' ? 'service' : 'preparation' });
+      } else if (ready && this.initialized && (previous === false
+        || (current.status === 'unavailable' && current.reason === 'preparation'))) {
         this.clear();
         this.current.set({ status: 'anonymous', reason: 'initial' });
       }
@@ -115,7 +88,8 @@ export class ProfessionalAuthService {
     if (this.initialized) return;
     this.initialized = true;
     // Reload starts without a bearer: no cookie bootstrap or persistent storage.
-    this.current.set(this.backendReady() ? { status: 'anonymous', reason: 'initial' } : { status: 'unavailable', reason: 'preparation' });
+    this.current.set(this.backendReady() ? { status: 'anonymous', reason: 'initial' }
+      : { status: 'unavailable', reason: this.backend?.availability?.() === 'unavailable' ? 'service' : 'preparation' });
   }
 
   login(): void {
@@ -169,7 +143,8 @@ export class ProfessionalAuthService {
   /** Clears browser-held state only; never claims server-side revocation. */
   reset(): void {
     this.clear();
-    this.current.set(this.backendReady() ? { status: 'anonymous', reason: 'initial' } : { status: 'unavailable', reason: 'preparation' });
+    this.current.set(this.backendReady() ? { status: 'anonymous', reason: 'initial' }
+      : { status: 'unavailable', reason: this.backend?.availability?.() === 'unavailable' ? 'service' : 'preparation' });
   }
 
   private receive(event: MessageEvent<unknown>): void {
@@ -184,7 +159,7 @@ export class ProfessionalAuthService {
       return;
     }
     if (!keys(data, ['kind', 'token_type', 'session_token', 'absolute_expires_at']) || data['token_type'] !== 'Bearer'
-      || typeof data['session_token'] !== 'string' || !/^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/.test(data['session_token'])
+      || !isApplicationSessionToken(data['session_token'])
       || typeof data['absolute_expires_at'] !== 'string' || !/^\d{4}-\d{2}-\d{2}T.+(?:Z|\+00:00)$/.test(data['absolute_expires_at'])) return;
     const expires = Date.parse(data['absolute_expires_at']);
     if (!Number.isFinite(expires)) return;
@@ -209,7 +184,7 @@ export class ProfessionalAuthService {
         if (generation !== this.generation) return;
         if (Date.now() >= this.expiresAt) { this.fail({ status: 'expired' }); return; }
         try {
-          this.current.set({ status: 'authenticated', profile: profileProjection(value), expiresAt: new Date(this.expiresAt).toISOString() });
+          this.current.set({ status: 'authenticated', profile: parseProfessionalProfile(value), expiresAt: new Date(this.expiresAt).toISOString() });
         } catch { this.fail({ status: 'error', reason: 'invalid-response' }); }
       },
       error: error => {

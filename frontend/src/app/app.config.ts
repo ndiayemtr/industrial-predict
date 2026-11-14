@@ -5,6 +5,8 @@ import { provideRouter } from '@angular/router';
 import { NbGlobalPhysicalPosition, NbSidebarModule, NbThemeModule, NbToastrModule } from '@nebular/theme';
 
 import { PREPARATION_ROUTES } from './app.routes';
+import { PROFESSIONAL_AUTH_BACKEND } from './features/auth/professional-auth.model';
+import { FastApiProfessionalAuthBackend } from './features/auth/fastapi-professional-auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,6 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(PREPARATION_ROUTES),
     provideHttpClient(),
+    { provide: PROFESSIONAL_AUTH_BACKEND, useExisting: FastApiProfessionalAuthBackend },
     // Nebular 17 still requires Angular's legacy animation providers.
     provideAnimations(),
     importProvidersFrom(
