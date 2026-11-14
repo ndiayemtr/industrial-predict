@@ -74,25 +74,109 @@ une ouverture réelle. Aucun de ces droits ne monte une route HTTP.
    et le propriétaire ui47_migrator. Le modèle SQL vérifie rôle, version 17.10,
    base/OID, cluster, instance, TLS et révision avant ses 15 GRANT ciblés.
    Il n'est applicable qu'au baseline B2B vide validé, jamais à une ACL ambiguë.
-4. Dans cette même transaction, après les GRANT, effectuer SET LOCAL ROLE ui47_app
-   puis les contrôles d'identité et inspect_runtime_schema avec le profil candidat
-   sur cette connexion. Une autre connexion ne voit pas les accords non commités.
+4. Dans cette même transaction propriétaire, les blocs `DO $acl$` vérifient
+   explicitement les droits du rôle nommé ui47_app avant ET après le delta.
+   Ils n'utilisent aucun changement de rôle : DEV-5B-4C a confirmé que le
+   propriétaire ne peut pas emprunter l'identité applicative. Ils contrôlent
+   les privilèges effectifs table/colonne, la forme et les propriétaires des
+   six tables, les attributs du rôle, ses appartenances, PUBLIC, les grantors
+   et les options de délégation. Une anomalie lève une exception et annule
+   la transaction. La procédure aller exige préparation → candidat ; le
+   retrait exige candidat → préparation. Aucun replay sur un autre état.
+   Une autre connexion ne voit pas les accords non commités.
    N'effectuer aucun test OIDC/écriture de données dans cette transaction.
    Les deux modèles terminent volontairement par **ROLLBACK**. Seule une revue
    humaine ultérieure pourra préparer leur version à COMMIT après contrôle exact.
-5. Après commit autorisé, requalifier avec une nouvelle connexion ui47_app et
-   comparer les ACL à la preuve attendue. Maintenir l'application arrêtée : le
+5. Après commit autorisé, requalifier avec une nouvelle connexion officielle
+   ui47_app : `inspect_db(config, profile='b2b-auth-candidate')` conserve les
+   vérifications d'identité, de révision et de transport avant `inspect_acl`.
+   `inspect_named_acl(connection, profile=...)` sert uniquement à contrôler
+   le rôle nommé depuis une connexion propriétaire déjà qualifiée ; ce helper
+   ne crée aucune connexion et ne remplace pas les contrôles de destination.
+   Comparer les ACL à la preuve attendue. Maintenir l'application arrêtée : le
    lanceur préparatoire refusera ces nouvelles ACL. Ce lot n'offre pas de lancement
    candidat et ne permet pas de poursuivre automatiquement vers Google.
 
 Retour arrière : avant commit, ROLLBACK ; après commit, arrêter les éventuels
 consommateurs, vérifier l'état candidat exact et l'absence de dérive/délégation,
 puis faire approuver le modèle inverse (15 REVOKE ciblés, sans ALL ni CASCADE),
-avec le même grantor. Vérifier sous ui47_app dans la transaction l'absence de
-droits B2B, puis, après commit autorisé, refaire le contrôle préparatoire complet.
+avec le même grantor. Vérifier dans la transaction propriétaire l'absence de
+droits B2B du rôle nommé ui47_app par le second bloc du modèle inverse, puis, après commit autorisé,
+refaire le contrôle préparatoire complet sous une nouvelle connexion ui47_app.
 Si l'état ne correspond pas à la preuve, arrêter pour revue ; ne pas révoquer
 aveuglément les droits d'un autre lot et ne pas restaurer la base active pour
 annuler des ACL. Aucun enregistrement ni objet du schéma n'est supprimé.
+L'inverse restaure les privilèges effectifs, sans garantir la représentation
+brute initiale des ACL (par exemple NULL contre une ACL explicite du propriétaire).
+
+### DEV-5B-4D — risque des droits UPDATE : décision avant attribution
+
+Cause du blocage : le propriétaire n'est ni superutilisateur ni autorisé à
+prendre le rôle applicatif. Les anciennes instructions de changement de rôle
+sont remplacées par les contrôles nommés ci-dessus, sans nouvelle appartenance.
+Les scripts restent des modèles terminant par ROLLBACK, sans exécuteur de droits.
+Le contrôle SQL `ssl=true` ne prouve pas à lui seul verify-full : le transport
+client officiel et la CA approuvée restent des préconditions obligatoires.
+
+Les magasins actuels verrouillent l'utilisateur FOR UPDATE, puis la session
+FOR UPDATE et l'identité externe FOR SHARE ; appartenances et permissions sont
+prises FOR SHARE et conservées dans la transaction appelante. Le magasin OIDC
+consomme une transaction après FOR UPDATE et échantillonne l'horloge après attente.
+Ordre des verrous, contrôles après attente et absence de retry restent obligatoires.
+
+| Option | Sécurité interentreprises / mutations | Transactions actuelles | Complexité et qualification |
+| --- | --- | --- | --- |
+| UPDATE ciblés actuels | Le backend contrôle le tenant, mais le rôle SQL peut réellement modifier les clés ; membership_id peut déplacer une permission vers une autre appartenance compatible. Aucun RLS ne limite les lignes. | Compatibilité directe et verrous conservés. | Faible ; nécessite acceptation explicite du risque. Ce n'est pas une réduction de capacités. |
+| Verrous de lignes plus faibles | FOR KEY SHARE n'empêche pas une suspension ou certaines modifications de droits ; tous les modes de verrouillage de ligne exigent encore UPDATE sur une colonne. | FOR NO KEY UPDATE pourrait réduire certaines contentions, pas les privilèges ; KEY SHARE ne préserve pas les garanties générales de révocation. | Tests de concurrence nouveaux pour tout changement ; aucun gain de privilèges. Ne pas changer les magasins pour cette raison. |
+| Petites fonctions SECURITY DEFINER de verrouillage | Retire à ui47_app les cinq UPDATE de clés accordés seulement pour verrouiller. Les fonctions ne modifient aucune donnée et verrouillent uniquement des lignes sélectionnées par requêtes fixes. L'autorisation tenant reste vérifiée par le backend ; ce n'est pas un RLS. | Appels sur la même connexion et transaction, sans commit interne ; mêmes ordre, prédicats et contrôles après attente. | Option ciblée recommandée pour réduire ces droits : nouveau lot approuvé, fonctions/owner dédiés, migration nouvelle et qualification PostgreSQL isolée. Aucun objet ajouté ici. |
+| Séparation de rôles pour opérations sensibles | Réduit le périmètre d'un composant si l'isolation des processus et secrets est réelle. Deux identifiants dans le même processus compromis ne garantissent pas cette isolation. | Un second moteur/une seconde transaction ne remplace pas les verrous conservés de la transaction métier ; risque de rupture d'atomicité. | Plus élevée : assemblage, secrets, procédures et tests supplémentaires. Garder l'administration/provisioning séparée ; éviter un second rôle pour contourner les verrous. |
+
+Recommandation : ne pas attribuer les UPDATE de clés du candidat actuel sans
+acceptation explicite. Pour réellement supprimer ce risque, préparer dans un
+lot distinct les seules opérations de lecture verrouillée nécessitant
+UPDATE(id) sur local_users/external_identities/company_memberships,
+UPDATE(membership_id) et UPDATE(transaction_id), via des fonctions restreintes.
+Le candidat actuel reste inchangé et non activable ; ce document ne constitue
+pas une approbation de sa matrice pour ouverture réelle.
+
+Conditions impératives des futures fonctions : propriétaire dédié NOLOGIN,
+non superutilisateur, distinct du migrateur, sans autorité administrative et
+avec droits SQL limités ; objets et signatures qualifiés, search_path sûr
+(pg_catalog, schéma de confiance, pg_temp en dernier), aucun SQL dynamique,
+aucun identifiant SQL sélectionnable par le client, paramètres strictement
+validés. Révoquer EXECUTE à PUBLIC et accorder seulement les signatures prévues
+au rôle applicatif dans la transaction de création. Fonctions VOLATILE,
+sans commit ni connexion externe ; renvoyer uniquement les données déjà
+autorisées à la lecture. Les paramètres identifient des lignes, jamais une
+autorisation : conserver les vérifications serveur du sujet, de la session,
+de l'entreprise et des permissions, sans retour booléen fourni par le client.
+
+Tests futurs requis : rejet des appels/signatures non autorisés, PUBLIC,
+search_path détourné, arguments invalides et appels hors périmètre ; refus des
+UPDATE directs de clés sous ui47_app ; identité des lignes et modes de verrous,
+attentes à deux connexions, suspension/révocation/relinking, rechargement des
+permissions, rollback, expiration après attente et commit incertain. Les
+nouveaux objets demanderont leur propre migration et empreintes, sans retoucher
+les révisions approuvées ; les magasins ne seront adaptés qu'après validation.
+
+Limites : les fonctions de verrouillage ne retirent pas INSERT/DELETE OIDC,
+INSERT de sessions ni UPDATE(last_activity_at,revoked_at,replaced_by), nécessaires
+aux opérations existantes. Le rôle conserve donc des capacités sensibles sur
+toutes ces lignes ; une compromission SQL peut notamment invalider des sessions
+ou lever certaines révocations. Les droits industriels historiques restent aussi
+inchangés. Une exigence d'isolation des tenants au niveau SQL demanderait une
+conception complémentaire des opérations autorisées ; ces fonctions seules ne
+permettent pas de la revendiquer. Ne pas déduire une autorisation métier du domaine email.
+
+Références PostgreSQL 17 :
+[privilèges des verrous SELECT](https://www.postgresql.org/docs/17/sql-select.html),
+[conflits des verrous](https://www.postgresql.org/docs/17/explicit-locking.html),
+[SECURITY DEFINER et précautions](https://www.postgresql.org/docs/17/sql-createfunction.html#SQL-CREATEFUNCTION-SECURITY).
+Les tests de ce lot utilisent uniquement des doubles et des revues de SQL généré ;
+les nouveaux blocs SQL n'ont pas été exécutés ni qualifiés sur PostgreSQL.
+Les empreintes des scripts et du plan changent avec ces contrôles : les anciens
+hashes de revue DEV-5B-4C ne valident pas ces nouvelles versions. Les empreintes
+des migrations et leur politique restent inchangées.
 
 ### Assemblage ultérieur et tests
 

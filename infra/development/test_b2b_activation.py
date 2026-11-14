@@ -17,23 +17,32 @@ class ActivationTests(unittest.TestCase):
             patch(name, side_effect=AssertionError('Network/DB forbidden')).start()
 
     def connection(self, *, profile=activation.CANDIDATE, role='ui47_app', memberships=0,
-                   unsafe=False, changed_shape=None, flip_table=None, flip_column=None):
+                   unsafe=False, changed_shape=None, flip_table=None, flip_column=None,
+                   role_valid=True, owner_valid=True):
         expected = activation.matrix(profile)
         connection = MagicMock()
         def driver(sql):
             result = MagicMock()
             if sql == 'SELECT current_user':
                 result.scalar_one.return_value = role
-            elif 'pg_auth_members' in sql:
-                result.scalar_one.return_value = memberships
             else:
                 raise AssertionError('Unexpected SQL')
             return result
         def execute(statement, params):
             sql = str(statement)
-            table = params['name'].split('.')[1]
+            self.assertEqual(params['role'], 'ui47_app')
             result = MagicMock()
-            if 'SELECT a.attname' in sql:
+            if 'pg_catalog.pg_roles' in sql:
+                result.scalar_one.return_value = int(role_valid)
+                return result
+            if 'pg_auth_members' in sql:
+                self.assertIn('member=to_regrole(:role)', sql)
+                result.scalar_one.return_value = memberships
+                return result
+            table = params['name'].split('.')[1]
+            if 'relowner=' in sql:
+                result.scalar_one.return_value = int(owner_valid)
+            elif 'SELECT a.attname' in sql:
                 columns = activation.COLUMNS[table]
                 result.scalars.return_value.all.return_value = (
                     (*columns, 'unexpected') if table == changed_shape else columns)
@@ -65,6 +74,57 @@ class ActivationTests(unittest.TestCase):
         connection.commit.assert_not_called()
         self.assertTrue(all(str(c.args[0]).lstrip().startswith('SELECT')
                             for c in connection.execute.call_args_list))
+
+    def test_owner_precommit_checks_app_not_owner_without_switch_or_commit(self):
+        connection = self.connection(role='ui47_migrator')
+        proof = activation.inspect_named_acl(connection, profile=activation.CANDIDATE)
+        self.assertEqual(proof['checked_role'], 'ui47_app')
+        self.assertTrue(proof['acl_exact'])
+        connection.commit.assert_not_called()
+        self.assertEqual([c.args[0] for c in connection.exec_driver_sql.call_args_list], ['SELECT current_user'])
+        for call in connection.execute.call_args_list:
+            self.assertNotIn('current_user', str(call.args[0]))
+            self.assertEqual(call.args[1]['role'], 'ui47_app')
+
+    def test_owner_precommit_rejects_app_acl_defects_despite_owner_authority(self):
+        for changes in ({'flip_column': ('local_users', 'id', 'UPDATE')},
+                        {'flip_column': ('local_users', 'state', 'UPDATE')},
+                        {'flip_table': ('oidc_transactions', 'DELETE')},
+                        {'flip_table': ('local_users', 'UPDATE')},
+                        {'memberships': 1}, {'unsafe': True}, {'role_valid': False}, {'owner_valid': False}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                activation.inspect_named_acl(self.connection(role='ui47_migrator', **changes),
+                                             profile=activation.CANDIDATE)
+
+    def test_named_precommit_and_independent_postcommit_connections_are_distinct(self):
+        for role in ('ui47_app', 'ui47_admin'):
+            with self.subTest(role=role), self.assertRaises(ValueError):
+                activation.inspect_named_acl(self.connection(role=role), profile=activation.CANDIDATE)
+        with self.assertRaises(ValueError):
+            activation.inspect_acl(self.connection(role='ui47_migrator'), profile=activation.CANDIDATE)
+        self.assertTrue(activation.inspect_acl(self.connection(), profile=activation.CANDIDATE)['acl_exact'])
+
+    def test_sql_assertions_are_executable_named_checks_in_both_directions(self):
+        for reverse, before, after in ((False, activation.PREPARATION, activation.CANDIDATE),
+                                      (True, activation.CANDIDATE, activation.PREPARATION)):
+            body = activation.sql_delta(reverse=reverse)
+            checks = body.split('DO $acl$')
+            self.assertEqual(len(checks), 3)
+            self.assertLess(body.index(activation.acl_assertion_sql(before)), body.index('REVOKE ' if reverse else 'GRANT ', body.index('END; $guard$;')))
+            self.assertGreater(body.rindex(activation.acl_assertion_sql(after)), body.index('REVOKE ' if reverse else 'GRANT ', body.index('END; $guard$;')))
+            self.assertNotIn('SET LOCAL ROLE', body)
+            self.assertNotIn('SET ROLE', body)
+            self.assertTrue(body.endswith('ROLLBACK;'))
+            for block in checks[1:]:
+                self.assertIn("target_role constant text := 'ui47_app'", block)
+                self.assertIn('has_table_privilege(target_role,', block)
+                self.assertIn('has_column_privilege(target_role,', block)
+                self.assertIn('pg_catalog.pg_auth_members WHERE member=to_regrole(target_role)', block)
+                self.assertIn('grantee=0', block)
+                self.assertIn('is_grantable', block)
+                self.assertIn('RAISE EXCEPTION', block)
+                self.assertIn('IS DISTINCT FROM', block)
+                self.assertIn('a.attacl', block)
 
     def test_each_missing_or_excessive_table_and_column_privilege_is_rejected(self):
         for table, columns in activation.COLUMNS.items():
