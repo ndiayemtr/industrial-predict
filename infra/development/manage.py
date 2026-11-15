@@ -21,6 +21,7 @@ REPO = Path(__file__).resolve().parents[2]
 REVISION = '09ac8101e9fe'
 RUNTIME_REVISION = 'b2b_0002_analyze'
 RUNTIME_MODE = 'b2b-preparation'
+AUTH_ONLY = 'auth-only'
 SOURCE_CLUSTER = '7673083456081215526'
 TABLES = ('companies', 'sites', 'equipments', 'sensors', 'measurements',
           'maintenance_records', 'prediction_records', 'maintenance_recommendations')
@@ -156,6 +157,25 @@ def inspect_runtime_schema(connection, *, profile=RUNTIME_MODE):
     return {'sequence_usage_only': True, 'b2b_access': 'not_enabled'}
 
 
+def inspect_runtime_rights(connection, result):
+    """Existing historical privilege invariants, shared by both API profiles."""
+    permissions = {}
+    for privilege in ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'):
+        permissions[privilege] = [bool(connection.execute(text('SELECT has_table_privilege(current_user,:table,:privilege)'),
+            {'table':'public.'+table,'privilege':privilege}).scalar_one()) for table in TABLES]
+    result['crud_all_tables'] = all(all(permissions[p]) for p in ('SELECT','INSERT','UPDATE','DELETE'))
+    result['extra_table_privileges'] = any(any(permissions[p]) for p in ('TRUNCATE','TRIGGER','REFERENCES'))
+    result['schema_create'] = connection.execute(text("SELECT has_schema_privilege(current_user,'public','CREATE')")).scalar_one()
+    result['database_create'] = connection.execute(text('SELECT has_database_privilege(current_user,current_database(),\'CREATE\')')).scalar_one()
+    result['temporary_tables'] = connection.execute(text('SELECT has_database_privilege(current_user,current_database(),\'TEMP\')')).scalar_one()
+    result['alembic_update'] = connection.execute(text("SELECT has_table_privilege(current_user,'public.alembic_version','UPDATE')")).scalar_one()
+    result['owns_business_tables'] = connection.execute(text("SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tableowner=current_user")).scalar_one() != 0
+    result['role_memberships'] = connection.execute(text('SELECT count(*) FROM pg_auth_members WHERE member=(SELECT oid FROM pg_roles WHERE rolname=current_user)')).scalar_one()
+    if not result['crud_all_tables'] or not result['sequence_usage_only'] or any(result[k] for k in ('extra_table_privileges','schema_create','database_create','temporary_tables','alembic_update','owns_business_tables','role_memberships')):
+        raise ValueError('Unexpected runtime privileges')
+    return result
+
+
 def inspect_db(config, *, profile=RUNTIME_MODE):
     activation.require_profile(profile)
     engine = runtime_engine(config)
@@ -166,21 +186,7 @@ def inspect_db(config, *, profile=RUNTIME_MODE):
                 result = inspect_runtime_connection(connection, config)
                 result.update(inspect_runtime_schema(connection, profile=profile))
                 result['counts'] = {table: connection.exec_driver_sql(f'SELECT count(*) FROM public.{table}').scalar_one() for table in TABLES}
-                permissions = {}
-                for privilege in ('SELECT','INSERT','UPDATE','DELETE','TRUNCATE','TRIGGER','REFERENCES'):
-                    permissions[privilege] = [bool(connection.execute(text('SELECT has_table_privilege(current_user,:table,:privilege)'),
-                        {'table':'public.'+table,'privilege':privilege}).scalar_one()) for table in TABLES]
-                result['crud_all_tables'] = all(all(permissions[p]) for p in ('SELECT','INSERT','UPDATE','DELETE'))
-                result['extra_table_privileges'] = any(any(permissions[p]) for p in ('TRUNCATE','TRIGGER','REFERENCES'))
-                result['schema_create'] = connection.execute(text("SELECT has_schema_privilege(current_user,'public','CREATE')")).scalar_one()
-                result['database_create'] = connection.execute(text('SELECT has_database_privilege(current_user,current_database(),\'CREATE\')')).scalar_one()
-                result['temporary_tables'] = connection.execute(text('SELECT has_database_privilege(current_user,current_database(),\'TEMP\')')).scalar_one()
-                result['alembic_update'] = connection.execute(text("SELECT has_table_privilege(current_user,'public.alembic_version','UPDATE')")).scalar_one()
-                result['owns_business_tables'] = connection.execute(text("SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tableowner=current_user")).scalar_one() != 0
-                result['role_memberships'] = connection.execute(text('SELECT count(*) FROM pg_auth_members WHERE member=(SELECT oid FROM pg_roles WHERE rolname=current_user)')).scalar_one()
-                if not result['crud_all_tables'] or not result['sequence_usage_only'] or any(result[k] for k in ('extra_table_privileges','schema_create','database_create','temporary_tables','alembic_update','owns_business_tables','role_memberships')):
-                    raise ValueError('Unexpected runtime privileges')
-                return result
+                return inspect_runtime_rights(connection, result)
             finally:
                 connection.exec_driver_sql('ROLLBACK')
     finally:
@@ -667,19 +673,34 @@ def prepare_runtime_app(config, *, profile=RUNTIME_MODE):
     discovery are outside this preparation phase. Only diagnostics are mounted.
     """
     activation.require_preparation(config, profile)
+    return _runtime_app(config, runtime_engine(config))
+
+
+def _runtime_app(config, engine, *, mode=RUNTIME_MODE, inspector=None):
+    """Shared diagnostic surface; never import the legacy application or .env."""
     from fastapi import FastAPI
     from sqlalchemy.orm import sessionmaker
     sys.path.insert(0, str(REPO/'backend'))
     from app.core.database_runtime import SqlRuntime
-    engine = runtime_engine(config)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.state.sql_runtime = SqlRuntime(engine, sessionmaker(bind=engine, autoflush=False, autocommit=False))
     from starlette.concurrency import run_in_threadpool
     from starlette.responses import JSONResponse
 
     def identity():
+        if inspector is not None and app.state.sql_runtime._closed:
+            raise ValueError('Auth-only SQL runtime is closed')
         with engine.connect() as connection:
-            proof = inspect_runtime_connection(connection, config)
+            if inspector is None:
+                proof = inspect_runtime_connection(connection, config)
+            else:
+                connection.exec_driver_sql('SET TRANSACTION READ ONLY')
+                try:
+                    connection.exec_driver_sql("SET LOCAL statement_timeout = '15s'")
+                    connection.exec_driver_sql("SET LOCAL lock_timeout = '5s'")
+                    proof = inspector(connection)
+                finally:
+                    connection.exec_driver_sql('ROLLBACK')
         return {'mode':'local-development',**proof}
 
     @app.middleware('http')
@@ -695,18 +716,106 @@ def prepare_runtime_app(config, *, profile=RUNTIME_MODE):
     app.add_api_route('/__dev/identity', identity, methods=['GET'], include_in_schema=False)
     @app.get('/health')
     def health():
-        return {'environment': config['mode'], 'status': 'healthy', 'runtime_mode': RUNTIME_MODE}
+        return {'environment': config['mode'], 'status': 'healthy', 'runtime_mode': mode}
+    app.state.development_identity = identity
     return app
 
 
-def api(config):
-    activation.require_preparation(config)
-    inspect_db(config)
-    free_port(config['api_port'])
-    app = prepare_runtime_app(config)
-    import uvicorn
+def load_auth_settings(config):
+    """Explicit companion file; no environment discovery or configurable secret path."""
+    sys.path.insert(0, str(REPO/'backend'))
+    from app.core.b2b_browser import https_origin
+    from app.core.oidc_config import OidcConfig
+    directory = Path(config['_directory']).resolve(strict=True)
+    approved = Path(b2b.policy()['profile']).resolve()
+    if (Path(config['_path']).resolve() != approved or directory != approved.parent
+            or directory.is_relative_to(REPO)):
+        raise ValueError('Unapproved auth-only private directory')
+
+    def private_file(name):
+        path = directory / name
+        if path.resolve(strict=True) != path or not path.is_file():
+            raise ValueError('Auth-only file must remain in approved private directory')
+        return path
+
+    def unique_fields(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError('Ambiguous auth-only configuration')
+            result[key] = value
+        return result
+
+    data = json.loads(private_file('auth-only.json').read_text(encoding='utf-8'), object_pairs_hook=unique_fields)
+    if (type(data) is not dict or set(data) != {'profile', 'origin', 'oidc', 'approved_domains'}
+            or data['profile'] != AUTH_ONLY or type(data['oidc']) is not dict
+            or type(data['approved_domains']) is not list or not data['approved_domains']
+            or any(type(v) is not str for v in data['approved_domains'])):
+        raise ValueError('Explicit auth-only configuration required')
+    origin = https_origin(data['origin'])
+    values = dict(data['oidc'])
+    if type(values.get('signature_algorithms')) is not list:
+        raise ValueError('Explicit OIDC algorithms required')
+    values['signature_algorithms'] = tuple(values['signature_algorithms'])
+    oidc = OidcConfig.model_validate(values)
+    if (oidc.issuer != 'https://accounts.google.com' or oidc.signature_algorithms != ('RS256',)
+            or oidc.callback_url != origin + '/auth/oidc/google/callback'
+            or oidc.allow_http_loopback_callback):
+        raise ValueError('Auth-only OIDC policy mismatch')
+
+    def secret_loader():
+        secret = private_file('google-client-secret.txt').read_text(encoding='utf-8').removesuffix('\n')
+        if re.fullmatch(r'[!-~]{1,4096}', secret) is None:
+            raise ValueError('OIDC secret unavailable')
+        return secret
+    return origin, oidc, tuple(data['approved_domains']), secret_loader
+
+
+def prepare_auth_only_app(config):
+    """Explicit auth-only assembly over the official engine; no provider request."""
+    activation.require_preparation(config)  # The base DEV profile is never implicitly activated.
+    origin, oidc, domains, secret_loader = load_auth_settings(config)
+    runtime_connect_args(config)  # Verify destination/TLS/CA BEFORE reading any secret.
+    secret_loader()  # Availability only; never store the value in config/state/logs.
+    engine = runtime_engine(config)
     try:
-        uvicorn.run(app, host='127.0.0.1', port=config['api_port'], log_level='warning', access_log=False)
+        def inspect(connection):
+            proof = inspect_runtime_connection(connection, config)
+            proof.update(inspect_runtime_schema(connection, profile=activation.CANDIDATE))
+            inspect_runtime_rights(connection, proof)
+            return {**proof, 'runtime_mode': AUTH_ONLY, 'business_routes_enabled': False}
+
+        app = _runtime_app(config, engine, mode=AUTH_ONLY, inspector=inspect)
+        sql = app.state.sql_runtime
+        from app.core.b2b_browser import BrowserAuthProfile
+        from app.b2b_runtime import install_google_b2b
+
+        def guard(candidate):
+            if candidate is not sql or app.state.sql_runtime is not sql or candidate.engine is not engine or sql._closed:
+                raise ValueError('Auth-only SQL runtime identity mismatch')
+            app.state.development_identity()  # Same engine, fresh read-only identity/schema/ACL/function checks.
+            secret_loader()  # Also refuse a later secret removal before an OIDC redirect.
+
+        install_google_b2b(app, sql=sql, config=oidc, approved_domains=domains,
+            client_secret_loader=secret_loader, browser_profile=BrowserAuthProfile(origin, guard))
+        return app
+    except Exception:
+        engine.dispose()
+        raise
+
+
+def api(config, *, profile=RUNTIME_MODE):
+    activation.require_preparation(config)
+    if profile not in (RUNTIME_MODE, AUTH_ONLY):
+        raise ValueError('Unknown API runtime profile')
+    if profile == RUNTIME_MODE:
+        inspect_db(config)
+    free_port(config['api_port'])
+    import uvicorn
+    app = prepare_auth_only_app(config) if profile == AUTH_ONLY else prepare_runtime_app(config)
+    try:
+        proxy = {'proxy_headers': True, 'forwarded_allow_ips': '127.0.0.1'} if profile == AUTH_ONLY else {}
+        uvicorn.run(app, host='127.0.0.1', port=config['api_port'], log_level='warning', access_log=False, **proxy)
     finally:
         app.state.sql_runtime.dispose()
 
@@ -735,7 +844,7 @@ def main():
     parser.add_argument('--role', default='ui47_migrator')
     parser.add_argument('--bundle')
     parser.add_argument('--qualification-campaign')
-    parser.add_argument('--runtime-profile', choices=(activation.PREPARATION, activation.CANDIDATE),
+    parser.add_argument('--runtime-profile', choices=(activation.PREPARATION, activation.CANDIDATE, AUTH_ONLY),
                         default=activation.PREPARATION)
     args = parser.parse_args()
     if args.qualification_campaign is not None and not args.action.startswith('b2b-locks-'):
@@ -754,6 +863,12 @@ def main():
         report['live_checks_performed'] = False
         report['plan_sha256'] = b2b.digest(b2b.canonical(report))
         print(json.dumps(report))
+        return
+    if args.runtime_profile == AUTH_ONLY:
+        if (args.action != 'api' or args.role != activation.ROLE or args.bundle
+                or args.qualification_campaign or args.current_revision is not None or args.target != RUNTIME_REVISION):
+            parser.error('auth-only requires explicit api/ui47_app and no migration/qualification options')
+        api(load_config(args.config), profile=AUTH_ONLY)
         return
     if args.runtime_profile != activation.PREPARATION:
         parser.error('Candidate profile cannot launch, migrate or access services')

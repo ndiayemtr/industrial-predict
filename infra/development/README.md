@@ -1,5 +1,12 @@
 # Environnement permanent de développement
 
+Le lancement explicite FastAPI `auth-only` est raccordé par ACT-2, sans activation
+par défaut : voir [AUTH_ONLY.md](AUTH_ONLY.md). Il réutilise les contrôles
+destination/TLS/révision, ACL candidates et fonctions existants. Le candidat reste
+non activable ; seuls `api --runtime-profile auth-only --role ui47_app` et un
+fichier privé compagnon valide sélectionnent l'assemblage exclusivement auth.
+Le lanceur Angular et tous les autres lancements restent préparatoires.
+
 Le parcours de sauvegarde au schéma installé, d'installation A/B et de retour
 arrière fermé est décrit dans [B2B_DEPLOYMENT.md](B2B_DEPLOYMENT.md).
 Ces opérations exigent des approbations séparées ; aucun lancement courant ne
