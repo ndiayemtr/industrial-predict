@@ -1,5 +1,69 @@
 # DEV-5B-4H-3A — Contexte isolé, désactivé par défaut
 
+## AUTH-B2B-ACT-4 — reprise minimale préparée, aucune opération réelle
+
+Le champ Docker optionnel HostConfig.Tmpfs est lu par
+`{{json (index .HostConfig "Tmpfs")}}` : une clé absente devient null, sans
+échec de rendu. Le contrôle accepte seulement absence/null/dictionnaire vide.
+Un dictionnaire non vide, une valeur mal formée ou un montage tmpfs dans Mounts
+reste refusé. Aucun autre contrôle d'identité ou de montage n'est modifié.
+
+Seul le nouveau test doit être exécuté pour ACT-4 (les commandes de suites en fin
+de document décrivent la livraison historique, pas une campagne à relancer) :
+
+```powershell
+$env:PYTHONPATH = 'infra/development;backend'
+& '.\backend\.venv\Scripts\python.exe' -B -m unittest -q test_b2b_qualification.QualificationTests.test_optional_tmpfs_field_keeps_unexpected_mounts_forbidden
+```
+
+Résultat ACT-4 : ce seul test ciblé réussit (absence, null, dictionnaire vide,
+tmpfs déclaré, types mal formés et montage supplémentaire). `b2b_deployment.capture`
+valide les cinq sources épinglées sans changement ; les cinq SHA-256 des corps
+concordent et le delta garde exactement seize accords. Aucun SQL ni Docker réel
+n'est exécuté. Le rendu Docker réel reste à confirmer dans la reprise autorisée.
+
+La correction change l'empreinte du contexte de qualification. Il faut un nouveau
+plan et de nouveaux reçus, sans modifier manuellement leurs empreintes. Les cinq
+sources SQL épinglées dans b2b_deployment.PINS, les cinq corps et leurs SHA-256,
+ainsi que les seize accords, doivent rester identiques. Les anciens rapports
+sont conservés ; ils ne sont pas substitués aux preuves de la reprise.
+
+Après autorisation opérateur distincte seulement :
+
+1. Revérifier disponibilité des noms exacts ci-dessous et du port 55443, image
+   locale exacte 17.10 linux/amd64 et ID épinglé, clients PostgreSQL 17.10 et
+   prérequis du relais. Aucun pull automatique, aucune ressource existante réutilisée.
+2. Créer uniquement le conteneur/volume dédiés définis ci-dessous, réseau none,
+   aucun port Docker publié, nouveau run_id et identifiants/OID/marqueurs
+   distincts. Secrets, CA et certificat indépendants, données synthétiques seules.
+   Attester IDs/labels/montage unique avant usage ; profil de campagne neuf ou
+   réinventorié exactement, preuves dans un sous-dossier evidence neuf.
+3. Vérifier le relais opaque 127.0.0.1:55443 et TLS verify-full/CA épinglée.
+   Les bases DEV 5433/5434 restent exclues ; ne pas reprendre leurs fichiers privés.
+4. Exécuter séparément **b2b-locks-backup → b2b-locks-rehearse →
+   b2b-locks-install (A) → b2b-locks-grant (B) → b2b-locks-rollback**, avec les
+   confirmations propres à chaque commande déjà documentées. Limiter les
+   contrôles aux 15 tables/11 séquences, archive/preuves/restauration, cinq
+   objets fonctionnels, seize accords et préservation finale des données/ACL.
+   Après inverse, vérifier retrait du delta complet : sept objets et seize accords.
+   Ne pas rejouer les 26 scénarios fonctionnels ni les tests historiques.
+5. Premier échec ou commit incertain : arrêt, sans retry/réparation automatique,
+   conserver l'état pour diagnostic. Après réussite seulement, arrêter le relais
+   et supprimer les seules ressources approuvées après revalidation IDs/labels/
+   montages et absence d'autre utilisateur du volume ; conserver les reçus.
+
+Avant toute sauvegarde **DEV** et les étapes A/B : qualification isolée réussie
+et revue, approbations séparées du profil/destination et de chaque opération,
+contrôle réel actualisé d'identité/TLS/révision/ACL, clients fermés et gel des
+écritures, répertoire privé protégé avec espace suffisant. Sauvegarde custom
+complète et snapshot cohérent (15 tables, 11 séquences, catalogue/ACL et rôles
+sans mots de passe), SHA-256 et lecture d'archive vérifiés, restauration répétée
+sur une cible distincte vide, preuves concordantes de moins de 24 h et absence
+de dérive source. A utilise ui47_admin, B ui47_migrator ; jamais ui47_app.
+Suivre B2B_DEPLOYMENT.md sans restaurer la base active ni modifier les empreintes
+approuvées. A/B ne lancent ni auth-only ni Google. Aucun de ces prérequis réels
+n'est exécuté ou certifié par ACT-4.
+
 Préparation hors connexion seulement. Aucune ressource, clé ou connexion réelle
 n'est créée par ce lot. La qualification réelle et sa configuration de création
 exacte nécessitent une autorisation opérateur séparée.

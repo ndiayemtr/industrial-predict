@@ -33,7 +33,7 @@ INSPECT = ('{"id":{{json .Id}},"name":{{json .Name}},"image":{{json .Image}},'
            '"labels":{{json .Config.Labels}},"mounts":{{json .Mounts}},'
            '"network":{{json .HostConfig.NetworkMode}},"bindings":{{json .HostConfig.PortBindings}},'
            '"ports":{{json .NetworkSettings.Ports}},"running":{{json .State.Running}},'
-           '"privileged":{{json .HostConfig.Privileged}},"tmpfs":{{json .HostConfig.Tmpfs}},'
+           '"privileged":{{json .HostConfig.Privileged}},"tmpfs":{{json (index .HostConfig "Tmpfs")}},'
            '"pid_mode":{{json .HostConfig.PidMode}},"ipc_mode":{{json .HostConfig.IpcMode}}}')
 
 
@@ -150,7 +150,9 @@ class Qualification:
                 and container['image'] == IMAGE and container['labels'] == {**inherited, **self.labels()}, 'Container identity mismatch')
         require(container['running'] is True and container['network'] == 'none' and not container['bindings']
                 and all(not v for v in (container['ports'] or {}).values()), 'Container network/ports mismatch')
-        require(container['privileged'] is False and not container['tmpfs'] and container['pid_mode'] == ''
+        tmpfs = container.get('tmpfs')
+        require(tmpfs is None or (type(tmpfs) is dict and not tmpfs), 'Unexpected container tmpfs')
+        require(container['privileged'] is False and container['pid_mode'] == ''
                 and container['ipc_mode'] == 'private', 'Unexpected container isolation options')
         require(len(volumes) == 1, 'Unexpected volume inventory')
         v = volumes[0]

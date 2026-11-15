@@ -148,6 +148,25 @@ class QualificationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.qualification.check_resources({**container, 'mounts': container['mounts'] * 2}, volumes)
 
+    def test_optional_tmpfs_field_keeps_unexpected_mounts_forbidden(self):
+        # Docker Go templates must index this optional map key, not dereference
+        # .HostConfig.Tmpfs (which fails before JSON is produced if absent).
+        self.assertIn('"tmpfs":{{json (index .HostConfig "Tmpfs")}}', q.INSPECT)
+        self.assertNotIn('.HostConfig.Tmpfs', q.INSPECT)
+        container, volumes = self.resources()
+        absent = {key: value for key, value in container.items() if key != 'tmpfs'}
+        for label, candidate in (('absent', absent), ('null', {**container, 'tmpfs': None}),
+                                 ('empty', {**container, 'tmpfs': {}})):
+            with self.subTest(label=label):
+                self.qualification.check_resources(candidate, volumes)
+        for value in ({'/unexpected': 'rw'}, {'/var/lib/postgresql/data': 'rw'}, False, [], '', 0):
+            with self.subTest(tmpfs=value), self.assertRaises(ValueError):
+                self.qualification.check_resources({**container, 'tmpfs': value}, volumes)
+        # Absence of HostConfig.Tmpfs never hides an actual extra tmpfs mount.
+        with self.assertRaises(ValueError):
+            self.qualification.check_resources({**absent, 'mounts': [*container['mounts'],
+                {'Type': 'tmpfs', 'Destination': '/unexpected', 'RW': True}]}, volumes)
+
     def test_name_resolved_before_inspection_of_id(self):
         with patch.object(self.qualification, 'docker', return_value=b'wrong-id') as docker, self.assertRaises(ValueError):
             self.qualification.verify_resources()
