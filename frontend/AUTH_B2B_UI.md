@@ -1,8 +1,9 @@
-# AUTH-B2B-UI-2 — Adaptateur FastAPI raccordé, activation fermée
+# AUTH-B2B-UI-2 / ACT-1 — Adaptateur FastAPI raccordé, activation fermée
 
-`appConfig` fournit désormais `FastApiProfessionalAuthBackend`. Sa configuration
-et son vérificateur de disponibilité valent **null par défaut dans les builds
-livrés** : aucune requête, popup, session ou ouverture métier au démarrage.
+`appConfig` fournit `FastApiProfessionalAuthBackend` et son vérificateur HTTP
+`FastApiAuthReadinessVerifier`. La configuration de déploiement reste **null par
+défaut dans les builds livrés** : aucune requête, popup, session ou ouverture
+métier au démarrage.
 Le design de `/connexion` et les guards de préparation restent conservés.
 
 ## Correspondance avec AUTH-B2B-API-1
@@ -12,6 +13,7 @@ Le design de `/connexion` et les guards de préparation restent conservés.
 | `GET /auth/oidc/google/start` → 302, cookie de binding sécurisé | Navigation popup synchrone après clic, jamais HttpClient/fetch |
 | `GET /auth/oidc/google/callback` | Traité exclusivement par FastAPI : PKCE, state, nonce, identité et autorisations serveur ; aucune route callback Angular |
 | Bridge du profil navigateur explicitement qualifié | `industrial-predict:b2b-session:v1`, contrôle de l'origine HTTPS exacte, de la fenêtre émettrice et du contexte de connexion |
+| `GET /api/v1/auth/readiness` → 200 JSON no-store | Sans bearer ni cookie ; `{status: "ready", profile: "auth-only", bridgeVersion: "industrial-predict:b2b-session:v1"}` après qualification serveur réelle |
 | `GET /api/v1/auth/me` → 200 JSON no-store | Bearer de session en en-tête ; DTO exact `{userId, displayName, companies}` |
 | Entreprise du DTO | `{companyId, displayName, permissions}` ; noms nullables, permissions explicites, jamais inférées du domaine Google |
 | `POST /api/v1/auth/logout` → 204 vide no-store | Corps vide, bearer courant uniquement, aucun sélecteur d'utilisateur/entreprise |
@@ -41,14 +43,18 @@ Deux dépendances distinctes sont nécessaires :
 - `PROFESSIONAL_AUTH_READINESS_VERIFIER` : intégration de confiance chargée de
   vérifier réellement le profil serveur sécurisé avant de terminer avec succès.
 
-**Aucune implémentation du second port n'est fournie.** L'API actuelle n'a pas de
-contrat de preuve de disponibilité avant connexion. `/health`, OpenAPI, une
-configuration frontend ou un 401 de `/me` ne prouvent pas l'exécution du garde de
-qualification serveur : la validation du bearer intervient avant ce garde.
-Aucun endpoint de disponibilité n'est inventé et aucun probe n'est envoyé.
-Une intégration serveur réelle, revue séparément, reste donc nécessaire.
-Un double RxJS de réussite dans les tests n'est jamais une procédure d'activation.
+ACT-1 implémente le second port par une requête réelle à `/api/v1/auth/readiness`,
+uniquement quand le premier port est explicitement configuré. Le backend ne monte
+ce contrat que dans l'assemblage navigateur auth-only. Il rejoue le garde SQL/TLS/
+identité/ACL existant et contrôle le secret via le chargeur serveur approuvé, sans
+le renvoyer. Il ne contacte pas Google et ne prouve ni la validité distante du
+secret ni le provisioning d'un utilisateur. Une erreur ou un contrat divergent
+maintient le bouton désactivé, sans fallback ni retry.
+
+`/health`, OpenAPI ou un 401 de `/me` ne sont jamais des preuves de disponibilité.
 Les paramètres URL, cookies et stockages navigateur ne configurent pas ces ports.
+Un double RxJS de réussite dans les tests n'est jamais une procédure d'activation.
+La configuration Angular reste absente et le lanceur DEV reste préparatoire.
 
 ## Transport et cycle de vie
 
@@ -106,8 +112,10 @@ node node_modules/@angular/cli/bin/ng.js build
 ```
 
 Ces tests ne qualifient aucune connexion Google réelle. Avant cette validation :
-preuve serveur de disponibilité, activation explicite de BrowserAuthProfile et de
+activation explicite de BrowserAuthProfile et de
 ses gardes SQL/TLS/ACL, HTTPS same-origin et routage des chemins existants,
 configuration Google/callback, provisioning explicite des identités/appartenances,
 cookies de binding et compatibilité popup/COOP doivent être validés. La qualification
 DevOps demeure en pause et aucune opération PostgreSQL n'est effectuée dans ce lot.
+Le [chemin critique ACT-1](../docs/auth-b2b-act-1.md) distingue les adaptations
+applicatives livrées des autorisations et opérations DEV encore nécessaires.

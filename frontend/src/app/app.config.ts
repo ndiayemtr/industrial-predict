@@ -6,7 +6,8 @@ import { NbGlobalPhysicalPosition, NbSidebarModule, NbThemeModule, NbToastrModul
 
 import { PREPARATION_ROUTES } from './app.routes';
 import { PROFESSIONAL_AUTH_BACKEND } from './features/auth/professional-auth.model';
-import { FastApiProfessionalAuthBackend } from './features/auth/fastapi-professional-auth.service';
+import { FastApiProfessionalAuthBackend, PROFESSIONAL_AUTH_READINESS_VERIFIER } from './features/auth/fastapi-professional-auth.service';
+import { FastApiAuthReadinessVerifier } from './features/auth/fastapi-auth-readiness.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(PREPARATION_ROUTES),
     provideHttpClient(),
     { provide: PROFESSIONAL_AUTH_BACKEND, useExisting: FastApiProfessionalAuthBackend },
+    { provide: PROFESSIONAL_AUTH_READINESS_VERIFIER, useExisting: FastApiAuthReadinessVerifier },
     // Nebular 17 still requires Angular's legacy animation providers.
     provideAnimations(),
     importProvidersFrom(

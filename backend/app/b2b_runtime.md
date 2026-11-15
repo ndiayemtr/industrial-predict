@@ -1,5 +1,25 @@
 # AUTH-B2B-RUNTIME-1
 
+## AUTH-B2B-ACT-1 — disponibilité locale, activation toujours fermée
+
+Le contrat `GET /api/v1/auth/readiness` est désormais monté uniquement par
+l'assemblage navigateur explicite. Sans bearer, il vérifie l'origine HTTPS,
+le contexte same-origin, la liaison au même SqlRuntime et l'absence de runtime
+métier, puis rejoue `BrowserAuthProfile.check`. Il contrôle la disponibilité
+locale du secret par le chargeur approuvé, sans le divulguer, sans requête Google,
+sans transaction OIDC et sans émission de session. Succès no-store :
+`{status: "ready", profile: "auth-only", bridgeVersion: "industrial-predict:b2b-session:v1"}`.
+Échec de qualification/chargeur : 503 générique ; origine appelante étrangère,
+sélecteurs query ou Authorization : 403. Une application non montée reste en 404.
+Ce contrat ne certifie ni l'acceptation distante du secret ni le provisioning.
+
+Angular UI-2 possède les adaptateurs profil/logout ; ACT-1 ajoute leur vérificateur
+HTTP de disponibilité, sans configuration active. Le lanceur DEV reste strictement
+préparatoire et le candidat ACL ne constitue pas un profil activable. Le
+[plan ACT-1](../../docs/auth-b2b-act-1.md) est l'état courant du chemin critique ;
+les sections suivantes conservent l'historique des livraisons, sans prouver un
+déploiement actuel, ni autoriser l'exemple historique d'assemblage métier.
+
 ## AUTH-B2B-API-1 — contrats navigateur optionnels, aucune activation DEV
 
 Le paramètre `browser_profile` de `install_google_b2b` reste `None` par défaut.

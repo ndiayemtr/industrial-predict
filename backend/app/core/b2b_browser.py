@@ -16,7 +16,7 @@ from app.core.database_runtime import SqlRuntime
 
 BROWSER_BRIDGE = 'industrial-predict:b2b-session:v1'
 AUTH_PATHS = frozenset(('/auth/oidc/google/start', '/auth/oidc/google/callback',
-                       '/api/v1/auth/me', '/api/v1/auth/logout'))
+                       '/api/v1/auth/me', '/api/v1/auth/logout', '/api/v1/auth/readiness'))
 DIAGNOSTIC_PATHS = frozenset(('/health', '/__dev/identity', '/docs', '/docs/oauth2-redirect',
                             '/redoc', '/openapi.json'))
 

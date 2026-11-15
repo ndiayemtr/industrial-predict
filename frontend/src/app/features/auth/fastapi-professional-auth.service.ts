@@ -16,10 +16,10 @@ export interface ProfessionalAuthConfiguration {
 
 /**
  * Trusted integration port for a REAL server qualification, not an enable flag.
- * No implementation is supplied: FastAPI currently has no pre-login readiness
- * proof. Neither /health, OpenAPI presence nor an unauthenticated /me 401 proves
- * that BrowserAuthProfile.qualification_guard passed. An approved future server
- * integration must implement this port; of(undefined) is only a unit double.
+ * FastApiAuthReadinessVerifier checks the auth-only server's real readiness
+ * contract. Neither /health, OpenAPI nor an unauthenticated /me 401 is proof.
+ * The deployment configuration remains absent by default; of(undefined) is
+ * only a unit double, never an activation procedure.
  */
 export interface ProfessionalAuthReadinessVerifier {
   verify(configuration: Readonly<ProfessionalAuthConfiguration>): Observable<void>;
@@ -29,7 +29,7 @@ export const PROFESSIONAL_AUTH_CONFIGURATION = new InjectionToken<ProfessionalAu
   'Explicit professional auth deployment', { providedIn: 'root', factory: () => null },
 );
 export const PROFESSIONAL_AUTH_READINESS_VERIFIER = new InjectionToken<ProfessionalAuthReadinessVerifier | null>(
-  'Qualified server profile verification (not yet supplied)', { providedIn: 'root', factory: () => null },
+  'Qualified server profile verification', { providedIn: 'root', factory: () => null },
 );
 
 // Dedicated Fetch transport: no global interceptor sees or spreads this bearer.

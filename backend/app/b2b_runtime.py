@@ -241,7 +241,8 @@ def install_google_b2b(app, *, sql, config, approved_domains, client_secret_load
         from app.api.routes.b2b_login import HEADERS
         from fastapi.responses import JSONResponse
         app.state.b2b_auth_runtime = runtime  # Do NOT enable business runtime.
-        app.include_router(create_b2b_auth_router(runtime=runtime, profile=browser_profile))
+        app.include_router(create_b2b_auth_router(runtime=runtime, profile=browser_profile,
+                                               client_secret_loader=client_secret_loader))
         @app.middleware('http')
         async def auth_only_surface(request, call_next):
             if request.url.path not in AUTH_PATHS | DIAGNOSTIC_PATHS:
