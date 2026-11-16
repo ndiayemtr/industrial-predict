@@ -6,6 +6,7 @@ No Docker, role impersonation, automatic retry or active-database restore.
 """
 from datetime import datetime, timedelta, timezone
 import logging
+import json
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -35,6 +36,95 @@ def require(value, message):
 
 def digest(value):
     return policy.digest(policy.canonical(value))
+
+
+def _check_cast_forms():
+    """Only the four complete PG17 dump/restore spellings reviewed in ACT-5.
+
+    No SQL parser, cast stripping, whitespace normalization or value sorting.
+    Unbounded varchar -> text preserves these non-NULL ASCII constants. Casting
+    the array elementwise or each constructor element gives the same text[].
+    The text equality operator, ANY, Boolean tree and column casts stay intact.
+    """
+    def any_of(column, values, scalar):
+        elements = ', '.join("'" + value + "'::character varying" + ('::text' if scalar else '')
+                             for value in values)
+        return column + '::text = ANY (ARRAY[' + elements + ']' + ('' if scalar else '::text[]') + ')'
+
+    forms = {}
+    for scalar in (False, True):
+        roles = any_of('role', ('reader', 'technician', 'company_admin'), scalar)
+        entries = {
+            ('company_memberships', 'ck_company_memberships_role'): 'CHECK (' + roles + ')',
+            ('company_memberships', 'ck_company_memberships_state'):
+                'CHECK (' + any_of('state', ('active', 'inactive'), scalar) + ')',
+            ('local_users', 'ck_local_users_state'):
+                'CHECK (' + any_of('state', ('active', 'suspended'), scalar) + ')',
+            ('membership_permissions', 'ck_membership_permissions_role_cap'):
+                'CHECK ((' + roles + ') AND (' + any_of('permission', (
+                    'companies:read', 'assets:read', 'measurements:read', 'predictions:read'), scalar)
+                + ') OR (' + any_of('role', ('technician', 'company_admin'), scalar)
+                + ") AND permission::text = 'maintenance:write'::text OR role::text = 'company_admin'::text AND ("
+                + any_of('permission', ('memberships:manage', 'predictions:analyze'), scalar) + '))',
+        }
+        for key, definition in entries.items():
+            forms.setdefault(key, []).append(definition)
+    return forms
+
+
+CHECK_CAST_FORMS = _check_cast_forms()
+
+
+def restored_snapshot_matches(expected, actual):
+    """Compare raw snapshots, allowing only four exact CHECK cast pairs.
+
+    Never mutate evidence. Source drift checks deliberately remain raw equality.
+    New metadata is mandatory for an exception; old receipts cannot acquire one.
+    All other snapshot fields, row ordering and constraint attributes stay exact.
+    """
+    if expected == actual:
+        return True
+    if (set(expected) != set(actual) or 'constraints' not in expected
+            or any(expected[k] != actual[k] for k in expected if k != 'constraints')):
+        return False
+    left, right = expected['constraints'], actual['constraints']
+    if len(left) != len(right):
+        return False
+    try:
+        columns = [json.loads(row) for row in expected['columns']]
+        seen = set()
+        for before, after in zip(left, right):
+            a, b = json.loads(before), json.loads(after)
+            key = (a['relname'], a['conname'])
+            if key in seen:
+                return False
+            seen.add(key)
+            if before == after:
+                continue
+            pair = CHECK_CAST_FORMS.get(key, ())
+            if a.get('definition') not in pair or b.get('definition') not in pair:
+                return False
+            attributes = {'contype': 'c', 'convalidated': True, 'condeferrable': False,
+                          'condeferred': False, 'connoinherit': False, 'conislocal': True, 'coninhcount': 0}
+            if any(row.get(k) != v or type(row.get(k)) is not type(v)
+                   for row in (a, b) for k, v in attributes.items()):
+                return False
+            if policy.canonical({k: v for k, v in a.items() if k != 'definition'}) != policy.canonical(
+                    {k: v for k, v in b.items() if k != 'definition'}):
+                return False
+            names = ('role', 'permission') if key[0] == 'membership_permissions' else (
+                'state' if key[1].endswith('_state') else 'role',)
+            for name in names:
+                matches = [c for c in columns if c['relname'] == key[0] and c['attname'] == name]
+                if len(matches) != 1:
+                    return False
+                column = matches[0]
+                if (column['type'] != ('character varying(16)' if name == 'state' else 'character varying(32)')
+                        or column['attnotnull'] is not True or not column.get('collation')):
+                    return False
+        return True
+    except (ValueError, TypeError, KeyError):
+        return False
 
 
 def utcnow():
@@ -260,14 +350,20 @@ class Deployment:
                 raw = row.encode('utf-8'); fingerprint.update(len(raw).to_bytes(8, 'big') + raw); count += 1
             result['b2b_rows'][table] = {'count': count, 'sha256': fingerprint.hexdigest()}
         queries = {
-            'database': "SELECT datdba::regrole::text AS owner,datacl::text,pg_encoding_to_char(encoding) AS encoding,datlocprovider,datcollate,datctype,datlocale,datcollversion FROM pg_catalog.pg_database WHERE datname=current_database()",
+            'database': "SELECT datdba::regrole::text AS owner,datacl::text,pg_encoding_to_char(encoding) AS encoding,datlocprovider,datcollate,datctype,datlocale,daticurules,datcollversion FROM pg_catalog.pg_database WHERE datname=current_database()",
             'extensions': "SELECT e.extname,e.extversion,e.extowner::regrole::text AS owner,n.nspname FROM pg_catalog.pg_extension e JOIN pg_catalog.pg_namespace n ON n.oid=e.extnamespace ORDER BY e.extname",
             'columns': """SELECT c.relname,c.relowner::regrole::text AS owner,c.relrowsecurity,c.relforcerowsecurity,
-                a.attname,format_type(a.atttypid,a.atttypmod) AS type,a.attnotnull,pg_get_expr(d.adbin,d.adrelid) AS default_value
+                a.attname,format_type(a.atttypid,a.atttypmod) AS type,a.attnotnull,pg_get_expr(d.adbin,d.adrelid) AS default_value,
+                CASE WHEN col.oid IS NOT NULL THEN json_build_object('schema',cn.nspname,'name',col.collname,
+                    'provider',col.collprovider,'deterministic',col.collisdeterministic,'encoding',col.collencoding,
+                    'collate',col.collcollate,'ctype',col.collctype,'locale',col.colllocale,
+                    'rules',col.collicurules,'version',col.collversion) END AS collation
                 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid
+                LEFT JOIN pg_catalog.pg_collation col ON col.oid=a.attcollation
+                LEFT JOIN pg_catalog.pg_namespace cn ON cn.oid=col.collnamespace
                 LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid=c.oid AND d.adnum=a.attnum
                 WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND a.attnum>0 AND NOT a.attisdropped ORDER BY c.relname,a.attnum""",
-            'constraints': "SELECT c.relname,k.conname,pg_get_constraintdef(k.oid,true) AS definition,k.convalidated FROM pg_catalog.pg_constraint k JOIN pg_catalog.pg_class c ON c.oid=k.conrelid WHERE c.relnamespace='public'::regnamespace ORDER BY c.relname,k.conname",
+            'constraints': "SELECT c.relname,k.conname,pg_get_constraintdef(k.oid,true) AS definition,k.contype,k.convalidated,k.condeferrable,k.condeferred,k.connoinherit,k.conislocal,k.coninhcount FROM pg_catalog.pg_constraint k JOIN pg_catalog.pg_class c ON c.oid=k.conrelid WHERE c.relnamespace='public'::regnamespace ORDER BY c.relname,k.conname",
             'indexes': "SELECT p.tablename,p.indexname,p.indexdef,i.indisvalid,i.indisready FROM pg_catalog.pg_indexes p JOIN pg_catalog.pg_class c ON c.relname=p.indexname AND c.relnamespace='public'::regnamespace JOIN pg_catalog.pg_index i ON i.indexrelid=c.oid WHERE p.schemaname='public' ORDER BY p.tablename,p.indexname",
             'triggers': "SELECT c.relname,t.tgname,pg_get_triggerdef(t.oid,true) AS definition FROM pg_catalog.pg_trigger t JOIN pg_catalog.pg_class c ON c.oid=t.tgrelid WHERE c.relnamespace='public'::regnamespace AND NOT t.tgisinternal ORDER BY c.relname,t.tgname",
             'roles': f"SELECT rolname,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit,rolvaliduntil FROM pg_catalog.pg_roles WHERE rolname<>'{locks.OWNER}' ORDER BY rolname",
@@ -365,10 +461,12 @@ class Deployment:
             with engine.connect() as c, c.begin():
                 c.exec_driver_sql('SET TRANSACTION READ ONLY')
                 self.identity(c, 'migrator', destination)
-                require(self.snapshot(c) == backup['snapshot'] and self.acl(c) == [tuple(r) for r in backup['acl']], 'Restore verification mismatch')
+                restored_snapshot = self.snapshot(c)
+                require(restored_snapshot_matches(backup['snapshot'], restored_snapshot) and self.acl(c) == [tuple(r) for r in backup['acl']], 'Restore verification mismatch')
             self.backup_evidence(directory)
             return write_receipt(directory, 'restore', self.plan, backup_sha256=stamp, archive_sha256=backup['archive_sha256'],
-                                 destination={k: destination[k] for k in ('database', 'database_oid', 'instance_id', 'cluster_identifier')}, verified=True)
+                                 destination={k: destination[k] for k in ('database', 'database_oid', 'instance_id', 'cluster_identifier')},
+                                 snapshot=restored_snapshot, verified=True)
         finally:
             engine.dispose()
 
@@ -390,7 +488,7 @@ class Deployment:
             with engine.connect() as c, c.begin():
                 c.exec_driver_sql('SET TRANSACTION READ ONLY')
                 self.identity(c, 'migrator', destination)
-                require(self.snapshot(c) == backup['snapshot'] and self.acl(c) == [tuple(r) for r in backup['acl']], 'Restored data changed')
+                require(restored_snapshot_matches(backup['snapshot'], self.snapshot(c)) and self.acl(c) == [tuple(r) for r in backup['acl']], 'Restored data changed')
         finally:
             engine.dispose()
 

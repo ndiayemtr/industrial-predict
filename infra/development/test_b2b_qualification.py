@@ -232,15 +232,19 @@ class QualificationTests(unittest.TestCase):
         c.execute.return_value.scalar_one.return_value = 'b2b_0002_analyze'
         c.exec_driver_sql.return_value.one.return_value = ('127.0.0.1', 55443)
         self.manager.inspect_connection(c, self.qualification.config, 'migrator', expected_revision='b2b_0002_analyze')
+        c.exec_driver_sql.assert_called_once_with('SELECT host(inet_server_addr()),inet_server_port()')
         for change in ({'cluster_name': 'industrial-predict-development'}, {'database': 'industrial_predict_dev'},
                        {'version': '17.10.1'}, {'role': 'ui47_app'}, {'superuser': True}):
             c.execute.return_value.mappings.return_value.one.return_value = {**proof, **change}
             with self.subTest(change=change), self.assertRaises(ValueError):
                 self.manager.inspect_connection(c, self.qualification.config, 'migrator', expected_revision='b2b_0002_analyze')
         c.execute.return_value.mappings.return_value.one.return_value = proof
-        c.exec_driver_sql.return_value.one.return_value = ('127.0.0.1', 5434)
-        with self.assertRaises(ValueError):
-            self.manager.inspect_connection(c, self.qualification.config, 'migrator', expected_revision='b2b_0002_analyze')
+        for endpoint in (('127.0.0.2', 55443), ('0.0.0.0', 55443), ('::1', 55443),
+                         ('127.0.0.1/32', 55443), (None, 55443),
+                         ('127.0.0.1', 5433), ('127.0.0.1', 5434), ('127.0.0.1', None)):
+            c.exec_driver_sql.return_value.one.return_value = endpoint
+            with self.subTest(endpoint=endpoint), self.assertRaises(ValueError):
+                self.manager.inspect_connection(c, self.qualification.config, 'migrator', expected_revision='b2b_0002_analyze')
 
     def test_pgtools_pin_tls_and_never_put_password_in_argv(self):
         evidence = self.root / 'evidence'

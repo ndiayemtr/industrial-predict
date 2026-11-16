@@ -242,7 +242,7 @@ class Manager:
         proof = self.base.inspect_connection(c, config, role, revision=revision,
             expected_revision=expected_revision, expected_cluster_name=CLUSTER)
         require(proof['version'].split()[0] == '17.10', 'Exact PostgreSQL 17.10 required')
-        require(c.exec_driver_sql('SELECT inet_server_addr()::text,inet_server_port()').one() == ('127.0.0.1', PORT), 'Unexpected qualification backend transport')
+        require(c.exec_driver_sql('SELECT host(inet_server_addr()),inet_server_port()').one() == ('127.0.0.1', PORT), 'Unexpected qualification backend transport')
         return proof
 
     def inspect_runtime_connection(self, c, config):
